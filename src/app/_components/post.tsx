@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
+<<<<<<< HEAD
 import { api } from "~/trpc/react";
+=======
+import { api } from "@/trpc/react";
+>>>>>>> e64d26a (project init)
 
 export function LatestPost() {
   const [latestPost] = api.post.getLatest.useSuspenseQuery();
