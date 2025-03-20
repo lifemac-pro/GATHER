@@ -5,7 +5,12 @@ const config = {
     "project": true
   },
   "plugins": [
+<<<<<<< HEAD
     "@typescript-eslint"
+=======
+    "@typescript-eslint",
+    "drizzle"
+>>>>>>> e64d26a (project init)
   ],
   "extends": [
     "next/core-web-vitals",
@@ -36,6 +41,27 @@ const config = {
           "attributes": false
         }
       }
+<<<<<<< HEAD
+=======
+    ],
+    "drizzle/enforce-delete-with-where": [
+      "error",
+      {
+        "drizzleObjectName": [
+          "db",
+          "ctx.db"
+        ]
+      }
+    ],
+    "drizzle/enforce-update-with-where": [
+      "error",
+      {
+        "drizzleObjectName": [
+          "db",
+          "ctx.db"
+        ]
+      }
+>>>>>>> e64d26a (project init)
     ]
   }
 }

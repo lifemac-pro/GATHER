@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 import "~/styles/globals.css";
+=======
+import "@/styles/globals.css";
+>>>>>>> e64d26a (project init)
 
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
+<<<<<<< HEAD
 import { TRPCReactProvider } from "~/trpc/react";
+=======
+import { TRPCReactProvider } from "@/trpc/react";
+>>>>>>> e64d26a (project init)
 
 export const metadata: Metadata = {
   title: "Create T3 App",
