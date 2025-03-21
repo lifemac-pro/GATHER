@@ -1,7 +1,11 @@
 import Navbar from "../components/ui/navbar";
-import Footer from "../components/ui/footer";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import HeroSection from "../components/ui/hero_section";
+import Testimonials from "../components/ui/testimonials";
+import CTA from "../components/ui/cta";
+import Footer from "../components/ui/footer";
+import FeaturedEvents from "../components/ui/featured-events";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,7 +33,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </main>
 
+      <HeroSection />
+      <Testimonials />
+      <CTA />
+      <FeaturedEvents />
       <Footer />
+      
     </div>
   );
 }
