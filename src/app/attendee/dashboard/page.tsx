@@ -1,7 +1,7 @@
 import React from "react";
-import Sidebar from "../../../components/ui/sidebar";
-import EventCard from "../../../components/ui/featured-events";
-import {Button} from "../../../components/ui/button";
+import Sidebar from "@/components/ui/sidebar";
+import EventCard from "@/components/ui/featured-events";
+import {Button} from "@/components/ui/button";
 
 const Dashboard = () => {
   const handleRegister = (eventTitle: string) => {

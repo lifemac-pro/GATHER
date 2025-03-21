@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"; // Ensure correct import path
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Ensure correct import path
 
 // Define prop types
 type EventProps = {

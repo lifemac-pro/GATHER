@@ -1,7 +1,7 @@
 import React from "react";
-import Sidebar from "../../../components/ui/sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
+import Sidebar from "@/components/ui/sidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const EventsPage = () => {
   return (
