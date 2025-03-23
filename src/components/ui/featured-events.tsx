@@ -1,5 +1,5 @@
-import { Card, CardContent } from "./card";
-import { Button } from "./button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 const events = [

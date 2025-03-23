@@ -7,11 +7,13 @@ import CTA from "../components/ui/cta";
 import Footer from "../components/ui/footer";
 import FeaturedEvents from "../components/ui/featured-events";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
 
+
+       
       {/* Main Content */}
       <main className="flex-grow px-6 pt-20 bg-[#0A2A4A] text-white">
         <section className="py-10 text-center">

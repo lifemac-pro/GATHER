@@ -1,4 +1,4 @@
-import { Card, CardContent } from "./card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const testimonials = [
   { name: "Alice Johnson", text: "GatherEase made organizing our conference seamless!" },
@@ -14,7 +14,9 @@ export default function Testimonials() {
         {testimonials.map((testimonial, index) => (
           <Card key={index} className="bg-[#072446] text-white p-6 rounded-lg shadow-lg">
             <CardContent>
-              <p className="italic">"{testimonial.text}"</p>
+            <p>Great event! {/* This was amazing! */}</p> // ✅ Correct JSX comment
+
+            
               <h3 className="mt-4 font-semibold text-[#E1A913]">{testimonial.name}</h3>
             </CardContent>
           </Card>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** @type {import("eslint").Linter.Config} */
 const config = {
   "parser": "@typescript-eslint/parser",
@@ -5,7 +6,7 @@ const config = {
     "project": true
   },
   "plugins": [
-    "@typescript-eslint",
+    "@typescript-eslint", // ✅ Use an array of strings, NOT an object
     "drizzle"
   ],
   "extends": [

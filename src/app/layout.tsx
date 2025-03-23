@@ -1,9 +1,9 @@
-import "~/styles/globals.css";
-
+import "@/styles/globals.css";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { AnimatePresence, motion } from "framer-motion";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
-
-import { TRPCReactProvider } from "~/trpc/react";
+import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -15,9 +15,22 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    <html lang="en" className={GeistSans.variable}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <ThemeProvider>
+            <AnimatePresence mode="wait">
+              {/* <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              > */}
+                {children}
+              {/* </motion.div> */}
+            </AnimatePresence>
+          </ThemeProvider>
+        </TRPCReactProvider>
       </body>
     </html>
   );
