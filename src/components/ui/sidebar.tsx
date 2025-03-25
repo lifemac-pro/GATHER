@@ -1,10 +1,12 @@
+"use client";
+
 import { Home, Calendar, List, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 
 const Sidebar = () => {
   return (
-    <div className="h-screen w-60 bg-[#072446] text-[#B0B8C5] p-5">
-      <h2 className="text-xl font-bold text-[#E1A913] mb-6">GatherEase</h2>
+    <div className="sticky top-0 h-screen w-60 overflow-y-auto bg-[#072446] p-5 text-[#B0B8C5]">
+      <h2 className="mb-6 text-xl font-bold text-[#E1A913]">GatherEase</h2>
       <nav className="space-y-4">
         <Link href="/attendee/dashboard" className="flex items-center gap-2 hover:text-[#00b0a6]">
           <Home size={20} /> Dashboard

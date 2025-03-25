@@ -1,16 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Ensure correct import path
+"use client"; // ✅ Add this at the top to make it a Client Component
 
-// Define prop types
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 type EventProps = {
   title: string;
   date: string;
   status: "Registered" | "Not Registered";
-  actionButton?: React.ReactNode;
 };
-
 const EventCard: React.FC<EventProps> = ({ title, date, status }) => {
   return (
-    <Card className="border border-gray-200 shadow-md hover:shadow-lg transition">
+    <Card className="border bg-[#072446] border-gray-200 shadow-md hover:shadow-lg transition p-4">
       <CardHeader>
         <CardTitle className="text-[#E1A913]">{title}</CardTitle>
       </CardHeader>
