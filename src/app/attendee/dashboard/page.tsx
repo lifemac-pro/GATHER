@@ -3,26 +3,9 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/ui/sidebar";
 import EventCard from "@/components/ui/EventCard";
-import { Menu, X } from "lucide-react"; // Added close icon for better UX
+import { Menu, X } from "lucide-react";
 
-/*************  ✨ Codeium Command ⭐  *************/
-/**
- * Dashboard component that renders the main user interface for attendees.
- * 
- * Features include:
- * - A responsive sidebar that is always visible on large screens and 
- *   slides in from the left on smaller screens.
- * - A mobile-friendly navbar for toggling the sidebar.
- * - Main content area displaying a welcome message and upcoming events.
- * 
- * State:
- * - mobileMenuOpen: Boolean state for toggling the visibility of the mobile sidebar.
- * 
- * The component is structured for optimal display across various screen sizes,
- * utilizing a mix of CSS Flexbox and Grid for layout management.
- */
-
-/******  fb9e91f2-fef0-400c-8c9c-370f96de60f5  *******/const Dashboard = () => {
+const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -32,7 +15,7 @@ import { Menu, X } from "lucide-react"; // Added close icon for better UX
         <Sidebar />
       </aside>
 
-      {/* Mobile Navbar (No duplicate title here) */}
+      {/* Mobile Navbar */}
       <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
         <button
           className="text-white"
@@ -56,7 +39,6 @@ import { Menu, X } from "lucide-react"; // Added close icon for better UX
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* No extra title here */}
           <button
             className="absolute top-4 right-4 text-white"
             onClick={() => setMobileMenuOpen(false)}
@@ -77,17 +59,52 @@ import { Menu, X } from "lucide-react"; // Added close icon for better UX
           Manage your event registrations and feedback.
         </p>
 
+        {/* Upcoming Events Section */}
         <section className="mt-6">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
             Upcoming Events
           </h2>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <EventCard title="Tech Conference 2025" date="March 30, 2025" status="Registered" />
-            <EventCard title="Startup Pitch Night" date="April 5, 2025" status="Not Registered" />
-            <EventCard title="AI & Web3 Summit" date="May 15, 2025" status="Not Registered" />
-            <EventCard title="PSP" date="May 15, 2025" status="Not Registered" />
-            <EventCard title="YLT" date="June 24, 2025" status="Registered" />
-            <EventCard title="NORNUVI" date="April 18, 2025" status="Not Registered" />
+            {[
+              {
+                title: "Tech Conference 2025",
+                date: "March 30, 2025",
+                status: "Registered" as "Registered",
+                image: "/images/tech-conference.jpg",
+              },
+              {
+                title: "Startup Pitch Night",
+                date: "April 5, 2025",
+                status: "Not Registered" as "Not Registered",
+                image: "/images/startup-pitch.jpg",
+              },
+              {
+                title: "AI & Web3 Summit",
+                date: "May 15, 2025",
+                status: "Not Registered" as "Not Registered",
+                image: "/images/ai-web3-summit.jpg",
+              },
+              {
+                title: "PSP",
+                date: "May 15, 2025",
+                status: "Not Registered" as "Not Registered",
+                image: "/images/psp-event.jpg",
+              },
+              {
+                title: "YLT",
+                date: "June 24, 2025",
+                status: "Registered" as "Registered",
+                image: "/images/ylt-event.jpg",
+              },
+              {
+                title: "NORNUVI",
+                date: "April 18, 2025",
+                status: "Not Registered" as "Not Registered",
+                image: "/images/nornuvi-event.jpg",
+              },
+            ].map((event, index) => (
+              <EventCard key={index} {...event} />
+            ))}
           </div>
         </section>
       </main>

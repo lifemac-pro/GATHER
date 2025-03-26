@@ -29,6 +29,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               title={`Event Name ${event}`}
               date="📅 Date & Time"
               status="Not Registered"
+              image="/images/tech-conference.jpg"
+              //image="/images/ai-web3-summit.jpg"      // Replace with the path to your image
             />
           ))}
         </div>
