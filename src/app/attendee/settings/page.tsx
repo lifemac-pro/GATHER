@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Sidebar from "../../../components/ui/sidebar";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const SettingsPage = () => {
   // State for settings
@@ -21,41 +21,60 @@ const SettingsPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Desktop Sidebar (hidden on mobile) */}
+      {/* Desktop Sidebar (Always Visible) */}
       <aside className="hidden md:block sticky top-0">
         <Sidebar />
       </aside>
 
-      {/* Mobile Navbar (visible on small screens) */}
+      {/* Mobile Navbar */}
       <nav className="md:hidden flex items-center justify-between bg-[#072446] p-4">
         <h2 className="text-xl font-bold text-[#E1A913]">GatherEase</h2>
         <button
           className="text-white"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => setMobileMenuOpen(true)}
+          aria-label="Open Menu"
         >
           <Menu size={24} />
         </button>
       </nav>
 
-      {/* Mobile Sidebar (slides in/out) */}
+      {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
-        <aside className="absolute z-50 top-16 left-0 w-60 bg-[#072446] text-[#B0B8C5] p-5 h-full shadow-lg md:hidden">
-          <Sidebar />
-        </aside>
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <aside
+            className="fixed top-0 left-0 h-screen w-64 bg-[#072446] text-[#B0B8C5] shadow-lg transform transition-transform duration-300"
+            onClick={(e) => e.stopPropagation()} // Prevent sidebar from closing when clicking inside
+          >
+            <div className="flex items-center justify-between p-4">
+              {/* <h2 className="text-xl font-bold text-[#E1A913]">GatherEase</h2> */}
+              <button
+                className="text-white"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close Menu"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <Sidebar />
+          </aside>
+        </div>
       )}
 
       {/* Main Content */}
       <main className="flex-1 bg-[#6fc3f7] p-6">
-        <h1 className="mb-6 text-2xl md:text-3xl font-bold text-[#E1A913]">
+        <h1 className="mb-6 text-2xl md:text-3xl font-bold text-gray-800">
           Settings
         </h1>
 
         <div className="space-y-6">
           {/* Profile Section */}
-          <section className="rounded-lg bg-white p-6 shadow-md">
+          <section className="rounded-lg bg-[#072446] p-6 shadow-md">
             <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">Profile</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-400">
                 Full Name
               </label>
               <input
@@ -66,7 +85,7 @@ const SettingsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-400">
                 Email
               </label>
               <input
@@ -79,7 +98,7 @@ const SettingsPage = () => {
           </section>
 
           {/* Notifications Section */}
-          <section className="rounded-lg bg-white p-6 shadow-md">
+          <section className="rounded-lg bg-[#072446] p-6 shadow-md">
             <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
               Notifications
             </h2>
@@ -91,18 +110,18 @@ const SettingsPage = () => {
                 checked={notifications}
                 onChange={() => setNotifications(!notifications)}
               />
-              <label htmlFor="notifications" className="text-sm text-gray-700">
+              <label htmlFor="notifications" className="text-sm text-gray-400">
                 Receive email notifications
               </label>
             </div>
           </section>
 
           {/* Change Password Section */}
-          <section className="rounded-lg bg-white p-6 shadow-md">
+          <section className="rounded-lg bg-[#072446] p-6 shadow-md">
             <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
               Change Password
             </h2>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-400">
               New Password
             </label>
             <input
