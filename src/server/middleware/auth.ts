@@ -1,6 +1,7 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { getAuth } from "@clerk/nextjs/server";
 
-export default authMiddleware({
-  publicRoutes: ["/api/auth/login"],
-  ignoredRoutes: ["/uploads/"],
-});
+export const isAuthenticated = (req: any) => {
+  const auth = getAuth(req);
+  if (!auth.userId) throw new Error("Unauthorized");
+  return auth.userId;
+};

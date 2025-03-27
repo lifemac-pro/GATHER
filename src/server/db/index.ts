@@ -1,20 +1,9 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/gather";
 
-if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI in .env");
-}
-
-const connectDB = async () => {
+export const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
-
-  try {
-    await mongoose.connect(MONGODB_URI, { dbName: "event_management" });
-    console.log("✅ Connected to MongoDB");
-  } catch (error) {
-    console.error("MongoDB Connection Error:", error);
-  }
+  await mongoose.connect(MONGO_URI);
+  console.log("📦 Connected to MongoDB");
 };
-
-export default connectDB;
