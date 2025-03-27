@@ -62,7 +62,7 @@ const Dashboard = () => {
         {/* Upcoming Events Section */}
         <section className="mt-6">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
-            Upcoming Events
+            Events
           </h2>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
