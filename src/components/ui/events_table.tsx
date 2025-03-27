@@ -51,14 +51,14 @@ export default function EventsTable() {
       />
 
       <Table className="min-w-full">
-        <TableHeader>
+        {/* <TableHeader>
           <TableRow>
             <TableHead>Event Name</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
-        </TableHeader>
+        </TableHeader> */}
         <TableBody>
           {filteredEvents.length > 0 ? (
             filteredEvents.map((event) => (
@@ -73,6 +73,10 @@ export default function EventsTable() {
                   <Link href={`/dashboard/events/delete?id=${event.id}`}>
                     <Button variant="destructive" size="sm">Delete</Button>
                   </Link>
+                  <Link href={`/admin/events/${event.id}`}>
+  <button className="bg-blue-500 text-white px-4 py-2 rounded">View</button>
+</Link>
+
                 </TableCell>
               </TableRow>
             ))

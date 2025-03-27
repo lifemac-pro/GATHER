@@ -11,21 +11,25 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, title, value, icon, color, ...props }, ref) => (
     <div
-      ref={ref}
-      className={cn(
-        "rounded-xl border shadow-md transition-all hover:shadow-lg p-4 md:p-6",
-        "bg-white dark:bg-[#0A2A4A] border-gray-200 dark:border-gray-700",
-        className
-      )}
-      {...props}
-    >
+  ref={ref}
+  className={cn(
+    "rounded-lg border shadow-sm transition-all hover:shadow-md p-3 md:p-4",
+    "bg-white dark:bg-[#0A2A4A] border-gray-200 dark:border-gray-700",
+    className
+  )}
+  {...props}
+>
+
       {title && (
         <div className="flex flex-row items-center justify-between">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          {icon && <div className={`p-3 rounded-full text-white ${color}`}>{icon}</div>}
+          <h3 className="text-base font-semibold">{title}</h3>
+
+          {icon && <div className={`p-2 rounded-full text-white ${color}`}>{icon}</div>}
+
         </div>
       )}
-      {value && <p className="text-2xl font-bold mt-2">{value}</p>}
+      {value && <p className="text-xl font-bold mt-1">{value}</p>}
+
       {props.children}
     </div>
   )

@@ -25,7 +25,7 @@ export default function Sidebar() {
       <Sheet>
         <SheetTrigger asChild>
           <button 
-            className="md:hidden p-3 fixed top-4 left-4 bg-[#00b0a6] text-white rounded-md z-50"
+            className="md:hidden p-3 fixed top-3 left-4 bg-[#00b0a6] text-white rounded-md z-50"
             onClick={() => console.log("Sidebar Button Clicked")} // Debugging
           >
             <Menu size={24} />
@@ -40,7 +40,11 @@ export default function Sidebar() {
       </Sheet>
 
       {/* ✅ Desktop Sidebar */}
-      <div className={`hidden md:flex flex-col bg-[#072446] text-[#B0B8C5] min-h-screen transition-all duration-300 ${isOpen ? "w-64" : "w-20"} p-4 relative`}>
+      <div 
+  className={`hidden md:flex flex-col bg-[#072446] text-[#B0B8C5] fixed left-0 top-[70px] h-screen transition-all duration-300 
+  ${isOpen ? "w-64" : "w-20"} p-0 border-r border-gray-700 shadow-lg`}
+>
+
         {/* Toggle Button */}
         <button 
           onClick={() => setIsOpen(!isOpen)} 
@@ -53,10 +57,7 @@ export default function Sidebar() {
 
         <SidebarContent pathname={pathname} isOpen={isOpen} />
 
-        <Button variant="destructive" className="mt-auto w-full flex items-center space-x-2">
-          <LogOut size={20} />
-          {isOpen && <span>Logout</span>}
-        </Button>
+        
       </div>
     </>
   );

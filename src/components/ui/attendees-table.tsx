@@ -1,129 +1,110 @@
-'use client'
+"use client";
+
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
 import BulkMessageDialog from "@/components/ui/bulk-message-dialog";
 import SendSurveyDialog from "@/components/ui/send-survey-dialog";
 import { exportToCSV, exportToPDF } from "@/utils/export-data";
 
-const attendees = [
+interface Attendee {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  event: string;
+}
+
+// Sample Attendees Data
+const attendees: Attendee[] = [
   { id: 1, name: "Alice Johnson", email: "alice@example.com", phone: "+123456789", event: "Tech Conference" },
   { id: 2, name: "Michael Smith", email: "michael@example.com", phone: "+987654321", event: "Startup Pitch Night" },
   { id: 3, name: "Sarah Lee", email: "sarah@example.com", phone: "+112233445", event: "Networking Night" },
 ];
 
-
-
-export default function AttendeesTable() {
-  // State for keeping track of which attendees are selected
+export default function AttendeesTable({ selectedEvent }: { selectedEvent: string }) {
   const [selectedAttendees, setSelectedAttendees] = useState<number[]>([]);
+  const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>(attendees);
 
-  // Toggles the selection of an attendee, either adding or removing them from the list
+  useEffect(() => {
+    if (selectedEvent) {
+      setFilteredAttendees(attendees.filter((attendee) => attendee.event === selectedEvent));
+    } else {
+      setFilteredAttendees(attendees);
+    }
+  }, [selectedEvent]);
+
   const toggleSelection = (id: number) => {
     setSelectedAttendees((prev) =>
-      // If the attendee is already selected, filter them out of the list
-      prev.includes(id) ? prev.filter((attendeeId) => attendeeId !== id) : 
-      // Otherwise, add them to the list
-      [...prev, id]
+      prev.includes(id) ? prev.filter((attendeeId) => attendeeId !== id) : [...prev, id]
     );
   };
 
   return (
     <div>
-
- {/* Export Buttons */}
- <Button variant="secondary" onClick={() => exportToCSV(attendees, "attendees.csv")}>
+      {/* Export Buttons */}
+      <div className="flex space-x-2 mb-4">
+        <Button variant="secondary" onClick={() => exportToCSV(filteredAttendees.map(({ id, name, email, phone, event }) => ({ id, name, email, phone, event })), "attendees.csv")}>
           Export CSV
         </Button>
-        <Button variant="secondary" onClick={() => exportToPDF(attendees, ["id", "name", "email", "event"], "attendees.pdf")}>
+        <Button variant="secondary" onClick={() => exportToPDF(filteredAttendees.map(({ id, name, email, phone, event }) => ({ id, name, email, phone, event })), ["id", "name", "email", "event"], "attendees.pdf")}>
           Export PDF
         </Button>
+      </div>
 
+      {/* Bulk Actions with Spacing */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <SendSurveyDialog selectedAttendees={selectedAttendees} attendees={filteredAttendees} />
+        <BulkMessageDialog selectedAttendees={selectedAttendees} attendees={filteredAttendees} />
+      </div>
 
+      {/* Add Attendee Button
+      <Button className="mb-4 bg-[#E1A913] text-[#072446] px-4 py-2">Add New Attendee</Button> */}
 
-      {/* Send Survey Button */}
-      <SendSurveyDialog selectedAttendees={selectedAttendees} attendees={attendees} />
-      {/* 
-        Button for sending a bulk message to selected attendees 
-        Dialog component is defined below
-      */}
-      <BulkMessageDialog selectedAttendees={selectedAttendees} attendees={attendees} />
-      
-
-      <Button className="mb-4 bg-[#E1A913] text-[#072446] px-4 py-2">Add New Attendee</Button>
-      
-      {/* 
-        Table component from the Radix UI library
-        It expects a header and body, and handles layout and styling
-      */}
+      {/* Attendees Table */}
       <Table className="mt-6">
-        {/* 
-          Table header component
-          expects a single TableRow component
-        */}
         <TableHeader>
           <TableRow>
-            {/* 
-              Checkbox component that toggles the selection of all attendees
-              If all attendees are selected, it will be checked
-              If no attendees are selected, it will be unchecked
-            */}
             <TableHead>
               <Checkbox
-                // Conditionally render the checkbox as checked or unchecked
-                checked={selectedAttendees.length === attendees.length}
-                // Toggle the selection of all attendees when the checkbox is clicked
+                checked={selectedAttendees.length === filteredAttendees.length && filteredAttendees.length > 0}
                 onCheckedChange={() =>
                   setSelectedAttendees(
-                    // If all attendees are selected, set the list to empty
-                    selectedAttendees.length === attendees.length ? [] : 
-                    // Otherwise, set the list to all attendee IDs
-                    attendees.map((a) => a.id)
+                    selectedAttendees.length === filteredAttendees.length ? [] : filteredAttendees.map((a) => a.id)
                   )
                 }
               />
             </TableHead>
-            {/* 
-              Table header cells
-              These are the column headers
-            */}
             <TableHead>Attendee Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Registered Event</TableHead>
           </TableRow>
         </TableHeader>
-        {/* 
-          Table body component
-          expects one or more TableRow components
-        */}
         <TableBody>
-          {/* 
-            Map over the list of attendees and render a TableRow for each
-          */}
-          {attendees.map((attendee) => (
-            <TableRow key={attendee.id}>
-              {/* 
-                Checkbox component that toggles the selection of an individual attendee
-              */}
-              <TableCell>
-                <Checkbox 
-                  // Conditionally render the checkbox as checked or unchecked
-                  checked={selectedAttendees.includes(attendee.id)} 
-                  // Toggle the selection of the attendee when the checkbox is clicked
-                  onCheckedChange={() => toggleSelection(attendee.id)} 
-                />
+          {filteredAttendees.length > 0 ? (
+            filteredAttendees.map((attendee) => (
+              <TableRow key={attendee.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedAttendees.includes(attendee.id)}
+                    onCheckedChange={() => toggleSelection(attendee.id)}
+                  />
+                </TableCell>
+                <TableCell>{attendee.name}</TableCell>
+                <TableCell>{attendee.email}</TableCell>
+                <TableCell>{attendee.phone}</TableCell>
+                <TableCell>{attendee.event}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center p-4 text-gray-500">
+                No attendees found.
               </TableCell>
-              {/* 
-                Table cells for the attendee's information
-              */}
-              <TableCell>{attendee.name}</TableCell>
-              <TableCell>{attendee.email}</TableCell>
-              <TableCell>{attendee.phone}</TableCell>
-              <TableCell>{attendee.event}</TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </div>

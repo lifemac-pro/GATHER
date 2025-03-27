@@ -27,6 +27,7 @@ export default function BulkMessageDialog({ selectedAttendees, attendees }: Bulk
         <Button disabled={selectedAttendees.length === 0} className="mt-4 bg-[#00b0a6] text-white">
           Send Bulk Message
         </Button>
+        
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

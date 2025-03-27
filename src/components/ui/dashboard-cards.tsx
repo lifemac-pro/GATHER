@@ -2,10 +2,11 @@ import { Card } from "@/components/ui/card";
 import { BarChart3, Users, ClipboardList, Timer } from "lucide-react";
 
 const stats = [
-  { title: "Total Events", value: "12", icon: <BarChart3 size={28} />, color: "bg-blue-500" },
-  { title: "Total Attendees", value: "230", icon: <Users size={28} />, color: "bg-green-500" },
-  { title: "Surveys Completed", value: "98%", icon: <ClipboardList size={28} />, color: "bg-yellow-500" },
-  { title: "Next Event In", value: "2d 5h", icon: <Timer size={28} />, color: "bg-purple-500" },
+  { title: "Total Events", value: "12", icon: <BarChart3 size={20} />, color: "bg-blue-500" },
+{ title: "Total Attendees", value: "230", icon: <Users size={20} />, color: "bg-black" },
+{ title: "Surveys Completed", value: "98%", icon: <ClipboardList size={20} />, color: "bg-black" },
+{ title: "Next Event In", value: "2d 5h", icon: <Timer size={20} />, color: "bg-black" },
+
 ];
 
 export default function DashboardCards() {
