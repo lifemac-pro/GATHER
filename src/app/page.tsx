@@ -1,4 +1,4 @@
-import Navbar from "../components/ui/navbar";
+//import Navbar from "../components/ui/navbar";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import HeroSection from "../components/ui/hero_section";
@@ -7,10 +7,18 @@ import CTA from "../components/ui/cta";
 import Footer from "../components/ui/footer";
 import FeaturedEvents from "../components/ui/featured-events";
 
+import {api} from "@/trpc/react"
+
+
 export default function Layout() {
+
+  const adminData = api.adminRouter.getAllUsers.useQuery()
+
+
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar isOpen={false} />
+      {/* <Navbar isOpen={false} /> */}
 
 
        

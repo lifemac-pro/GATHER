@@ -2,9 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Menu, Calendar, Users, BarChart3, ClipboardList, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Calendar, Users, BarChart3, ClipboardList, Settings, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: <BarChart3 size={20} /> },
@@ -17,63 +16,65 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true); // Controls sidebar open/close
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <>
-      {/* ✅ Mobile Sidebar (Sheet) */}
+      {/* ✅ Mobile Sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <button 
-            className="md:hidden p-3 fixed top-3 left-4 bg-[#00b0a6] text-white rounded-md z-50"
-            onClick={() => console.log("Sidebar Button Clicked")} // Debugging
-          >
+          <button className="md:hidden fixed top-4 left-4 bg-[#00b0a6] text-white p-2 rounded-md z-50">
             <Menu size={24} />
           </button>
         </SheetTrigger>
-        <SheetContent 
-          side="left" 
-          className="bg-[#072446] text-[#B0B8C5] w-64 z-50"
-        >
+        <SheetContent side="left" className="bg-[#072446] text-[#B0B8C5] w-64 z-50">
           <SidebarContent pathname={pathname} />
         </SheetContent>
       </Sheet>
 
       {/* ✅ Desktop Sidebar */}
-      <div 
-  className={`hidden md:flex flex-col bg-[#072446] text-[#B0B8C5] fixed left-0 top-[70px] h-screen transition-all duration-300 
-  ${isOpen ? "w-64" : "w-20"} p-0 border-r border-gray-700 shadow-lg`}
->
+      <aside
+        className={`hidden md:flex flex-col bg-[#072446] text-[#B0B8C5] fixed left-0 top-0 h-screen transition-all duration-300
+          ${isOpen ? "w-64" : "w-20"} border-r border-gray-700 shadow-lg relative`}
+      >
+        {/* ✅ Sidebar Header */}
+        <div className="flex items-center justify-between px-4 py-5">
+          {isOpen ? (
+            <h2 className="text-xl font-bold text-white">Admin Panel</h2>
+          ) : (
+            <div className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-full font-bold">
+              N
+            </div>
+          )}
 
-        {/* Toggle Button */}
-        <button 
-          onClick={() => setIsOpen(!isOpen)} 
-          className="absolute top-5 -right-5 bg-[#00b0a6] text-white p-1 rounded-full"
-        >
-          {isOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
-        </button>
+          {/* ✅ Collapse Button (Always Visible) */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="bg-[#00b0a6] text-white p-2 rounded-full shadow-md transition"
+            aria-label={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+          >
+            {isOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
+          </button>
+        </div>
 
-        <h2 className={`text-xl font-bold text-white mb-6 transition-opacity ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>Admin Panel</h2>
-
+        {/* ✅ Sidebar Links */}
         <SidebarContent pathname={pathname} isOpen={isOpen} />
-
-        
-      </div>
+      </aside>
     </>
   );
 }
 
-// ✅ Sidebar Navigation Content Component
-function SidebarContent({ pathname, isOpen = true }: { pathname: string; isOpen?: boolean }) {
+// ✅ Sidebar Content Component
+function SidebarContent({ pathname, isOpen = true }: { pathname: string; isOpen?: boolean; closeSidebar?: () => void }) {
   return (
-    <nav className="space-y-4">
+    <nav className="space-y-1 px-2">
       {navItems.map((item, index) => (
         <Link
           key={index}
           href={item.href}
-          className={`flex items-center space-x-3 p-3 rounded-md transition ${
-            pathname === item.href ? "bg-[#00b0a6] text-white" : "hover:text-[#E1A913]"
-          }`}
+          className={`flex items-center space-x-3 p-3 rounded-md transition duration-200
+            ${pathname === item.href ? "bg-[#00b0a6] text-white" : "hover:bg-[#E1A913] hover:text-white"}
+            ${isOpen ? "justify-start" : "justify-center"}`}
         >
           {item.icon}
           {isOpen && <span>{item.name}</span>}

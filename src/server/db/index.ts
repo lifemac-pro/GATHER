@@ -1,9 +1,19 @@
-import mongoose from "mongoose";
+import { createClient, type Client } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/gather";
+import { env } from "@/env";
+import * as schema from "./schema";
 
-export const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(MONGO_URI);
-  console.log("📦 Connected to MongoDB");
+/**
+ * Cache the database connection in development. This avoids creating a new connection on every HMR
+ * update.
+ */
+const globalForDb = globalThis as unknown as {
+  client: Client | undefined;
 };
+
+export const client =
+  globalForDb.client ?? createClient({ url: env.DATABASE_URL });
+if (env.NODE_ENV !== "production") globalForDb.client = client;
+
+export const db = drizzle(client, { schema });

@@ -6,6 +6,8 @@ import { Calendar, Users, ClipboardList, Timer } from "lucide-react";
 //import Navbar from "../../components/ui/navbar";
 import AttendeesChart from "@/components/ui/AttendeesChart"; 
 
+import {api} from "@/server/"
+
 const stats = [
   { title: "Total Events", value: "12", icon: <Calendar size={28} />, color: "bg-blue-500" },
   { title: "Total Attendees", value: "230", icon: <Users size={28} />, color: "bg-green-500" },

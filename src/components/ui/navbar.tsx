@@ -9,8 +9,9 @@ export default function Navbar({ isOpen }: { isOpen: boolean }) {
 
   return (
     <nav 
-    className={`bg-[#0E3A5D] text-white p-4 fixed top-0 right-0 w-full z-50 shadow-md transition-all 
-      ${isOpen ? "ml-64" : "ml-20"}`}
+    className={`bg-[#0E3A5D] text-white p-4 fixed top-0 right-0 z-50 shadow-md transition-all duration-300
+      ${isOpen ? "w-[calc(100%-50rem)]" : "w-[calc(100%-16rem)]"}`}
+
     >
       <div className="container mx-auto flex justify-between items-center">
         {/* Welcome Message */}
