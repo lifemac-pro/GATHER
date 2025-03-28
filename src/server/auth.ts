@@ -1,17 +1,33 @@
-import type { Session, User } from "next-auth";
+import NextAuth, { type NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { DrizzleAdapter } from "@auth/drizzle-adapter"; // ✅ Correct package
+import { db } from "@/server/db";
+import type { User as NextAuthUser, Session as NextAuthSession } from "next-auth";
 
-export const authCallbacks = {
-  async session({ session, token }: { session: Session; token: any }) {
-    if (token) {
+export const authOptions: NextAuthOptions = {
+  adapter: DrizzleAdapter(db),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  pages: {
+    signIn: "/signin",
+  },
+  callbacks: {
+    async session({ session, user }: { session: NextAuthSession; user: NextAuthUser }) {
       return {
         ...session,
         user: {
-          id: token.id,
-          email: token.email,
-          name: token.name,
+          id: user.id,
+          email: user.email,
+          name: user.name,
         },
       };
-    }
-    return session;
+    },
   },
 };
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

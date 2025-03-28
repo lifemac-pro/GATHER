@@ -1,35 +1,42 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import type { Session } from "next-auth";
-import { events } from "@/server/db/schema";
+import NextAuth, { NextAuthOptions, DefaultSession } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+    } & DefaultSession["user"];
+  }
 
+  interface User {
+    id: string;
+  }
+}
+
+// Define authentication options
 export const authOptions: NextAuthOptions = {
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email", placeholder: "your@email.com" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        // Simulated authentication, replace with actual logic
-        if (credentials?.email === "user@email.com" && credentials?.password === "password123") {
-          return { id: "1", name: "John Doe", email: credentials.email };
-        }
-        return null;
-      },
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  pages: {
-    signIn: "/login", // Customize your login page if needed
-  },
   callbacks: {
-    async session({ session }: { session: Session }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id || token.sub; // ✅ Ensure ID is assigned safely
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string; // ✅ Assign ID safely
+      }
       return session;
     },
   },
 };
 
+// ✅ Export API handler for Next.js
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

@@ -1,13 +1,53 @@
+"use client";
+
+import { useSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Navbar from "../components/ui/navbar";
-import { Button } from "../components/ui/button";
 import HeroSection from "../components/ui/hero_section";
 import Testimonials from "../components/ui/testimonials";
 import CTA from "../components/ui/cta";
 import Footer from "../components/ui/footer";
 import EventCard from "@/components/ui/EventCard";
-//import FeaturedEvents from "@/components/ui/FeaturedEvents";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function LandingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // ✅ Use useEffect() to prevent render-time updates
+  useEffect(() => {
+    if (session?.user) {
+      router.push("/attendee/dashboard");
+    }
+  }, [session, router]);
+
+  // ✅ Define event types explicitly
+  type EventStatus = "Not Registered" | "Registered";
+
+  const events = [
+    {
+      id: 1,
+      title: "Tech Conference 2025",
+      date: "April 15, 2025 - 10:00 AM",
+      status: "Not Registered" as EventStatus,
+      image: "/images/tech-conference.jpg",
+    },
+    {
+      id: 2,
+      title: "AI & Web3 Summit",
+      date: "June 20, 2025 - 1:00 PM",
+      status: "Registered" as EventStatus,
+      image: "/images/ai-web3-summit.jpg",
+    },
+    {
+      id: 3,
+      title: "Startup Pitch Night",
+      date: "August 10, 2025 - 5:00 PM",
+      status: "Not Registered" as EventStatus,
+      image: "/images/startup-pitch.jpg",
+    },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -21,16 +61,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </p>
         </section>
 
-        Event Cards using EventCard component
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {[1, 2, 3].map((event, index) => (
+        {/* Sign-in Button */}
+        <div className="flex justify-center my-6">
+          <button
+            onClick={() => signIn("google")}
+            className="bg-white text-[#E1A913] px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+            aria-label="Sign in with Google"
+          >
+            Sign in with Google
+          </button>
+        </div>
+
+        {/* Event Cards */}
+        <div className="mt-8 flex flex-wrap justify-center gap-6">
+          {events.map((event) => (
             <EventCard
-              key={index}
-              title={`Event Name ${event}`}
-              date="📅 Date & Time"
-              status="Not Registered"
-              image="/images/tech-conference.jpg"
-              //image="/images/ai-web3-summit.jpg"      // Replace with the path to your image
+              key={event.id}
+              title={event.title}
+              date={event.date}
+              status={event.status}
+              image={event.image}
             />
           ))}
         </div>

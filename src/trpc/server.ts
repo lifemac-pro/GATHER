@@ -9,22 +9,23 @@ import { createTRPCContext } from "@/server/api/trpc";
 import { createQueryClient } from "./query-client";
 
 /**
- * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
- * handling a tRPC call from a React Server Component.
+ * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API
+ * when handling a tRPC call from a React Server Component.
  */
 const createContext = cache(async () => {
-  const heads = new Headers(await headers());
+  const rawHeaders = await headers(); // ✅ Fix: Await first
+  const heads = new Headers(rawHeaders); // ✅ Use after awaiting
   heads.set("x-trpc-source", "rsc");
 
   return createTRPCContext({
-    headers: heads,
+    req: { headers: heads } as Request, // ✅ Ensure `req` is a valid `Request` object
   });
 });
 
 const getQueryClient = cache(createQueryClient);
-const caller = createCaller(createContext);
+const caller = async () => createCaller(await createContext()); // ✅ Fix: Await createContext()
 
 export const { trpc: api, HydrateClient } = createHydrationHelpers<AppRouter>(
-  caller,
+  await caller(),
   getQueryClient
 );

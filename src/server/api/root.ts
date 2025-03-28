@@ -1,6 +1,6 @@
 import { postRouter } from "@/server/api/routers/post";
 import { eventRouter } from "@/server/api/routers/event";
-import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { createTRPCRouter, createTRPCContext } from "@/server/api/trpc";
 
 /**
  * This is the primary router for your server.
@@ -22,4 +22,6 @@ export type AppRouter = typeof appRouter;
  * const res = await trpc.post.all();
  *       ^? Post[]
  */
-export const createCaller = createCallerFactory(appRouter);
+export const createCaller = (context: Awaited<ReturnType<typeof createTRPCContext>>) => {
+  return appRouter.createCaller(context);
+};
