@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { users, events, attendees } from "@/server/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { collections } from "@/server/db";
+import { ObjectId } from "mongodb";
 
 export const postRouter = createTRPCRouter({
   // ✅ Simple test query
@@ -12,26 +12,71 @@ export const postRouter = createTRPCRouter({
     }),
 
   // ✅ Create a new event
-  createEvent: publicProcedure
-    .input(
-      z.object({
-        title: z.string().min(1),
-        date: z.string().min(1), // ✅ Ensure `date` is provided
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await ctx.db.insert(events).values({
-          title: input.title,
-          date: new Date(input.date).toISOString(), // ✅ Convert `date` correctly
-          createdAt: new Date(),
-        });
+  create: publicProcedure
+    .input(z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      date: z.date(),
+      location: z.string().optional(),
+      organizerId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await collections.events.insertOne({
+        ...input,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return { id: result.insertedId.toString() };
+    }),
 
-        return { success: true, message: "Event created successfully!" };
-      } catch (error) {
-        console.error("Error creating event:", error);
-        return { success: false, message: "Failed to create event." };
-      }
+  getAll: publicProcedure.query(async () => {
+    const events = await collections.events.find().toArray();
+    return events.map(event => ({
+      ...event,
+      id: event._id.toString(),
+      _id: undefined,
+    }));
+  }),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const event = await collections.events.findOne({ _id: new ObjectId(input.id) });
+      if (!event) return null;
+      return {
+        ...event,
+        id: event._id.toString(),
+        _id: undefined,
+      };
+    }),
+
+  update: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      date: z.date().optional(),
+      location: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...updateData } = input;
+      const result = await collections.events.updateOne(
+        { _id: new ObjectId(id) },
+        { 
+          $set: { 
+            ...updateData,
+            updatedAt: new Date(),
+          }
+        }
+      );
+      return { success: result.modifiedCount > 0 };
+    }),
+
+  delete: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await collections.events.deleteOne({ _id: new ObjectId(input.id) });
+      return { success: result.deletedCount > 0 };
     }),
 
   // ✅ Get the latest event

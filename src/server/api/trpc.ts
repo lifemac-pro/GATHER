@@ -1,17 +1,22 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import { db } from "@/server/db";
+import { getAuth } from "@clerk/nextjs/server";
+import clientPromise from "@/server/db/mongodb";
 
 /**
  * 1. CONTEXT
  * Defines the context available in the backend API.
  */
-export const createTRPCContext = (opts: { req: Request }) => {
+export const createTRPCContext = async (opts: { req: Request }) => {
+  const { userId } = getAuth(opts.req);
+  const client = await clientPromise;
+  const db = client.db();
+
   return {
     db,
-    req: opts.req, // ✅ Keep only `req`, don't extract headers separately
+    userId,
+    req: opts.req,
   };
 };
 
@@ -53,3 +58,20 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * Public (unauthenticated) procedure.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Protected (authenticated) procedure.
+ */
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.userId) {
+      throw new Error("You must be logged in to access this resource");
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        userId: ctx.userId,
+      },
+    });
+  });

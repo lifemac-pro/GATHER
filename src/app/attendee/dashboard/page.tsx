@@ -1,16 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUser, SignOutButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/sidebar";
 import EventCard from "@/components/ui/EventCard";
 import { Menu, X } from "lucide-react";
 
 const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, isSignedIn } = useUser();
+  const router = useRouter();
+
+  // Redirect to home if not signed in
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.push("/");
+    }
+  }, [isSignedIn, router]);
+
+  if (!isSignedIn) return null; // Prevent rendering during redirection
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen relative">
-      {/* Desktop Sidebar (Always Visible on Large Screens) */}
+      {/* Desktop Sidebar */}
       <aside className="hidden md:block sticky top-0 h-screen">
         <Sidebar />
       </aside>
@@ -52,12 +65,24 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-6 bg-[#6fc3f7]">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Welcome, User!
-        </h1>
-        <p className="text-sm md:text-base text-gray-600">
-          Manage your event registrations and feedback.
-        </p>
+        {/* Welcome Message */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+              Welcome, {user.firstName || "Guest"}! 👋
+            </h1>
+            <p className="text-sm md:text-base text-gray-600">
+              Manage your event registrations and feedback.
+            </p>
+          </div>
+
+          {/* Sign Out Button */}
+          <SignOutButton>
+            <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition">
+              Sign Out
+            </button>
+          </SignOutButton>
+        </div>
 
         {/* Upcoming Events Section */}
         <section className="mt-6">

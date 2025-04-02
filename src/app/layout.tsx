@@ -1,20 +1,21 @@
-"use client";
-
 import "@/styles/globals.css";
-import { GeistSans } from "geist/font/sans";
-import { SessionProvider } from "next-auth/react";
-import { TRPCReactProvider } from "@/trpc/react";
-// import { EventProvider } from "context/EventContext";
+import { Providers } from "@/components/providers";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "GatherEase",
+  description: "Your personal event management assistant",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className={GeistSans.className}>
-        <SessionProvider>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-        </SessionProvider>
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

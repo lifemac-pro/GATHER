@@ -1,62 +1,33 @@
-import { sql } from "drizzle-orm";
-import { index, int, sqliteTableCreator, text, primaryKey } from "drizzle-orm/sqlite-core";
+import { z } from "zod";
 
-/**
- * This schema defines users, events, and attendee registration.
- */
-export const createTable = sqliteTableCreator((name) => `GATHER_${name}`);
+export const UserSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  email: z.string().email(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
 
-/** 🔹 Users Table */
-export const users = createTable(
-  "users",
-  {
-    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-    name: text("name", { length: 256 }).notNull(),
-    email: text("email", { length: 256 }).unique().notNull(),
-    password: text("password", { length: 256 }).notNull(),
-    createdAt: int("created_at", { mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-  },
-  (user) => ({
-    emailIndex: index("email_idx").on(user.email),
-  })
-);
+export const EventSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  date: z.date(),
+  location: z.string().optional(),
+  organizerId: z.string(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
 
-/** 🔹 Events Table */
-export const events = createTable(
-  "events",
-  {
-    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-    title: text("title", { length: 256 }).notNull(),
-    description: text("description"),
-    date: text("date").notNull(),
-    location: text("location", { length: 256 }),
-    createdAt: int("created_at", { mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-  },
-  (event) => ({
-    titleIndex: index("title_idx").on(event.title),
-  })
-);
+export const AttendeeSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  userId: z.string(),
+  status: z.enum(["confirmed", "pending", "declined"]),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
 
-/** 🔹 Attendees Table (Registering Users for Events) */
-export const attendees = createTable(
-  "attendees",
-  {
-    userId: int("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    eventId: int("event_id")
-      .notNull()
-      .references(() => events.id, { onDelete: "cascade" }),
-    registeredAt: int("registered_at", { mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-  },
-  (attendee) => ({
-    userEventPK: primaryKey({ columns: [attendee.userId, attendee.eventId] }), // Composite primary key
-    userEventIndex: index("user_event_idx").on(attendee.userId, attendee.eventId),
-  })
-);
+export type User = z.infer<typeof UserSchema>;
+export type Event = z.infer<typeof EventSchema>;
+export type Attendee = z.infer<typeof AttendeeSchema>; 
