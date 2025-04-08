@@ -6,3 +6,4 @@ export * from './waitlist';
 export * from './notification';
 export * from './setting';
 export * from './post';
+export * from './chat';
