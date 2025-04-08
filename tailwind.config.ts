@@ -3,7 +3,9 @@ import { fontFamily } from "tailwindcss/defaultTheme";
 
 export default {
     darkMode: ["class"],
-    content: ["./src/**/*.tsx"],
+    content: ["./src/**/*.tsx", "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",],
   theme: {
   	extend: {
   		fontFamily: {

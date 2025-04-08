@@ -9,8 +9,10 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import { db } from "~/server/db";
+import { TRPCError } from "@trpc/server";
+import { db } from "@/server/db";
+import { headers } from "next/headers";
+import { getAuth } from "@/server/auth";
 
 /**
  * 1. CONTEXT
@@ -18,15 +20,22 @@ import { db } from "~/server/db";
  * This section defines the "contexts" that are available in the backend API.
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
- *
- * This helper generates the "internals" for a tRPC context. The API handler and RSC clients each
- * wrap this and provides the required context.
- *
- * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+declare module "@trpc/server" {
+  interface Context {
+    db: any;
+    headers: Headers;
+    session: any | null;
+  }
+}
+
+export const createTRPCContext = async (opts: { headers: Headers }): Promise<Context> => {
+  const auth = await getAuth({ headers: opts.headers });
+  const session = auth?.sessionId;
+  
   return {
     db,
+    session,
     ...opts,
   };
 };
@@ -38,17 +47,10 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const t = initTRPC.create({
   transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    };
+  errorFormatter({ shape }) {
+    return shape;
   },
 });
 
@@ -74,33 +76,25 @@ export const createCallerFactory = t.createCallerFactory;
 export const createTRPCRouter = t.router;
 
 /**
- * Middleware for timing procedure execution and adding an artificial delay in development.
- *
- * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
- * network latency that would occur in production but not in local development.
- */
-const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now();
-
-  if (t._config.isDev) {
-    // artificial delay in dev
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
-
-  const result = await next();
-
-  const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
-
-  return result;
-});
-
-/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure;
+
+/**
+ * Protected (authenticated) procedure
+ *
+ * This is the base piece you use to build new queries and mutations on your tRPC API. It guarantees
+ * that the user is authenticated before running the procedure.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.session?.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({ ctx });
+});

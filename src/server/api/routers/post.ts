@@ -1,7 +1,7 @@
 import { z } from "zod";
-
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { posts } from "~/server/db/schema";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { Post } from "@/server/db/models";
+import { nanoid } from "nanoid";
 
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
@@ -14,17 +14,16 @@ export const postRouter = createTRPCRouter({
 
   create: publicProcedure
     .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(posts).values({
+    .mutation(async ({ input }) => {
+      await Post.create({
+        id: nanoid(),
         name: input.name,
+        createdAt: new Date(),
       });
     }),
 
-  getLatest: publicProcedure.query(async ({ ctx }) => {
-    const post = await ctx.db.query.posts.findFirst({
-      orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-    });
-
+  getLatest: publicProcedure.query(async () => {
+    const post = await Post.findOne().sort({ createdAt: -1 });
     return post ?? null;
   }),
 });

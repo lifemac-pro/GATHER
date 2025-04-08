@@ -11,6 +11,12 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    NEXTAUTH_SECRET: z.string(),
+    NEXTAUTH_URL: z.string().url(),
+    EMAIL_SERVER: z.string().url(),
+    EMAIL_FROM: z.string().email(),
+    STRIPE_SECRET_KEY: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string(),
   },
 
   /**
@@ -19,7 +25,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
   },
 
   /**
@@ -29,7 +35,13 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    EMAIL_SERVER: process.env.EMAIL_SERVER,
+    EMAIL_FROM: process.env.EMAIL_FROM,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
