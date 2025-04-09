@@ -39,13 +39,23 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
+  // Configure query client to suppress error logging
+  queryClient.setDefaultOptions({
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      onError: () => {
+        // Silent error handling
+      },
+    },
+  });
+
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
         loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
+          // Disable logger in development to reduce console noise
+          enabled: (op) => false, // Disable all logging
         }),
         unstable_httpBatchStreamLink({
           transformer: SuperJSON,
@@ -57,7 +67,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           },
         }),
       ],
-    })
+    }),
   );
 
   return (

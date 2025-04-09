@@ -3,11 +3,12 @@
 import { Home, Calendar, List, Settings, LogOut, Bell } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { trpc } from "@/utils/trpc";
+import { SignOutButton } from "@/components/ui/sign-out-button";
+import { useNotifications } from "@/context/notification-context";
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const { data: unreadCount } = trpc.notification.getUnreadCount.useQuery();
+  const { unreadCount, isError } = useNotifications();
 
   const isActive = (path: string) => pathname === path;
 
@@ -40,7 +41,7 @@ const Sidebar = () => {
             }`}
           >
             <Bell size={20} /> Notifications
-            {unreadCount && unreadCount > 0 && (
+            {!isError && unreadCount && unreadCount > 0 && (
               <span className="rounded-full bg-red-500 px-2 py-1 text-xs text-white">
                 {unreadCount}
               </span>
@@ -66,12 +67,12 @@ const Sidebar = () => {
       </div>
 
       {/* Logout Button */}
-      <button
-        onClick={() => (window.location.href = "/")}
+      <SignOutButton
+        redirectUrl="/"
         className="mt-4 flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
       >
         <LogOut size={20} /> Sign Out
-      </button>
+      </SignOutButton>
     </div>
   );
 };

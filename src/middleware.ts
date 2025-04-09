@@ -1,18 +1,39 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/attendee',
+  '/organizer',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/oauth-callback',
+  '/api/(.*)',
+  '/trpc/(.*)',
+])
+
 export default clerkMiddleware({
-  publicRoutes: ["/", "/sign-in", "/sign-up"],
-  ignoredRoutes: ["/api/trpc/(.*)"],
-});
+  afterAuth(auth, req) {
+    // If the user is signed in and trying to access a protected route, allow them through
+    if (auth.userId && !isPublicRoute(req.url)) {
+      return NextResponse.next()
+    }
 
-// See https://clerk.com/docs/references/nextjs/auth-middleware#matcher
+    // If the user is not signed in and trying to access a protected route, redirect them to the sign-in page
+    if (!auth.userId && !isPublicRoute(req.url)) {
+      return NextResponse.redirect(new URL('/attendee', req.url))
+    }
+
+    // For all other cases, just proceed as normal
+    return NextResponse.next()
+  },
+})
+
 export const config = {
   matcher: [
-    "/((?!.+\\.[\\w]+$|_next).*)", // exclude static files
-    "/",                            // include root
-    "/(api|trpc)(.*)",             // include API routes
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
-}; 
+}

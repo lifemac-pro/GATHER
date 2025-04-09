@@ -1,30 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useUser, SignOutButton } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import Link from "next/link";
 import Sidebar from "@/components/ui/sidebar";
 import EventCard from "@/components/ui/EventCard";
 import { Menu, X } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { SignOutButton } from "@/components/ui/sign-out-button";
 
 const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isSignedIn } = useUser();
-  const router = useRouter();
-
-  // Redirect to home if not signed in
-  useEffect(() => {
-    if (!isSignedIn) {
-      router.push("/");
-    }
-  }, [isSignedIn, router]);
-
-  if (!isSignedIn) return null; // Prevent rendering during redirection
+  const { user } = useUser();
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen relative">
+    <div className="relative flex min-h-screen flex-col md:flex-row">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block sticky top-0 h-screen">
+      <aside className="sticky top-0 hidden h-screen md:block">
         <Sidebar />
       </aside>
 
@@ -42,18 +33,18 @@ const Dashboard = () => {
       {/* Mobile Sidebar */}
       <div
         className={`fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300 ${
-          mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          mobileMenuOpen ? "visible opacity-100" : "invisible opacity-0"
         }`}
         onClick={() => setMobileMenuOpen(false)}
       >
         <aside
-          className={`fixed top-0 left-0 h-screen w-64 bg-[#072446] text-[#B0B8C5] shadow-lg transform transition-transform duration-300 ${
+          className={`fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="absolute top-4 right-4 text-white"
+            className="absolute right-4 top-4 text-white"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close Menu"
           >
@@ -64,32 +55,33 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 bg-[#6fc3f7]">
+      <main className="flex-1 bg-[#6fc3f7] p-6">
         {/* Welcome Message */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-              Welcome, {user.firstName || "Guest"}! 👋
+            <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+              Welcome, {user?.firstName || "Guest"}! 👋
             </h1>
-            <p className="text-sm md:text-base text-gray-600">
+            <p className="text-sm text-gray-600 md:text-base">
               Manage your event registrations and feedback.
             </p>
           </div>
 
           {/* Sign Out Button */}
-          <SignOutButton>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition">
-              Sign Out
-            </button>
+          <SignOutButton
+            redirectUrl="/"
+            className="rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
+          >
+            Sign Out
           </SignOutButton>
         </div>
 
         {/* Upcoming Events Section */}
         <section className="mt-6">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800 md:text-2xl">
             Events
           </h2>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 title: "Tech Conference 2025",

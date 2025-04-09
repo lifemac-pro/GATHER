@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Sidebar from "@/components/ui/sidebar";
-import { Menu, X, Bell, Trash2, Check } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -61,11 +61,37 @@ const NotificationsPage = () => {
         </button>
       </nav>
 
+      {/* Mobile Sidebar (Overlay) */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <aside
+            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            onClick={(e) => e.stopPropagation()} // Prevent sidebar from closing when clicking inside
+          >
+            <div className="flex items-center justify-between p-4">
+              <button
+                className="text-white"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close Menu"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <Sidebar />
+          </aside>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 bg-[#6fc3f7] p-6">
         <div className="mx-auto max-w-4xl">
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-[#072446]">Notifications</h1>
+            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
+              Notifications
+            </h1>
             {unreadCount && unreadCount > 0 && (
               <Button
                 onClick={handleMarkAllAsRead}
@@ -76,72 +102,79 @@ const NotificationsPage = () => {
             )}
           </div>
 
-          {notifications?.length === 0 ? (
-            <div className="py-8 text-center">
-              <Bell className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No notifications
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                You don't have any notifications yet.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {notifications?.map((notification) => (
-                <div
-                  key={notification._id}
-                  className={`rounded-lg border p-4 ${
-                    notification.read
-                      ? "bg-white"
-                      : "border-blue-200 bg-blue-50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
+          {/* Main Card Container */}
+          <div className="rounded-lg bg-[#072446] p-6 shadow-lg">
+            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
+              Your Notifications
+            </h2>
+
+            {notifications?.length === 0 ? (
+              <div className="rounded-lg bg-gray-50 p-4">
+                <p className="text-gray-500">
+                  No notifications available at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {notifications?.map((notification) => (
+                  <div
+                    key={
+                      typeof notification._id === "string"
+                        ? notification._id
+                        : notification._id.toString()
+                    }
+                    className="flex flex-col justify-between rounded-lg border-l-4 border-[#E1A913] bg-[#072446] p-5 shadow-md md:flex-row md:items-center"
+                  >
                     <div>
-                      <h3 className="font-medium text-[#072446]">
+                      <h2 className="text-xl font-semibold text-[#E1A913]">
                         {notification.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {notification.message}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
+                      </h2>
+                      <p className="text-gray-400">{notification.message}</p>
+                      <p className="mt-1 text-xs text-gray-400">
                         {formatDistanceToNow(new Date(notification.createdAt), {
                           addSuffix: true,
                         })}
                       </p>
-                    </div>
-                    <div className="flex space-x-2">
                       {!notification.read && (
-                        <button
-                          onClick={() => handleMarkAsRead(notification._id)}
-                          className="text-green-600 hover:text-green-700"
-                          title="Mark as read"
-                        >
-                          <Check size={20} />
-                        </button>
+                        <span className="mt-2 inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
+                          New
+                        </span>
                       )}
-                      <button
-                        onClick={() => handleDelete(notification._id)}
-                        className="text-red-600 hover:text-red-700"
-                        title="Delete notification"
+                    </div>
+                    <div className="mt-4 flex space-x-2 md:ml-4 md:mt-0">
+                      <Button
+                        variant="outline"
+                        className="bg-white hover:bg-gray-100"
+                        onClick={() =>
+                          handleMarkAsRead(
+                            typeof notification._id === "string"
+                              ? notification._id
+                              : notification._id.toString(),
+                          )
+                        }
+                        disabled={notification.read}
                       >
-                        <Trash2 size={20} />
-                      </button>
+                        {notification.read ? "Read" : "Mark as Read"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="bg-white text-red-600 hover:bg-red-50"
+                        onClick={() =>
+                          handleDelete(
+                            typeof notification._id === "string"
+                              ? notification._id
+                              : notification._id.toString(),
+                          )
+                        }
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
-                  {notification.link && (
-                    <a
-                      href={notification.link}
-                      className="mt-2 inline-block text-sm text-[#E1A913] hover:text-[#c99a0f]"
-                    >
-                      View details →
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

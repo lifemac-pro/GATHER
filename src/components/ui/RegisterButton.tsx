@@ -1,26 +1,26 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
-import { api } from "@/utils/trpc"; // ✅ Ensure correct import
+import { trpc } from "@/utils/trpc";
 
 export default function RegisterButton({ eventId }: { eventId: number }) {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [isRegistering, setIsRegistering] = useState(false);
-  const registerMutation = api.event.register.useMutation();
+  const registerMutation = trpc.event.register.useMutation();
 
   async function handleRegister() {
-    if (!session?.user?.id) return alert("You need to sign in first!");
+    if (!user?.id) return alert("You need to sign in first!");
 
     setIsRegistering(true);
 
     try {
       await registerMutation.mutateAsync({
-        eventId,
-        userId: parseInt(session.user.id), // ✅ Convert to number
+        eventId: eventId.toString()
       });
       alert("Registration successful!");
     } catch (error) {
+      console.error("Registration error:", error);
       alert("Failed to register. Try again!");
     } finally {
       setIsRegistering(false);
@@ -31,7 +31,7 @@ export default function RegisterButton({ eventId }: { eventId: number }) {
     <button
       onClick={handleRegister}
       disabled={isRegistering}
-      className="bg-blue-500 text-white px-4 py-2 rounded"
+      className="bg-[#E1A913] text-[#072446] px-4 py-2 rounded-md hover:bg-[#c28e00] transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isRegistering ? "Registering..." : "Register"}
     </button>

@@ -45,12 +45,12 @@ export const eventRouter = createTRPCRouter({
       const { _id, ...updateData } = input;
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Check if user owns the event
       const event = await db
         .collection(EventCollection)
         .findOne({ _id: new ObjectId(_id) });
-      
+
       if (!event || event.createdBy !== ctx.userId) {
         throw new Error("You don't have permission to update this event");
       }
@@ -70,12 +70,12 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Check if user owns the event
       const event = await db
         .collection(EventCollection)
         .findOne({ _id: new ObjectId(input.id) });
-      
+
       if (!event || event.createdBy !== ctx.userId) {
         throw new Error("You don't have permission to delete this event");
       }
@@ -92,12 +92,12 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Check if user is already registered
       const event = await db
         .collection(EventCollection)
         .findOne({ _id: new ObjectId(input.eventId) });
-      
+
       if (!event) {
         throw new Error("Event not found");
       }
@@ -119,12 +119,12 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Check if user is registered
       const event = await db
         .collection(EventCollection)
         .findOne({ _id: new ObjectId(input.eventId) });
-      
+
       if (!event) {
         throw new Error("Event not found");
       }

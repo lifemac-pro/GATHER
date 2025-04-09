@@ -7,7 +7,7 @@ import Footer from "@/components/ui/footer";
 import EventCard from "@/components/ui/EventCard";
 //import FeaturedEvents from "@/components/ui/FeaturedEvents";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function AttendeePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </p>
         </section>
 
-        Event Cards using EventCard component
+        {/* Event Cards using EventCard component */}
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           {[1, 2, 3].map((event, index) => (
             <EventCard
