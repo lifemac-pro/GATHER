@@ -5,13 +5,24 @@ import { useAuth } from "@clerk/nextjs";
 import { AuthButton } from "./auth-button";
 
 type EventProps = {
+  id?: string;
   title: string;
   date: string;
   status: "Registered" | "Not Registered";
   image: string;
+  onRegister?: (eventId: string) => void;
+  isLoading?: boolean;
 };
 
-const EventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
+const EventCard: React.FC<EventProps> = ({
+  id,
+  title,
+  date,
+  status,
+  image,
+  onRegister,
+  isLoading,
+}) => {
   return (
     <Card className="overflow-hidden rounded-lg border border-gray-200 bg-[#072446] p-4 shadow-md transition hover:shadow-lg">
       {/* Event Image */}
@@ -39,8 +50,12 @@ const EventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
         {/* Register Button with Clerk Authentication (Only if Not Registered) */}
         {status === "Not Registered" && (
           <div className="mt-3 w-full">
-            <button className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-              Register
+            <button
+              className={`w-full rounded-lg px-4 py-2 text-white transition ${isLoading ? "cursor-not-allowed bg-gray-500" : "bg-blue-600 hover:bg-blue-700"}`}
+              onClick={() => id && onRegister && onRegister(id)}
+              disabled={isLoading || !id || !onRegister}
+            >
+              {isLoading ? "Registering..." : "Register"}
             </button>
           </div>
         )}

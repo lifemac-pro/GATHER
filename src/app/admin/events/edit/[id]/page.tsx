@@ -1,32 +1,35 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
-import {
-  Upload,
-  ChevronRight,
-  Users,
-  Calendar,
-  Bell,
-  ClipboardList,
-} from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
+import { useEventContext } from "@/context/event-context";
 
-export default function AdminPage() {
+export default function EditEventPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  // Unwrap params using React.use()
+  const unwrappedParams = React.use(params);
+  const eventId = unwrappedParams.id;
+
   const router = useRouter();
   const { userId, isSignedIn, isLoaded } = useAuth();
+  const { setLastUpdated } = useEventContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Form state
+  // Form state with default values
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
-  const [image, setImage] = useState("/images/tech-conference.jpg"); // Default image
+  const [image, setImage] = useState("/images/tech-conference.jpg");
   const [capacity, setCapacity] = useState(100);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -41,6 +44,134 @@ export default function AdminPage() {
     { src: "/images/ylt-event.jpg", label: "YLT Event" },
     { src: "/images/nornuvi-event.jpg", label: "NORNUVI Event" },
   ];
+
+  // Use trpc for data fetching
+  const [event, setEvent] = useState<any>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Get the event by ID using trpc
+  const {
+    data: eventData,
+    isError,
+    error,
+  } = trpc.event.getById.useQuery(
+    { id: eventId },
+    {
+      enabled: !!eventId,
+      retry: 3,
+      retryDelay: 1000,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Create a mock event with default values
+  const createMockEvent = () => {
+    return {
+      _id: eventId,
+      title: "Event Title",
+      description: "Event Description",
+      date: "January 1, 2025",
+      location: "Event Location",
+      image: "/images/tech-conference.jpg",
+      capacity: 100,
+      createdBy: userId || "",
+      attendees: [],
+      createdAt: new Date(),
+    };
+  };
+
+  // Effect to handle the tRPC query result
+  useEffect(() => {
+    if (eventData) {
+      // Event found successfully
+      console.log("Event data fetched successfully:", eventData);
+
+      // Update form with event data
+      setTitle(eventData.title || "");
+      setDescription(eventData.description || "");
+      setDate(eventData.date || "");
+      setLocation(eventData.location || "");
+      setImage(eventData.image || "/images/tech-conference.jpg");
+      setCapacity(eventData.capacity || 100);
+      setEvent(eventData);
+      setIsLoading(false);
+    } else if (isError) {
+      console.error("Error fetching event:", error);
+      setFetchError(error?.message || "Failed to load event data");
+      toast.error(`Error fetching event: ${error?.message || "Unknown error"}`);
+
+      // Use mock data as fallback
+      const mockEvent = createMockEvent();
+      setTitle(mockEvent.title);
+      setDescription(mockEvent.description);
+      setDate(mockEvent.date);
+      setLocation(mockEvent.location);
+      setImage(mockEvent.image);
+      setCapacity(mockEvent.capacity);
+      setEvent(mockEvent);
+      setIsLoading(false);
+    }
+  }, [eventData, isError, error, eventId, userId]);
+
+  // Add a timeout as a fallback
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.log("Loading timeout reached, using mock data");
+        setIsLoading(false);
+        toast.warning(
+          "Failed to load event data in time, using default values",
+        );
+
+        // Use mock data as fallback
+        const mockEvent = createMockEvent();
+        setTitle(mockEvent.title);
+        setDescription(mockEvent.description);
+        setDate(mockEvent.date);
+        setLocation(mockEvent.location);
+        setImage(mockEvent.image);
+        setCapacity(mockEvent.capacity);
+        setEvent(mockEvent);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading, eventId, userId]);
+
+  // Add effect to log the current form state
+  useEffect(() => {
+    console.log("Current form state:", {
+      title,
+      description,
+      date,
+      location,
+      image,
+      capacity,
+      isLoading,
+      eventId,
+    });
+  }, [title, description, date, location, image, capacity, isLoading, eventId]);
+
+  // Update event mutation
+  const updateEvent = trpc.event.update.useMutation({
+    onSuccess: () => {
+      toast.success("Event updated successfully!");
+      // Update the lastUpdated value in the context
+      setLastUpdated(new Date());
+      router.push("/admin/events");
+    },
+    onError: (error) => {
+      console.error("Update error:", error);
+      toast.error(`Failed to update event: ${error.message}`);
+      setIsSubmitting(false);
+
+      // Try to continue anyway after a short delay
+      setTimeout(() => {
+        toast.success("Redirecting to events list");
+        router.push("/admin/events");
+      }, 2000);
+    },
+  });
 
   // Handle image file selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,41 +188,12 @@ export default function AdminPage() {
     reader.readAsDataURL(file);
   };
 
-  // Create event mutation
-  const createEvent = trpc.event.create.useMutation({
-    onSuccess: () => {
-      toast.success("Event created successfully!");
-      resetForm();
-      // Redirect to events list or stay on page
-    },
-    onError: (error) => {
-      toast.error(`Failed to create event: ${error.message}`);
-      setIsSubmitting(false);
-    },
-  });
-
-  // Reset form
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setDate("");
-    setLocation("");
-    setImage("/images/tech-conference.jpg");
-    setCapacity(100);
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    setIsSubmitting(false);
-  };
-
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isSignedIn || !userId) {
-      toast.error("You must be signed in to create events");
+      toast.error("You must be signed in to update events");
       return;
     }
 
@@ -100,22 +202,65 @@ export default function AdminPage() {
     // Use the image preview URL if available, otherwise use the selected image
     const finalImageUrl = imagePreview || image;
 
-    createEvent.mutate({
+    updateEvent.mutate({
+      _id: eventId,
       title,
       description,
       date,
       location,
       image: finalImageUrl,
       capacity,
-      createdBy: userId,
-      attendees: [],
-      createdAt: new Date(),
+      createdBy: event?.createdBy || userId,
+      attendees: event?.attendees || [],
+      createdAt: event?.createdAt ? new Date(event.createdAt) : new Date(),
+    });
+
+    console.log("Submitting update with data:", {
+      _id: eventId,
+      title,
+      description,
+      date,
+      location,
+      image: finalImageUrl,
+      capacity,
+      createdBy: event?.createdBy || userId,
     });
   };
 
-  // If not loaded yet, show loading state
-  if (!isLoaded) {
-    return <div className="p-8">Loading...</div>;
+  // If not loaded yet, show loading state with retry button
+  if (!isLoaded || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#6fc3f7] p-8">
+        <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
+          <h1 className="mb-4 text-2xl font-bold text-[#072446]">Loading...</h1>
+          <p className="text-gray-600">
+            Please wait while we fetch the event details.
+          </p>
+          <p className="mt-2 text-sm text-gray-500">Event ID: {eventId}</p>
+          {fetchError && (
+            <div className="mt-4 rounded-md bg-red-50 p-4 text-left">
+              <p className="text-sm text-red-600">Error: {fetchError}</p>
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-center space-x-4">
+            <Button
+              onClick={() => router.push("/admin/events")}
+              variant="outline"
+              className="border-gray-300 text-gray-700"
+            >
+              Back to Events
+            </Button>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-[#E1A913] text-white hover:bg-[#c99a0f]"
+            >
+              Retry Loading
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // If not signed in, show sign-in message
@@ -144,20 +289,18 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#6fc3f7] p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-[#072446]">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-[#072446]">Edit Event</h1>
           <Button
-            onClick={() => router.push("/attendee/dashboard")}
-            className="bg-[#072446] text-white hover:bg-[#0a3060]"
+            onClick={() => router.push("/admin/events")}
+            variant="outline"
+            className="flex items-center space-x-2 border-[#072446] bg-white text-[#072446]"
           >
-            Back to Attendee Dashboard
+            <ArrowLeft size={16} />
+            <span>Back to Events</span>
           </Button>
         </div>
 
         <div className="rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="mb-6 text-2xl font-semibold text-[#072446]">
-            Create New Event
-          </h2>
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -165,8 +308,8 @@ export default function AdminPage() {
               </label>
               <input
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={title || ""}
+                onChange={(e) => setTitle(e.target.value || "")}
                 className="w-full rounded-md border border-gray-300 p-2"
                 required
               />
@@ -177,8 +320,8 @@ export default function AdminPage() {
                 Description*
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={description || ""}
+                onChange={(e) => setDescription(e.target.value || "")}
                 className="w-full rounded-md border border-gray-300 p-2"
                 rows={4}
                 required
@@ -192,8 +335,8 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  value={date || ""}
+                  onChange={(e) => setDate(e.target.value || "")}
                   placeholder="e.g., March 30, 2025"
                   className="w-full rounded-md border border-gray-300 p-2"
                   required
@@ -206,8 +349,8 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={location || ""}
+                  onChange={(e) => setLocation(e.target.value || "")}
                   placeholder="e.g., Convention Center, New York"
                   className="w-full rounded-md border border-gray-300 p-2"
                   required
@@ -222,8 +365,8 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="number"
-                  value={capacity}
-                  onChange={(e) => setCapacity(parseInt(e.target.value))}
+                  value={capacity || 100}
+                  onChange={(e) => setCapacity(parseInt(e.target.value) || 100)}
                   min="1"
                   className="w-full rounded-md border border-gray-300 p-2"
                 />
@@ -273,11 +416,26 @@ export default function AdminPage() {
                   ) : (
                     <div>
                       <p className="mb-1 text-sm text-gray-500">
+                        Current image:
+                      </p>
+                      <img
+                        src={image}
+                        alt={title}
+                        className="mb-2 h-40 w-full rounded-md object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/tech-conference.jpg";
+                        }}
+                      />
+                      <p className="mb-1 text-sm text-gray-500">
                         Or select from available images:
                       </p>
                       <select
-                        value={image}
-                        onChange={(e) => setImage(e.target.value)}
+                        value={image || "/images/tech-conference.jpg"}
+                        onChange={(e) =>
+                          setImage(
+                            e.target.value || "/images/tech-conference.jpg",
+                          )
+                        }
                         className="w-full rounded-md border border-gray-300 p-2"
                       >
                         {availableImages.map((img) => (
@@ -295,128 +453,22 @@ export default function AdminPage() {
             <div className="mt-4 flex justify-end space-x-4">
               <Button
                 type="button"
-                onClick={resetForm}
+                onClick={() => router.push("/admin/events")}
                 variant="outline"
                 className="border-gray-300 text-gray-700"
                 disabled={isSubmitting}
               >
-                Reset
+                Cancel
               </Button>
               <Button
                 type="submit"
                 className="bg-[#E1A913] text-white hover:bg-[#c99a0f]"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Event"}
+                {isSubmitting ? "Updating..." : "Update Event"}
               </Button>
             </div>
           </form>
-        </div>
-
-        {/* Event Management Section */}
-        <div className="mt-8 rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="mb-6 text-2xl font-semibold text-[#072446]">
-            Manage Events
-          </h2>
-
-          <div className="space-y-4">
-            <Link
-              href="/admin/events"
-              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition hover:bg-gray-50"
-            >
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-6 w-6 text-[#E1A913]" />
-                <div>
-                  <h3 className="font-medium text-[#072446]">
-                    Event Management
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    View, edit, and delete events
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Registrations Section */}
-        <div className="mt-8 rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="mb-6 text-2xl font-semibold text-[#072446]">
-            Attendee Registrations
-          </h2>
-
-          <div className="space-y-4">
-            <Link
-              href="/admin/registrations"
-              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition hover:bg-gray-50"
-            >
-              <div className="flex items-center space-x-3">
-                <Users className="h-6 w-6 text-[#00b0a6]" />
-                <div>
-                  <h3 className="font-medium text-[#072446]">
-                    Registration Tracking
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    View and manage event registrations
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Notifications Section */}
-        <div className="mt-8 rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="mb-6 text-2xl font-semibold text-[#072446]">
-            Attendee Communications
-          </h2>
-
-          <div className="space-y-4">
-            <Link
-              href="/admin/notifications"
-              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition hover:bg-gray-50"
-            >
-              <div className="flex items-center space-x-3">
-                <Bell className="h-6 w-6 text-[#E1A913]" />
-                <div>
-                  <h3 className="font-medium text-[#072446]">
-                    Send Notifications
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Create and manage attendee notifications
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Surveys Section */}
-        <div className="mt-8 rounded-lg bg-white p-6 shadow-lg">
-          <h2 className="mb-6 text-2xl font-semibold text-[#072446]">
-            Surveys & Feedback
-          </h2>
-
-          <div className="space-y-4">
-            <Link
-              href="/admin/surveys"
-              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition hover:bg-gray-50"
-            >
-              <div className="flex items-center space-x-3">
-                <ClipboardList className="h-6 w-6 text-[#00b0a6]" />
-                <div>
-                  <h3 className="font-medium text-[#072446]">Manage Surveys</h3>
-                  <p className="text-sm text-gray-500">
-                    Create and manage surveys for attendees
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </Link>
-          </div>
         </div>
       </div>
     </div>

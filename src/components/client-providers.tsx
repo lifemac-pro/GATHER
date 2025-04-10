@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,15 +8,20 @@ import { AuthRedirect } from "@/components/auth-redirect";
 import { OAuthCallbackHandler } from "@/components/oauth-callback-handler";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { NotificationProvider } from "@/context/notification-context";
+import { EventProvider } from "@/context/event-context";
 
-export function ClientProviders({ children }: { children: React.ReactNode }) {
+// Client-side only component
+function ClientOnly({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
-  // This effect runs only on the client after hydration
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  return mounted ? <>{children}</> : null;
+}
+
+export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
       appearance={{
@@ -33,10 +38,14 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       <ErrorBoundary>
         <TRPCReactProvider>
           <NotificationProvider>
-            {children}
-            <Toaster />
-            {mounted && <AuthRedirect />}
-            {mounted && <OAuthCallbackHandler />}
+            <EventProvider>
+              {children}
+              <Toaster />
+              <ClientOnly>
+                <AuthRedirect />
+                <OAuthCallbackHandler />
+              </ClientOnly>
+            </EventProvider>
           </NotificationProvider>
         </TRPCReactProvider>
       </ErrorBoundary>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { trpc } from "@/utils/trpc";
 
 // Define the context type
 type NotificationContextType = {
@@ -8,6 +9,7 @@ type NotificationContextType = {
   isLoading: boolean;
   isError: boolean;
   markAsRead: (id: string) => void;
+  refetchCount: () => void;
 };
 
 // Create the context with default values
@@ -16,6 +18,7 @@ const NotificationContext = createContext<NotificationContextType>({
   isLoading: false,
   isError: false,
   markAsRead: () => {},
+  refetchCount: () => {},
 });
 
 // Hook to use the notification context
@@ -28,25 +31,40 @@ export function NotificationProvider({
   children: React.ReactNode;
 }) {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Generate mock data on first load
+  // Use tRPC to get the real unread count
+  const {
+    data: unreadCountData,
+    isLoading,
+    isError,
+    refetch,
+  } = trpc.notification.getUnreadCount.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Mark notification as read mutation
+  const markAsReadMutation = trpc.notification.markAsRead.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  // Update unread count when data changes
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      // Generate a random number between 0 and 5 for mock notifications
-      setUnreadCount(Math.floor(Math.random() * 6));
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Mock function to mark a notification as read
-  const markAsRead = (id: string) => {
-    if (unreadCount > 0) {
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+    if (unreadCountData !== undefined) {
+      setUnreadCount(unreadCountData);
     }
+  }, [unreadCountData]);
+
+  // Function to mark a notification as read
+  const markAsRead = (id: string) => {
+    markAsReadMutation.mutate({ id });
+  };
+
+  // Function to refetch the unread count
+  const refetchCount = () => {
+    refetch();
   };
 
   return (
@@ -54,8 +72,9 @@ export function NotificationProvider({
       value={{
         unreadCount,
         isLoading,
-        isError: false, // We're not making API calls, so no errors
+        isError,
         markAsRead,
+        refetchCount,
       }}
     >
       {children}

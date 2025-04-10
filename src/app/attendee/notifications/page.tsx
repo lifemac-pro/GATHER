@@ -2,15 +2,32 @@
 
 import React, { useState } from "react";
 import Sidebar from "@/components/ui/sidebar";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Link from "next/link";
+import { useNotifications } from "@/context/notification-context";
 
 const NotificationsPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { data: notifications, refetch } = trpc.notification.getAll.useQuery();
+  const [expandedNotificationId, setExpandedNotificationId] = useState<
+    string | null
+  >(null);
+  const {
+    data: notifications,
+    isLoading,
+    refetch,
+  } = trpc.notification.getAll.useQuery();
+
+  // Get notification context for updating unread count
+  const { refetchCount } = useNotifications();
+
+  // Toggle notification expansion
+  const toggleNotificationExpansion = (id: string) => {
+    setExpandedNotificationId(expandedNotificationId === id ? null : id);
+  };
   const { data: unreadCount } = trpc.notification.getUnreadCount.useQuery();
   const markAsRead = trpc.notification.markAsRead.useMutation({
     onSuccess: () => {
@@ -33,14 +50,20 @@ const NotificationsPage = () => {
 
   const handleMarkAsRead = async (id: string) => {
     await markAsRead.mutateAsync({ id });
+    // Update the global notification count
+    refetchCount();
   };
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead.mutateAsync();
+    // Update the global notification count
+    refetchCount();
   };
 
   const handleDelete = async (id: string) => {
     await deleteNotification.mutateAsync({ id });
+    // Update the global notification count
+    refetchCount();
   };
 
   return (
@@ -103,12 +126,16 @@ const NotificationsPage = () => {
           </div>
 
           {/* Main Card Container */}
-          <div className="rounded-lg bg-[#072446] p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
+          <div className="rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="mb-4 text-xl font-semibold text-[#072446]">
               Your Notifications
             </h2>
 
-            {notifications?.length === 0 ? (
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center">
+                <p className="text-gray-500">Loading notifications...</p>
+              </div>
+            ) : notifications?.length === 0 ? (
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-gray-500">
                   No notifications available at the moment.
@@ -116,62 +143,105 @@ const NotificationsPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {notifications?.map((notification) => (
-                  <div
-                    key={
-                      typeof notification._id === "string"
-                        ? notification._id
-                        : notification._id.toString()
-                    }
-                    className="flex flex-col justify-between rounded-lg border-l-4 border-[#E1A913] bg-[#072446] p-5 shadow-md md:flex-row md:items-center"
-                  >
-                    <div>
-                      <h2 className="text-xl font-semibold text-[#E1A913]">
-                        {notification.title}
-                      </h2>
-                      <p className="text-gray-400">{notification.message}</p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        {formatDistanceToNow(new Date(notification.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                      {!notification.read && (
-                        <span className="mt-2 inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
-                          New
-                        </span>
+                {notifications?.map((notification) => {
+                  const notificationId =
+                    typeof notification._id === "string"
+                      ? notification._id
+                      : notification._id.toString();
+
+                  return (
+                    <div
+                      key={notificationId}
+                      className={`rounded-lg border-l-4 ${notification.read ? "border-gray-300" : "border-[#00b0a6]"} bg-white p-4 shadow-md`}
+                    >
+                      {/* Notification Header - Always Visible */}
+                      <div
+                        className="flex cursor-pointer items-center justify-between"
+                        onClick={() =>
+                          toggleNotificationExpansion(notificationId)
+                        }
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <h2 className="text-lg font-semibold text-[#072446]">
+                              {notification.title}
+                            </h2>
+                            {!notification.read && (
+                              <span className="ml-2 inline-block rounded-full bg-[#00b0a6] px-2 py-0.5 text-xs text-white">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {formatDistanceToNow(
+                              new Date(notification.createdAt),
+                              { addSuffix: true },
+                            )}
+                          </p>
+                        </div>
+                        {expandedNotificationId === notificationId ? (
+                          <ChevronUp size={16} className="text-gray-500" />
+                        ) : (
+                          <ChevronDown size={16} className="text-gray-500" />
+                        )}
+                      </div>
+
+                      {/* Expanded Content */}
+                      {expandedNotificationId === notificationId && (
+                        <div className="mt-3 border-t pt-3">
+                          <p className="text-gray-600">
+                            {notification.message}
+                          </p>
+
+                          {notification.type && (
+                            <div className="mt-2 text-sm">
+                              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                                {notification.type.replace(/_/g, " ")}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                            <Link
+                              href={`/attendee/notification/${notificationId}`}
+                              className="inline-flex items-center text-sm text-[#00b0a6] hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span>View Details</span>
+                              <ExternalLink size={14} className="ml-1" />
+                            </Link>
+
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-[#00b0a6] bg-white text-[#00b0a6] hover:bg-[#00b0a6] hover:text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkAsRead(notificationId);
+                                }}
+                                disabled={notification.read}
+                              >
+                                {notification.read ? "Read" : "Mark as Read"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-red-300 bg-white text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(notificationId);
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
-                    <div className="mt-4 flex space-x-2 md:ml-4 md:mt-0">
-                      <Button
-                        variant="outline"
-                        className="bg-white hover:bg-gray-100"
-                        onClick={() =>
-                          handleMarkAsRead(
-                            typeof notification._id === "string"
-                              ? notification._id
-                              : notification._id.toString(),
-                          )
-                        }
-                        disabled={notification.read}
-                      >
-                        {notification.read ? "Read" : "Mark as Read"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="bg-white text-red-600 hover:bg-red-50"
-                        onClick={() =>
-                          handleDelete(
-                            typeof notification._id === "string"
-                              ? notification._id
-                              : notification._id.toString(),
-                          )
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

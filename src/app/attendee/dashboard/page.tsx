@@ -7,10 +7,84 @@ import EventCard from "@/components/ui/EventCard";
 import { Menu, X } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { SignOutButton } from "@/components/ui/sign-out-button";
+import { trpc } from "@/utils/trpc";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
+  const [loadingEvent, setLoadingEvent] = useState<string | null>(null);
+
+  // Fetch all events
+  const { data: events, isLoading, refetch } = trpc.event.getAll.useQuery();
+
+  // Fetch user registrations to check which events they're registered for
+  const { data: userRegistrations } =
+    trpc.registration.getUserRegistrations.useQuery(undefined, {
+      enabled: !!isSignedIn,
+    });
+
+  // Register for event mutation
+  const registerMutation = trpc.registration.register.useMutation({
+    onSuccess: (data) => {
+      if (data.alreadyRegistered) {
+        toast.info("You are already registered for this event");
+      } else {
+        toast.success("Registration successful!");
+      }
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Registration failed: ${error.message}`);
+    },
+  });
+
+  // Function to handle event registration
+  const handleRegister = async (eventId: string) => {
+    if (!isSignedIn || !user) {
+      toast.error("You must be signed in to register for events");
+      return;
+    }
+
+    if (loadingEvent === eventId) return; // Prevent duplicate requests
+    setLoadingEvent(eventId);
+
+    try {
+      console.log("Registering for event with ID:", eventId);
+
+      await registerMutation.mutateAsync({
+        eventId,
+        userId: user.id,
+        userName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        userEmail: user.emailAddresses[0]?.emailAddress || "",
+        notes: "",
+      });
+
+      console.log("Registration successful");
+    } catch (error) {
+      // Error is handled in the mutation callbacks
+      console.error("Registration error:", error);
+    } finally {
+      setLoadingEvent(null); // Reset loading state
+    }
+  };
+
+  // Check if user is registered for an event
+  const isRegistered = (eventId: string, event: any) => {
+    if (!isSignedIn || !user) return false;
+
+    // Check if user is in the event's attendees array
+    if (event.attendees && event.attendees.includes(user.id)) {
+      return true;
+    }
+
+    // Check if user has a registration for this event
+    if (userRegistrations) {
+      return userRegistrations.some((reg) => reg.eventId === eventId);
+    }
+
+    return false;
+  };
 
   return (
     <div className="relative flex min-h-screen flex-col md:flex-row">
@@ -89,48 +163,41 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold text-gray-800 md:text-2xl">
             Events
           </h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: "Tech Conference 2025",
-                date: "March 30, 2025",
-                status: "Registered" as "Registered",
-                image: "/images/tech-conference.jpg",
-              },
-              {
-                title: "Startup Pitch Night",
-                date: "April 5, 2025",
-                status: "Not Registered" as "Not Registered",
-                image: "/images/startup-pitch.jpg",
-              },
-              {
-                title: "AI & Web3 Summit",
-                date: "May 15, 2025",
-                status: "Not Registered" as "Not Registered",
-                image: "/images/ai-web3-summit.jpg",
-              },
-              {
-                title: "PSP",
-                date: "May 15, 2025",
-                status: "Not Registered" as "Not Registered",
-                image: "/images/psp-event.jpg",
-              },
-              {
-                title: "YLT",
-                date: "June 24, 2025",
-                status: "Registered" as "Registered",
-                image: "/images/ylt-event.jpg",
-              },
-              {
-                title: "NORNUVI",
-                date: "April 18, 2025",
-                status: "Not Registered" as "Not Registered",
-                image: "/images/nornuvi-event.jpg",
-              },
-            ].map((event, index) => (
-              <EventCard key={index} {...event} />
-            ))}
-          </div>
+
+          {isLoading ? (
+            <div className="mt-4 rounded-lg bg-white p-8 text-center shadow-md">
+              <p className="text-gray-600">Loading events...</p>
+            </div>
+          ) : events && events.length > 0 ? (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => {
+                const eventId =
+                  typeof event._id === "string"
+                    ? event._id
+                    : event._id.toString();
+                const registered = isRegistered(eventId, event);
+
+                return (
+                  <EventCard
+                    key={eventId}
+                    id={eventId}
+                    title={event.title}
+                    date={event.date}
+                    status={registered ? "Registered" : "Not Registered"}
+                    image={event.image || "/images/tech-conference.jpg"}
+                    onRegister={handleRegister}
+                    isLoading={loadingEvent === eventId}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg bg-white p-8 text-center shadow-md">
+              <p className="text-gray-600">
+                No events available at the moment.
+              </p>
+            </div>
+          )}
         </section>
       </main>
     </div>
