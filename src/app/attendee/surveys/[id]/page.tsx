@@ -16,40 +16,42 @@ export default function SurveyDetailPage({
   // Unwrap params using React.use()
   const unwrappedParams = React.use(params);
   const surveyId = unwrappedParams.id;
-  
+
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Fetch survey data
-  const { data: survey, isLoading: surveyLoading } = trpc.survey.getById.useQuery(
-    { id: surveyId },
-    {
-      enabled: !!surveyId,
-      retry: 1,
-      onError: (error) => {
-        toast.error(`Error loading survey: ${error.message}`);
-        router.push("/attendee/surveys");
-      },
-    }
-  );
-  
-  // Check if user has already responded
-  const { data: hasResponded, isLoading: checkingResponse } = trpc.survey.hasResponded.useQuery(
-    { surveyId },
-    {
-      enabled: !!surveyId,
-      retry: 1,
-      onSuccess: (data) => {
-        if (data) {
-          toast.info("You have already completed this survey");
+  const { data: survey, isLoading: surveyLoading } =
+    trpc.survey.getById.useQuery(
+      { id: surveyId },
+      {
+        enabled: !!surveyId,
+        retry: 1,
+        onError: (error) => {
+          toast.error(`Error loading survey: ${error.message}`);
           router.push("/attendee/surveys");
-        }
+        },
       },
-    }
-  );
-  
+    );
+
+  // Check if user has already responded
+  const { data: hasResponded, isLoading: checkingResponse } =
+    trpc.survey.hasResponded.useQuery(
+      { surveyId },
+      {
+        enabled: !!surveyId,
+        retry: 1,
+        onSuccess: (data) => {
+          if (data) {
+            toast.info("You have already completed this survey");
+            router.push("/attendee/surveys");
+          }
+        },
+      },
+    );
+
   // Submit survey response
   const submitResponse = trpc.survey.submitResponse.useMutation({
     onSuccess: () => {
@@ -61,7 +63,7 @@ export default function SurveyDetailPage({
       setIsSubmitting(false);
     },
   });
-  
+
   // Handle answer change
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers((prev) => ({
@@ -69,49 +71,53 @@ export default function SurveyDetailPage({
       [questionId]: value,
     }));
   };
-  
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!survey) return;
-    
+
     // Check if all required questions are answered
     const unansweredRequired = survey.questions
       .filter((q) => q.required)
       .filter((q) => !answers[q.id || ""] && answers[q.id || ""] !== 0);
-    
+
     if (unansweredRequired.length > 0) {
       toast.error(`Please answer all required questions`);
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     // Format answers for submission
-    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
-      questionId,
-      answer,
-    }));
-    
+    const formattedAnswers = Object.entries(answers).map(
+      ([questionId, answer]) => ({
+        questionId,
+        answer,
+      }),
+    );
+
     submitResponse.mutate({
       surveyId,
       userId: "", // This will be set by the server
       answers: formattedAnswers,
     });
   };
-  
+
   // Render question based on type
   const renderQuestion = (question: any, index: number) => {
     const questionId = question.id || "";
-    
+
     switch (question.type) {
       case "MULTIPLE_CHOICE":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#072446]">
+            <label className="mb-2 block font-medium text-[#E1A913]">
               {index + 1}. {question.text}
-              {question.required && <span className="ml-1 text-red-500">*</span>}
+              {question.required && (
+                <span className="ml-1 text-red-500">*</span>
+              )}
             </label>
             <div className="space-y-2">
               {question.options?.map((option: string, i: number) => (
@@ -123,12 +129,12 @@ export default function SurveyDetailPage({
                     value={option}
                     checked={answers[questionId] === option}
                     onChange={() => handleAnswerChange(questionId, option)}
-                    className="h-4 w-4 text-[#00b0a6] focus:ring-[#00b0a6]"
+                    className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
                     required={question.required}
                   />
                   <label
                     htmlFor={`${questionId}-${i}`}
-                    className="ml-2 text-gray-700"
+                    className="ml-2 text-gray-400"
                   >
                     {option}
                   </label>
@@ -137,34 +143,38 @@ export default function SurveyDetailPage({
             </div>
           </div>
         );
-      
+
       case "TEXT":
         return (
           <div className="mb-6">
             <label
               htmlFor={questionId}
-              className="mb-2 block font-medium text-[#072446]"
+              className="mb-2 block font-medium text-[#E1A913]"
             >
               {index + 1}. {question.text}
-              {question.required && <span className="ml-1 text-red-500">*</span>}
+              {question.required && (
+                <span className="ml-1 text-red-500">*</span>
+              )}
             </label>
             <textarea
               id={questionId}
               value={answers[questionId] || ""}
               onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+              className="w-full rounded-md border border-gray-300 bg-[#072446] p-2 text-gray-300 focus:border-[#E1A913] focus:outline-none focus:ring-1 focus:ring-[#E1A913]"
               rows={4}
               required={question.required}
             />
           </div>
         );
-      
+
       case "RATING":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#072446]">
+            <label className="mb-2 block font-medium text-[#E1A913]">
               {index + 1}. {question.text}
-              {question.required && <span className="ml-1 text-red-500">*</span>}
+              {question.required && (
+                <span className="ml-1 text-red-500">*</span>
+              )}
             </label>
             <div className="flex space-x-4">
               {[1, 2, 3, 4, 5].map((rating) => (
@@ -174,31 +184,29 @@ export default function SurveyDetailPage({
                     onClick={() => handleAnswerChange(questionId, rating)}
                     className={`h-10 w-10 rounded-full ${
                       answers[questionId] === rating
-                        ? "bg-[#00b0a6] text-white"
+                        ? "bg-[#E1A913] text-white"
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     {rating}
                   </button>
                   <span className="mt-1 text-xs text-gray-500">
-                    {rating === 1
-                      ? "Poor"
-                      : rating === 5
-                      ? "Excellent"
-                      : ""}
+                    {rating === 1 ? "Poor" : rating === 5 ? "Excellent" : ""}
                   </span>
                 </div>
               ))}
             </div>
           </div>
         );
-      
+
       case "YES_NO":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#072446]">
+            <label className="mb-2 block font-medium text-[#E1A913]">
               {index + 1}. {question.text}
-              {question.required && <span className="ml-1 text-red-500">*</span>}
+              {question.required && (
+                <span className="ml-1 text-red-500">*</span>
+              )}
             </label>
             <div className="flex space-x-4">
               <div className="flex items-center">
@@ -209,12 +217,12 @@ export default function SurveyDetailPage({
                   value="Yes"
                   checked={answers[questionId] === "Yes"}
                   onChange={() => handleAnswerChange(questionId, "Yes")}
-                  className="h-4 w-4 text-[#00b0a6] focus:ring-[#00b0a6]"
+                  className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
                   required={question.required}
                 />
                 <label
                   htmlFor={`${questionId}-yes`}
-                  className="ml-2 text-gray-700"
+                  className="ml-2 text-gray-400"
                 >
                   Yes
                 </label>
@@ -227,12 +235,12 @@ export default function SurveyDetailPage({
                   value="No"
                   checked={answers[questionId] === "No"}
                   onChange={() => handleAnswerChange(questionId, "No")}
-                  className="h-4 w-4 text-[#00b0a6] focus:ring-[#00b0a6]"
+                  className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
                   required={question.required}
                 />
                 <label
                   htmlFor={`${questionId}-no`}
-                  className="ml-2 text-gray-700"
+                  className="ml-2 text-gray-400"
                 >
                   No
                 </label>
@@ -240,15 +248,15 @@ export default function SurveyDetailPage({
             </div>
           </div>
         );
-      
+
       default:
         return null;
     }
   };
-  
+
   // Loading state
   const isLoading = surveyLoading || checkingResponse;
-  
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop Sidebar */}
@@ -301,7 +309,7 @@ export default function SurveyDetailPage({
             <Button
               onClick={() => router.push("/attendee/surveys")}
               variant="outline"
-              className="flex items-center space-x-2 border-[#072446] bg-white text-[#072446]"
+              className="flex items-center space-x-2 border-[#E1A913] bg-[#072446] text-[#E1A913]"
             >
               <ArrowLeft size={16} />
               <span>Back to Surveys</span>
@@ -309,24 +317,24 @@ export default function SurveyDetailPage({
           </div>
 
           {isLoading ? (
-            <div className="flex h-60 items-center justify-center rounded-lg bg-white p-6 shadow-lg">
-              <p className="text-gray-500">Loading survey questions...</p>
+            <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
+              <p className="text-gray-400">Loading survey questions...</p>
             </div>
           ) : survey ? (
-            <div className="rounded-lg bg-white p-6 shadow-lg">
-              <p className="mb-6 text-gray-600">{survey.description}</p>
-              
+            <div className="rounded-lg bg-[#072446] p-6 shadow-md">
+              <p className="mb-6 text-gray-400">{survey.description}</p>
+
               <form onSubmit={handleSubmit}>
                 {survey.questions.map((question, index) => (
                   <div key={question.id || index}>
                     {renderQuestion(question, index)}
                   </div>
                 ))}
-                
+
                 <div className="mt-8 flex justify-end">
                   <Button
                     type="submit"
-                    className="bg-[#00b0a6] text-white hover:bg-[#009991]"
+                    className="bg-[#E1A913] text-white hover:bg-[#c6900f]"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Survey"}
@@ -335,17 +343,20 @@ export default function SurveyDetailPage({
               </form>
             </div>
           ) : (
-            <div className="flex h-60 flex-col items-center justify-center space-y-4 rounded-lg bg-white p-6 shadow-lg">
+            <div className="flex h-60 flex-col items-center justify-center space-y-4 rounded-lg bg-[#072446] p-6 shadow-md">
               <AlertCircle size={32} className="text-red-500" />
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-800">Survey Not Found</h2>
-                <p className="mt-2 text-gray-600">
-                  The survey you're looking for could not be found or has been removed.
+                <h2 className="text-xl font-semibold text-[#E1A913]">
+                  Survey Not Found
+                </h2>
+                <p className="mt-2 text-gray-400">
+                  The survey you're looking for could not be found or has been
+                  removed.
                 </p>
               </div>
               <Button
                 onClick={() => router.push("/attendee/surveys")}
-                className="mt-4 bg-[#00b0a6] text-white hover:bg-[#009991]"
+                className="mt-4 bg-[#E1A913] text-white hover:bg-[#c6900f]"
               >
                 Return to Surveys
               </Button>

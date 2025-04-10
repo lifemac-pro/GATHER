@@ -197,30 +197,27 @@ const SettingsPage = () => {
         </h1>
 
         {isUserLoading ? (
-          <div className="flex h-60 items-center justify-center rounded-lg bg-white p-6 shadow-lg">
-            <Loader2 className="mr-2 h-6 w-6 animate-spin text-[#00b0a6]" />
-            <p className="text-gray-600">Loading your profile...</p>
+          <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin text-[#E1A913]" />
+            <p className="text-gray-400">Loading your profile...</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Profile Section */}
-            <section className="rounded-lg bg-white p-6 shadow-lg">
-              <div className="mb-4 flex items-center">
-                <User className="mr-2 h-5 w-5 text-[#00b0a6]" />
-                <h2 className="text-xl font-semibold text-[#072446]">
-                  Profile Information
-                </h2>
-              </div>
+            <section className="rounded-lg bg-[#072446] p-6 shadow-md">
+              <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
+                Profile
+              </h2>
 
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Full Name*
+                    <label className="block text-sm font-medium text-gray-400">
+                      Full Name
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Enter your full name"
@@ -228,12 +225,12 @@ const SettingsPage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Email*
+                    <label className="block text-sm font-medium text-gray-400">
+                      Email
                     </label>
                     <input
                       type="email"
-                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
@@ -243,11 +240,11 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-400">
                     Bio
                   </label>
                   <textarea
-                    className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                    className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell us about yourself"
@@ -257,24 +254,24 @@ const SettingsPage = () => {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-400">
                       Organization
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                       value={organization}
                       onChange={(e) => setOrganization(e.target.value)}
                       placeholder="Your company or organization"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-400">
                       Job Title
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder="Your job title"
@@ -283,12 +280,12 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-400">
                     Phone Number
                   </label>
                   <input
                     type="tel"
-                    className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#00b0a6] focus:outline-none focus:ring-1 focus:ring-[#00b0a6]"
+                    className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Your phone number"
@@ -299,7 +296,7 @@ const SettingsPage = () => {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={handleProfileSave}
-                  className="flex items-center space-x-2 bg-[#00b0a6] text-white hover:bg-[#009991]"
+                  className="rounded-md bg-[#E1A913] px-4 py-2 font-medium text-white hover:bg-[#c6900f]"
                   disabled={isProfileSaving}
                 >
                   {isProfileSaving ? (
@@ -318,26 +315,23 @@ const SettingsPage = () => {
             </section>
 
             {/* Notifications Section */}
-            <section className="rounded-lg bg-white p-6 shadow-lg">
-              <div className="mb-4 flex items-center">
-                <Bell className="mr-2 h-5 w-5 text-[#E1A913]" />
-                <h2 className="text-xl font-semibold text-[#072446]">
-                  Notification Preferences
-                </h2>
-              </div>
+            <section className="rounded-lg bg-[#072446] p-6 shadow-md">
+              <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
+                Notifications
+              </h2>
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
                     id="emailNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#00b0a6] focus:ring-[#00b0a6]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
                     checked={emailNotifications}
                     onChange={() => setEmailNotifications(!emailNotifications)}
                   />
                   <label
                     htmlFor="emailNotifications"
-                    className="text-sm text-gray-700"
+                    className="text-sm text-gray-400"
                   >
                     Receive email notifications
                   </label>
@@ -347,13 +341,13 @@ const SettingsPage = () => {
                   <input
                     id="inAppNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#00b0a6] focus:ring-[#00b0a6]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
                     checked={inAppNotifications}
                     onChange={() => setInAppNotifications(!inAppNotifications)}
                   />
                   <label
                     htmlFor="inAppNotifications"
-                    className="text-sm text-gray-700"
+                    className="text-sm text-gray-400"
                   >
                     Receive in-app notifications
                   </label>
@@ -363,13 +357,13 @@ const SettingsPage = () => {
                   <input
                     id="eventReminders"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#00b0a6] focus:ring-[#00b0a6]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
                     checked={eventReminders}
                     onChange={() => setEventReminders(!eventReminders)}
                   />
                   <label
                     htmlFor="eventReminders"
-                    className="text-sm text-gray-700"
+                    className="text-sm text-gray-400"
                   >
                     Receive event reminders
                   </label>
@@ -379,7 +373,7 @@ const SettingsPage = () => {
                   <input
                     id="surveyNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#00b0a6] focus:ring-[#00b0a6]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
                     checked={surveyNotifications}
                     onChange={() =>
                       setSurveyNotifications(!surveyNotifications)
@@ -387,7 +381,7 @@ const SettingsPage = () => {
                   />
                   <label
                     htmlFor="surveyNotifications"
-                    className="text-sm text-gray-700"
+                    className="text-sm text-gray-400"
                   >
                     Receive survey notifications
                   </label>
@@ -397,7 +391,7 @@ const SettingsPage = () => {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={handleNotificationsSave}
-                  className="flex items-center space-x-2 bg-[#00b0a6] text-white hover:bg-[#009991]"
+                  className="rounded-md bg-[#E1A913] px-4 py-2 font-medium text-white hover:bg-[#c6900f]"
                   disabled={isNotificationsSaving}
                 >
                   {isNotificationsSaving ? (
@@ -416,15 +410,12 @@ const SettingsPage = () => {
             </section>
 
             {/* Password Section */}
-            <section className="rounded-lg bg-white p-6 shadow-lg">
-              <div className="mb-4 flex items-center">
-                <Lock className="mr-2 h-5 w-5 text-[#072446]" />
-                <h2 className="text-xl font-semibold text-[#072446]">
-                  Password Management
-                </h2>
-              </div>
+            <section className="rounded-lg bg-[#072446] p-6 shadow-md">
+              <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
+                Change Password
+              </h2>
 
-              <p className="mb-4 text-gray-600">
+              <p className="mb-4 text-gray-400">
                 Password management is handled by our authentication provider.
                 To change your password, please use the authentication
                 provider's settings.
@@ -438,8 +429,7 @@ const SettingsPage = () => {
                       "_blank",
                     )
                   }
-                  variant="outline"
-                  className="border-[#072446] text-[#072446] hover:bg-[#072446] hover:text-white"
+                  className="rounded-md bg-[#E1A913] px-4 py-2 font-medium text-white hover:bg-[#c6900f]"
                 >
                   Manage Password
                 </Button>

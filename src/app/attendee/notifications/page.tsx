@@ -126,18 +126,18 @@ const NotificationsPage = () => {
           </div>
 
           {/* Main Card Container */}
-          <div className="rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-semibold text-[#072446]">
+          <div className="rounded-lg bg-[#072446] p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
               Your Notifications
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-500">Loading notifications...</p>
+                <p className="text-gray-400">Loading notifications...</p>
               </div>
             ) : notifications?.length === 0 ? (
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-gray-500">
+              <div className="rounded-lg border border-gray-600 bg-[#072446] p-4">
+                <p className="text-gray-400">
                   No notifications available at the moment.
                 </p>
               </div>
@@ -152,7 +152,7 @@ const NotificationsPage = () => {
                   return (
                     <div
                       key={notificationId}
-                      className={`rounded-lg border-l-4 ${notification.read ? "border-gray-300" : "border-[#00b0a6]"} bg-white p-4 shadow-md`}
+                      className={`rounded-lg border-l-4 ${notification.read ? "border-gray-600" : "border-[#E1A913]"} bg-[#072446] p-4 shadow-md`}
                     >
                       {/* Notification Header - Always Visible */}
                       <div
@@ -163,11 +163,11 @@ const NotificationsPage = () => {
                       >
                         <div className="flex-1">
                           <div className="flex items-center">
-                            <h2 className="text-lg font-semibold text-[#072446]">
+                            <h2 className="text-lg font-semibold text-[#E1A913]">
                               {notification.title}
                             </h2>
                             {!notification.read && (
-                              <span className="ml-2 inline-block rounded-full bg-[#00b0a6] px-2 py-0.5 text-xs text-white">
+                              <span className="ml-2 inline-block rounded-full bg-[#E1A913] px-2 py-0.5 text-xs text-white">
                                 New
                               </span>
                             )}
@@ -180,22 +180,22 @@ const NotificationsPage = () => {
                           </p>
                         </div>
                         {expandedNotificationId === notificationId ? (
-                          <ChevronUp size={16} className="text-gray-500" />
+                          <ChevronUp size={16} className="text-gray-400" />
                         ) : (
-                          <ChevronDown size={16} className="text-gray-500" />
+                          <ChevronDown size={16} className="text-gray-400" />
                         )}
                       </div>
 
                       {/* Expanded Content */}
                       {expandedNotificationId === notificationId && (
-                        <div className="mt-3 border-t pt-3">
-                          <p className="text-gray-600">
+                        <div className="mt-3 border-t border-gray-600 pt-3">
+                          <p className="text-gray-400">
                             {notification.message}
                           </p>
 
                           {notification.type && (
                             <div className="mt-2 text-sm">
-                              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                              <span className="rounded-full border border-gray-600 bg-[#072446] px-2 py-1 text-xs text-gray-400">
                                 {notification.type.replace(/_/g, " ")}
                               </span>
                             </div>
@@ -204,7 +204,7 @@ const NotificationsPage = () => {
                           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                             <Link
                               href={`/attendee/notification/${notificationId}`}
-                              className="inline-flex items-center text-sm text-[#00b0a6] hover:underline"
+                              className="inline-flex items-center text-sm text-[#E1A913] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span>View Details</span>
@@ -215,7 +215,7 @@ const NotificationsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-[#00b0a6] bg-white text-[#00b0a6] hover:bg-[#00b0a6] hover:text-white"
+                                className="border-[#E1A913] bg-[#072446] text-[#E1A913] hover:bg-[#E1A913] hover:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleMarkAsRead(notificationId);
@@ -227,7 +227,7 @@ const NotificationsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-red-300 bg-white text-red-600 hover:bg-red-50"
+                                className="border-red-500 bg-[#072446] text-red-500 hover:bg-red-500 hover:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDelete(notificationId);

@@ -10,22 +10,18 @@ import { formatDistanceToNow } from "date-fns";
 
 const SurveysPage = () => {
   const router = useRouter();
-  
+
   // Fetch available surveys (not yet completed)
-  const { 
-    data: availableSurveys, 
-    isLoading: availableLoading 
-  } = trpc.survey.getAvailableSurveys.useQuery();
-  
+  const { data: availableSurveys, isLoading: availableLoading } =
+    trpc.survey.getAvailableSurveys.useQuery();
+
   // Fetch completed surveys
-  const { 
-    data: completedSurveys, 
-    isLoading: completedLoading 
-  } = trpc.survey.getCompletedSurveys.useQuery();
-  
+  const { data: completedSurveys, isLoading: completedLoading } =
+    trpc.survey.getCompletedSurveys.useQuery();
+
   // Loading state
   const isLoading = availableLoading || completedLoading;
-  
+
   const handleTakeSurvey = (id: string) => {
     router.push(`/attendee/surveys/${id}`);
   };
@@ -88,43 +84,47 @@ const SurveysPage = () => {
           </div>
 
           {/* Available Surveys Section */}
-          <div className="mb-8 rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-semibold text-[#072446]">
+          <div className="mb-8 rounded-lg bg-[#072446] p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
               Available Surveys
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-500">Loading surveys...</p>
+                <p className="text-gray-400">Loading surveys...</p>
               </div>
             ) : availableSurveys && availableSurveys.length > 0 ? (
               <div className="space-y-4">
                 {availableSurveys.map((survey) => {
-                  const surveyId = typeof survey._id === "string" 
-                    ? survey._id 
-                    : survey._id.toString();
-                  
+                  const surveyId =
+                    typeof survey._id === "string"
+                      ? survey._id
+                      : survey._id.toString();
+
                   return (
                     <div
                       key={surveyId}
-                      className="rounded-lg border-l-4 border-[#00b0a6] bg-white p-4 shadow-md"
+                      className="rounded-lg border-l-4 border-[#E1A913] bg-[#072446] p-4 shadow-md"
                     >
                       <div className="flex flex-col justify-between md:flex-row md:items-center">
                         <div>
-                          <h3 className="text-lg font-semibold text-[#072446]">
+                          <h3 className="text-lg font-semibold text-[#E1A913]">
                             {survey.title}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-400">
                             {survey.description}
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Created {formatDistanceToNow(new Date(survey.createdAt), { addSuffix: true })}
+                            Created{" "}
+                            {formatDistanceToNow(new Date(survey.createdAt), {
+                              addSuffix: true,
+                            })}
                           </p>
                         </div>
                         <div className="mt-4 md:mt-0">
                           <Button
                             onClick={() => handleTakeSurvey(surveyId)}
-                            className="flex items-center space-x-2 bg-[#00b0a6] text-white hover:bg-[#009991]"
+                            className="flex items-center space-x-2 bg-[#E1A913] text-white hover:bg-[#c6900f]"
                           >
                             <span>Take Survey</span>
                             <ChevronRight size={16} />
@@ -136,9 +136,9 @@ const SurveysPage = () => {
                 })}
               </div>
             ) : (
-              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-300 p-4">
+              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-600 p-4">
                 <AlertCircle size={24} className="text-gray-400" />
-                <p className="text-center text-gray-500">
+                <p className="text-center text-gray-400">
                   No surveys available at the moment.
                 </p>
               </div>
@@ -146,36 +146,40 @@ const SurveysPage = () => {
           </div>
 
           {/* Completed Surveys Section */}
-          <div className="rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-semibold text-[#072446]">
+          <div className="rounded-lg bg-[#072446] p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
               Completed Surveys
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-500">Loading surveys...</p>
+                <p className="text-gray-400">Loading surveys...</p>
               </div>
             ) : completedSurveys && completedSurveys.length > 0 ? (
               <div className="space-y-4">
                 {completedSurveys.map((survey) => {
-                  const surveyId = typeof survey._id === "string" 
-                    ? survey._id 
-                    : survey._id.toString();
-                  
+                  const surveyId =
+                    typeof survey._id === "string"
+                      ? survey._id
+                      : survey._id.toString();
+
                   return (
                     <div
                       key={surveyId}
-                      className="rounded-lg border-l-4 border-gray-300 bg-white p-4 shadow-md"
+                      className="rounded-lg border-l-4 border-gray-600 bg-[#072446] p-4 shadow-md"
                     >
                       <div className="flex flex-col justify-between md:flex-row md:items-center">
                         <div>
                           <div className="flex items-center">
-                            <h3 className="text-lg font-semibold text-[#072446]">
+                            <h3 className="text-lg font-semibold text-[#E1A913]">
                               {survey.title}
                             </h3>
-                            <CheckCircle size={16} className="ml-2 text-green-500" />
+                            <CheckCircle
+                              size={16}
+                              className="ml-2 text-green-500"
+                            />
                           </div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-400">
                             {survey.description}
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
@@ -185,8 +189,12 @@ const SurveysPage = () => {
                         <div className="mt-4 md:mt-0">
                           <Button
                             variant="outline"
-                            onClick={() => router.push(`/attendee/surveys/${surveyId}/results`)}
-                            className="flex items-center space-x-2 border-[#00b0a6] text-[#00b0a6] hover:bg-[#00b0a6] hover:text-white"
+                            onClick={() =>
+                              router.push(
+                                `/attendee/surveys/${surveyId}/results`,
+                              )
+                            }
+                            className="flex items-center space-x-2 bg-[#E1A913] text-white hover:bg-[#c6900f]"
                           >
                             <span>View Results</span>
                             <ChevronRight size={16} />
@@ -198,9 +206,9 @@ const SurveysPage = () => {
                 })}
               </div>
             ) : (
-              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-300 p-4">
+              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-600 p-4">
                 <AlertCircle size={24} className="text-gray-400" />
-                <p className="text-center text-gray-500">
+                <p className="text-center text-gray-400">
                   You haven't completed any surveys yet.
                 </p>
               </div>
