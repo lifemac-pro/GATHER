@@ -6,6 +6,8 @@ export const EventSchema = z.object({
   description: z.string().optional(),
   date: z.string(),
   location: z.string().optional(),
+  image: z.string().default("/images/tech-conference.jpg"),
+  capacity: z.number().default(100),
   createdAt: z.date().default(() => new Date()),
   createdBy: z.string(),
   attendees: z.array(z.string()).default([]),
@@ -13,4 +15,4 @@ export const EventSchema = z.object({
 
 export type Event = z.infer<typeof EventSchema>;
 
-export const EventCollection = "events"; 
+export const EventCollection = "events";

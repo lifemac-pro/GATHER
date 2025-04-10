@@ -3,10 +3,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "./button";
 import { Menu, X } from "lucide-react";
-import { SignInButton } from "@clerk/nextjs"; // Changed import
+import { AuthButton } from "./auth-button";
+import { useAuth } from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
 
   return (
     <nav className="fixed top-0 z-50 w-full bg-[#072446] px-6 py-4 text-white shadow-md">
@@ -33,11 +35,13 @@ export default function Navbar() {
 
         {/* Sign In Button */}
         <div className="hidden md:block">
-          <SignInButton mode="modal">
-            <button className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]">
-              Sign In
-            </button>
-          </SignInButton>
+          <AuthButton
+            mode="sign-in"
+            redirectUrl="/attendee/dashboard"
+            className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]"
+          >
+            Sign In
+          </AuthButton>
         </div>
 
         {/* Mobile Menu Button */}
@@ -70,11 +74,13 @@ export default function Navbar() {
           >
             Contact
           </Link>
-          <SignInButton mode="modal">
-            <button className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]">
-              Sign In
-            </button>
-          </SignInButton>
+          <AuthButton
+            mode="sign-in"
+            redirectUrl="/attendee/dashboard"
+            className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]"
+          >
+            Sign In
+          </AuthButton>
         </div>
       )}
     </nav>

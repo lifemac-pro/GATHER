@@ -4,8 +4,7 @@ import HeroSection from "@/components/ui/hero_section";
 import Testimonials from "@/components/ui/testimonials";
 import CTA from "@/components/ui/cta";
 import Footer from "@/components/ui/footer";
-import EventCard from "@/components/ui/EventCard";
-//import FeaturedEvents from "@/components/ui/FeaturedEvents";
+import FeaturedEvents from "@/components/ui/FeaturedEvents";
 
 export default function AttendeePage() {
   return (
@@ -21,19 +20,8 @@ export default function AttendeePage() {
           </p>
         </section>
 
-        {/* Event Cards using EventCard component */}
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {[1, 2, 3].map((event, index) => (
-            <EventCard
-              key={index}
-              title={`Event Name ${event}`}
-              date="📅 Date & Time"
-              status="Not Registered"
-              image="/images/tech-conference.jpg"
-              //image="/images/ai-web3-summit.jpg"      // Replace with the path to your image
-            />
-          ))}
-        </div>
+        {/* Event Cards using FeaturedEvents component */}
+        <FeaturedEvents />
       </main>
 
       <HeroSection />

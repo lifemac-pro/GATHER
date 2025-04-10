@@ -67,13 +67,21 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Sign Out Button */}
-          <SignOutButton
-            redirectUrl="/"
-            className="rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-          >
-            Sign Out
-          </SignOutButton>
+          {/* Admin and Sign Out Buttons */}
+          <div className="flex space-x-2">
+            <Link
+              href="/admin"
+              className="rounded-md bg-[#072446] px-4 py-2 text-white transition hover:bg-[#0a3060]"
+            >
+              Admin Panel
+            </Link>
+            <SignOutButton
+              redirectUrl="/"
+              className="rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
+            >
+              Sign Out
+            </SignOutButton>
+          </div>
         </div>
 
         {/* Upcoming Events Section */}

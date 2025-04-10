@@ -11,17 +11,14 @@ type EventProps = {
   image: string;
 };
 
-const EventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
+const LandingEventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
   return (
     <Card className="overflow-hidden rounded-lg border border-gray-200 bg-[#072446] p-4 shadow-md transition hover:shadow-lg">
       {/* Event Image */}
       <img
-        src={image || "/images/tech-conference.jpg"}
+        src={image}
         alt={title}
         className="h-40 w-full rounded-t-lg object-cover"
-        onError={(e) => {
-          e.currentTarget.src = "/images/tech-conference.jpg";
-        }}
       />
 
       <CardHeader className="pt-3">
@@ -39,9 +36,13 @@ const EventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
         {/* Register Button with Clerk Authentication (Only if Not Registered) */}
         {status === "Not Registered" && (
           <div className="mt-3 w-full">
-            <button className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
+            <AuthButton
+              mode="sign-in"
+              redirectUrl="/attendee/dashboard"
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+            >
               Register
-            </button>
+            </AuthButton>
           </div>
         )}
       </CardContent>
@@ -49,4 +50,4 @@ const EventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
   );
 };
 
-export default EventCard;
+export default LandingEventCard;

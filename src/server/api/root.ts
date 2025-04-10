@@ -1,6 +1,7 @@
 import { postRouter } from "@/server/api/routers/post";
 import { eventRouter } from "@/server/api/routers/event";
 import { notificationRouter } from "@/server/api/routers/notification";
+import { registrationRouter } from "@/server/api/routers/registration";
 import { createTRPCRouter, createTRPCContext } from "@/server/api/trpc";
 
 /**
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   event: eventRouter,
   notification: notificationRouter,
+  registration: registrationRouter,
 });
 
 // export type definition of API
