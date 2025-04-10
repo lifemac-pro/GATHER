@@ -1,6 +1,6 @@
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
+import { Context, TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { Event, Attendee } from "@/server/db/models";
 
@@ -42,10 +42,11 @@ export const eventRouter = createTRPCRouter({
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft"
+
       });
       return event.toObject();
     }),
-  
+
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
@@ -57,8 +58,15 @@ export const eventRouter = createTRPCRouter({
     }),
 
   getFeatured: publicProcedure.query(async () => {
-    const events = await Event.find({ featured: true, status: "published" });
-    return events.map(e => e.toObject());
+    try {
+      console.log('Executing getFeatured procedure');
+      const events = await Event.find({ featured: true, status: "published" });
+      console.log('Found events:', events);
+      return events.map(e => e.toObject());
+    } catch (error) {
+      console.error('Error in getFeatured:', error);
+      throw error;
+    }
   }),
 
   getUpcoming: publicProcedure.query(async () => {
@@ -107,7 +115,7 @@ export const eventRouter = createTRPCRouter({
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input, ctx }: { input: any, ctx: Context }) => {
       const event = await Event.findOne({ id: input.id });
       if (!event) {
         throw new TRPCError({ code: "NOT_FOUND" });

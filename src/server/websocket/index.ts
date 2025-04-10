@@ -2,6 +2,7 @@ import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { getSession } from "next-auth/react";
 import { Event, Chat, Notification } from "@/server/db/models";
+import { User } from "next-auth";
 
 export function initializeWebSocket(httpServer: HTTPServer) {
   const io = new SocketIOServer(httpServer, {
@@ -14,13 +15,13 @@ export function initializeWebSocket(httpServer: HTTPServer) {
   });
 
   // Authentication middleware
-  io.use(async (socket, next) => {
+  io.use(async (socket: { request: any; data: { user: User; }; }, next: (arg0: Error | undefined) => void) => {
     const session = await getSession({ req: socket.request });
     if (!session?.user) {
       next(new Error("Unauthorized"));
     } else {
       socket.data.user = session.user;
-      next();
+      next(undefined);
     }
   });
 
@@ -48,7 +49,7 @@ export function initializeWebSocket(httpServer: HTTPServer) {
     socket.on("chatMessage", async (data: { eventId: string; message: string }) => {
       const { eventId, message } = data;
 
-      const chat = await Chat.create({
+      const chat = await (Chat as unknown as typeof import('@/server/db/models/chat')).create({
         eventId,
         userId,
         message,
@@ -62,8 +63,8 @@ export function initializeWebSocket(httpServer: HTTPServer) {
       const event = await Event.findOne({ id: eventId });
       if (event) {
         const notifications = await Notification.insertMany(
-          event.attendees
-            .filter((attendeeId: string) => attendeeId !== userId)
+          event?.maxAttendees
+            ? event.maxAttendees.filter((attendeeId: string) => attendeeId !== userId)
             .map((attendeeId: string) => ({
               userId: attendeeId,
               title: "New Chat Message",
@@ -71,8 +72,9 @@ export function initializeWebSocket(httpServer: HTTPServer) {
               type: "chat",
               eventId: event.id,
               actionUrl: `/events/${event.id}/chat`,
-            }))
-        );
+            }));
+        
+      
 
         // Send notifications to each user
         notifications.forEach((notification) => {

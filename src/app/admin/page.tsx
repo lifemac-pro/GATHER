@@ -1,14 +1,12 @@
-// app/admin/dashboard/page.tsx
-import AdminLayout from "@/app/admin/AdminLayout";
+// app/admin/page.tsx
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function AdminDashboardPage() {
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-[#E1A913]">
-          Welcome, Admin! 🎉
-        </h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-[#E1A913]">
+        Welcome, Admin! 🎉
+      </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Events */}
@@ -43,7 +41,6 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }

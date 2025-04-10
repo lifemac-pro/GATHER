@@ -1,15 +1,15 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model,Types } from 'mongoose';
 import { nanoid } from "nanoid";
 
 export interface EventBase {
-  id: string;
+  // id: Types.ObjectId;
   status: string;
   name: string;
   description?: string;
   location?: string;
   startDate: Date;
   endDate: Date;
-  maxAttendees?: number;
+  maxAttendees?: string[];
   category: string;
   featured: boolean;
   price: number;

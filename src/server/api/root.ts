@@ -4,6 +4,12 @@ import { adminDashboardRouter } from "@/server/api/routers/admin/dashboard";
 import { eventRouter } from "@/server/api/routers/event";
 import { analyticsRouter } from "@/server/api/routers/analytics";
 import { settingsRouter } from "@/server/api/routers/settings";
+import { qrRouter } from "@/server/api/routers/qr";
+import { chatRouter } from "@/server/api/routers/chat";
+import { notificationRouter } from "@/server/api/routers/notification";
+import { surveyRouter } from "@/server/api/routers/survey";
+import { attendeeRouter } from "@/server/api/routers/attendee";
+import { waitlistRouter } from "@/server/api/routers/waitlist";
 
 /**
  * This is the primary router for your server.
@@ -13,9 +19,15 @@ import { settingsRouter } from "@/server/api/routers/settings";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   adminDashboard: adminDashboardRouter,
-  Gevents: eventRouter,
+  event: eventRouter,
   analytics: analyticsRouter,
   settings: settingsRouter,
+  qr: qrRouter,
+  chat: chatRouter,
+  notification: notificationRouter,
+  survey: surveyRouter,
+  attendee: attendeeRouter,
+  waitlist: waitlistRouter,
 });
 
 // export type definition of API

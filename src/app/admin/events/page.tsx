@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Search, Filter, Calendar, MapPin } from "lucide-react";
@@ -28,8 +28,8 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: events, isLoading } = api.Gevents.getAll.useQuery();
-  const deleteEvent = api.Gevents.delete.useMutation({
+  const { data: events, isLoading } = api.event.getAll.useQuery();
+  const deleteEvent = api.event.delete.useMutation({
     onSuccess: () => {
       toast({
         title: "Event deleted",
@@ -91,7 +91,7 @@ export default function EventsPage() {
 
       {/* Events Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {events?.map((event) => (
+        {events?.map((event: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; startDate: string | number | Date; location: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; status: string; description: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; }) => (
           <Card key={event.id} className="overflow-hidden">
             <div className="p-6">
               <div className="flex items-start justify-between">

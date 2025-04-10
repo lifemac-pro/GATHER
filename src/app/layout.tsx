@@ -1,23 +1,23 @@
-import { type Metadata } from "next";
+"use client";
+
 import { GeistSans } from "geist/font/sans";
 import { Toaster } from "sonner";
 import { Navbar } from "@/components/ui/navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@/trpc/react";
+import { Sidebar } from "@/components/ui/sidebar";
+import { usePathname } from "next/navigation";
 
 import "@/styles/globals.css";
-
-export const metadata: Metadata = {
-  title: "GatherEase",
-  description: "Event Management Made Easy",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
-};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isAdminPage = pathname?.startsWith('/admin');
+
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable}`}>
@@ -27,8 +27,19 @@ export default function RootLayout({
           signUpUrl="/sign-up"
         >
           <TRPCReactProvider>
-            <Navbar />
-            {children}
+            {isAdminPage ? (
+              <div className="flex h-screen">
+                <Sidebar />
+                <div className="flex-1 overflow-auto">
+                  {children}
+                </div>
+              </div>
+            ) : (
+              <>
+                <Navbar />
+                {children}
+              </>
+            )}
           </TRPCReactProvider>
           <Toaster />
         </ClerkProvider>
