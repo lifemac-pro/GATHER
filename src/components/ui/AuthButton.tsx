@@ -1,17 +1,21 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
+import { SignInButton, SignOutButton, useAuth } from "@clerk/nextjs";
 
 export function AuthButton() {
-  const { data: session } = useSession();
+  const { isSignedIn } = useAuth();
 
-  return session ? (
-    <button onClick={() => signOut()} className="bg-red-500 text-white px-4 py-2 rounded">
-      Sign Out
-    </button>
+  return isSignedIn ? (
+    <SignOutButton>
+      <button className="rounded bg-red-500 px-4 py-2 text-white">
+        Sign Out
+      </button>
+    </SignOutButton>
   ) : (
-    <button onClick={() => signIn()} className="bg-blue-500 text-white px-4 py-2 rounded">
-      Sign In
-    </button>
+    <SignInButton fallbackRedirectUrl="/attendee/dashboard">
+      <button className="rounded bg-blue-500 px-4 py-2 text-white">
+        Sign In
+      </button>
+    </SignInButton>
   );
 }

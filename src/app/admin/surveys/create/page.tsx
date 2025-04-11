@@ -32,7 +32,15 @@ export default function CreateSurveyPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [questions, setQuestions] = useState([
+  const [questions, setQuestions] = useState<
+    Array<{
+      id: string;
+      text: string;
+      type: "MULTIPLE_CHOICE" | "TEXT" | "RATING" | "YES_NO";
+      required: boolean;
+      options?: string[];
+    }>
+  >([
     {
       id: generateId(),
       text: "",
@@ -83,52 +91,80 @@ export default function CreateSurveyPage() {
   // Update question text
   const updateQuestionText = (index: number, text: string) => {
     const newQuestions = [...questions];
-    newQuestions[index].text = text;
-    setQuestions(newQuestions);
+    if (newQuestions[index]) {
+      newQuestions[index].text = text;
+      setQuestions(newQuestions);
+    }
   };
 
   // Update question type
-  const updateQuestionType = (index: number, type: string) => {
-    const newQuestions = [...questions];
-    newQuestions[index].type = type;
+  const updateQuestionType = (index: number, typeValue: string) => {
+    // Validate that the type is one of the allowed values
+    const type = typeValue as "MULTIPLE_CHOICE" | "TEXT" | "RATING" | "YES_NO";
 
-    // Initialize options for multiple choice questions
-    if (
-      type === "MULTIPLE_CHOICE" &&
-      (!newQuestions[index].options || newQuestions[index].options.length === 0)
-    ) {
-      newQuestions[index].options = ["", ""];
+    // Ensure the type is valid
+    if (!["MULTIPLE_CHOICE", "TEXT", "RATING", "YES_NO"].includes(typeValue)) {
+      console.error(`Invalid question type: ${typeValue}`);
+      return;
     }
+    const newQuestions = [...questions];
 
-    setQuestions(newQuestions);
+    if (newQuestions[index]) {
+      newQuestions[index].type = type;
+
+      // Initialize options for multiple choice questions
+      if (
+        type === "MULTIPLE_CHOICE" &&
+        (!newQuestions[index].options ||
+          newQuestions[index].options?.length === 0)
+      ) {
+        newQuestions[index].options = ["", ""];
+      }
+
+      setQuestions(newQuestions);
+    }
   };
 
   // Update question required status
   const updateQuestionRequired = (index: number, required: boolean) => {
     const newQuestions = [...questions];
-    newQuestions[index].required = required;
-    setQuestions(newQuestions);
+    if (newQuestions[index]) {
+      newQuestions[index].required = required;
+      setQuestions(newQuestions);
+    }
   };
 
   // Add option to multiple choice question
   const addOption = (questionIndex: number) => {
     const newQuestions = [...questions];
-    if (!newQuestions[questionIndex].options) {
-      newQuestions[questionIndex].options = [];
+    const question = newQuestions[questionIndex];
+
+    if (question) {
+      if (!question.options) {
+        question.options = [];
+      }
+
+      // Now we know options exists
+      question.options.push("");
+      setQuestions(newQuestions);
     }
-    newQuestions[questionIndex].options?.push("");
-    setQuestions(newQuestions);
   };
 
   // Remove option from multiple choice question
   const removeOption = (questionIndex: number, optionIndex: number) => {
     const newQuestions = [...questions];
-    if (newQuestions[questionIndex].options?.length === 2) {
+    const question = newQuestions[questionIndex];
+
+    if (!question) return;
+
+    const options = question.options;
+
+    if (!options || options.length === 2) {
       toast.error("Multiple choice questions must have at least two options");
       return;
     }
 
-    newQuestions[questionIndex].options?.splice(optionIndex, 1);
+    options.splice(optionIndex, 1);
     setQuestions(newQuestions);
   };
 
@@ -139,8 +175,10 @@ export default function CreateSurveyPage() {
     text: string,
   ) => {
     const newQuestions = [...questions];
-    if (newQuestions[questionIndex].options) {
-      newQuestions[questionIndex].options[optionIndex] = text;
+    const question = newQuestions[questionIndex];
+
+    if (question && question.options) {
+      question.options[optionIndex] = text;
       setQuestions(newQuestions);
     }
   };
@@ -168,6 +206,7 @@ export default function CreateSurveyPage() {
     // Validate questions
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
+      if (!question) continue;
 
       if (!question.text.trim()) {
         toast.error(`Question ${i + 1} is missing text`);
@@ -181,7 +220,8 @@ export default function CreateSurveyPage() {
         }
 
         for (let j = 0; j < question.options.length; j++) {
-          if (!question.options[j].trim()) {
+          const option = question.options[j];
+          if (!option?.trim()) {
             toast.error(`Option ${j + 1} for question ${i + 1} is empty`);
             return;
           }
@@ -191,11 +231,17 @@ export default function CreateSurveyPage() {
 
     setIsSubmitting(true);
 
+    // Ensure questions have the correct type
+    const typedQuestions = questions.map((q) => ({
+      ...q,
+      type: q.type,
+    }));
+
     createSurvey.mutate({
       title,
       description,
       isActive,
-      questions,
+      questions: typedQuestions,
       createdBy: userId,
       createdAt: new Date(),
     });

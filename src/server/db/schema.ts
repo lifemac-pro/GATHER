@@ -30,4 +30,4 @@ export const AttendeeSchema = z.object({
 
 export type User = z.infer<typeof UserSchema>;
 export type Event = z.infer<typeof EventSchema>;
-export type Attendee = z.infer<typeof AttendeeSchema>; 
+export type Attendee = z.infer<typeof AttendeeSchema>;

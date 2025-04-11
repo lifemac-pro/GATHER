@@ -10,6 +10,18 @@ import { SignOutButton } from "@/components/ui/sign-out-button";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
 
+// Define type for Event
+type Event = {
+  _id: string | { toString(): string };
+  title: string;
+  date: string;
+  location?: string;
+  description?: string;
+  image?: string;
+  attendees?: string[];
+  capacity?: number;
+};
+
 const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isSignedIn } = useUser();
@@ -32,7 +44,7 @@ const Dashboard = () => {
       } else {
         toast.success("Registration successful!");
       }
-      refetch();
+      void refetch();
     },
     onError: (error) => {
       toast.error(`Registration failed: ${error.message}`);
@@ -70,17 +82,20 @@ const Dashboard = () => {
   };
 
   // Check if user is registered for an event
-  const isRegistered = (eventId: string, event: any) => {
+  const isRegistered = (eventId: string, event: Event) => {
     if (!isSignedIn || !user) return false;
 
     // Check if user is in the event's attendees array
-    if (event.attendees && event.attendees.includes(user.id)) {
+    if (event.attendees?.includes(user.id)) {
       return true;
     }
 
     // Check if user has a registration for this event
     if (userRegistrations) {
-      return userRegistrations.some((reg) => reg.eventId === eventId);
+      return userRegistrations.some((reg) => {
+        // Check if the registration has an event and if that event's ID matches
+        return reg.event && reg.event._id === eventId;
+      });
     }
 
     return false;
@@ -171,20 +186,23 @@ const Dashboard = () => {
           ) : events && events.length > 0 ? (
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => {
+                // Type assertion for event object
+                const typedEvent = event as Event;
+
                 const eventId =
-                  typeof event._id === "string"
-                    ? event._id
-                    : event._id.toString();
-                const registered = isRegistered(eventId, event);
+                  typeof typedEvent._id === "string"
+                    ? typedEvent._id
+                    : (typedEvent._id as { toString(): string }).toString();
+                const registered = isRegistered(eventId, typedEvent);
 
                 return (
                   <EventCard
                     key={eventId}
                     id={eventId}
-                    title={event.title}
-                    date={event.date}
+                    title={typedEvent.title}
+                    date={typedEvent.date}
                     status={registered ? "Registered" : "Not Registered"}
-                    image={event.image || "/images/tech-conference.jpg"}
+                    image={typedEvent.image || "/images/tech-conference.jpg"}
                     onRegister={handleRegister}
                     isLoading={loadingEvent === eventId}
                   />

@@ -12,19 +12,9 @@ export function Toaster() {
           color: "#072446",
           border: "1px solid #e2e8f0",
         },
-        success: {
-          style: {
-            background: "#ecfdf5",
-            border: "1px solid #d1fae5",
-            color: "#065f46",
-          },
-        },
-        error: {
-          style: {
-            background: "#fef2f2",
-            border: "1px solid #fee2e2",
-            color: "#b91c1c",
-          },
+        classNames: {
+          success: "bg-green-50 border-green-200 text-green-800",
+          error: "bg-red-50 border-red-200 text-red-800",
         },
       }}
     />

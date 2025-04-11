@@ -16,7 +16,7 @@ export default function RegisterButton({ eventId }: { eventId: number }) {
 
     try {
       await registerMutation.mutateAsync({
-        eventId: eventId.toString()
+        eventId: eventId.toString(),
       });
       alert("Registration successful!");
     } catch (error) {
@@ -31,7 +31,7 @@ export default function RegisterButton({ eventId }: { eventId: number }) {
     <button
       onClick={handleRegister}
       disabled={isRegistering}
-      className="bg-[#E1A913] text-[#072446] px-4 py-2 rounded-md hover:bg-[#c28e00] transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-md bg-[#E1A913] px-4 py-2 text-[#072446] transition duration-200 hover:bg-[#c28e00] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isRegistering ? "Registering..." : "Register"}
     </button>

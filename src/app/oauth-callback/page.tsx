@@ -11,11 +11,12 @@ export default function OAuthCallbackPage() {
 
     try {
       // Get the redirect URL from localStorage
-      const redirectUrl = localStorage.getItem("redirectAfterAuth") || "/attendee/dashboard";
-      
+      const redirectUrl =
+        localStorage.getItem("redirectAfterAuth") ?? "/attendee/dashboard";
+
       // Clear the redirect URL from localStorage
       localStorage.removeItem("redirectAfterAuth");
-      
+
       // Redirect the user with a full page reload
       window.location.href = redirectUrl;
     } catch (error) {
@@ -28,8 +29,12 @@ export default function OAuthCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#072446]">
       <div className="rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-4 text-2xl font-bold text-[#072446]">Redirecting...</h1>
-        <p className="text-gray-600">Please wait while we redirect you to your dashboard.</p>
+        <h1 className="mb-4 text-2xl font-bold text-[#072446]">
+          Redirecting...
+        </h1>
+        <p className="text-gray-600">
+          Please wait while we redirect you to your dashboard.
+        </p>
       </div>
     </div>
   );

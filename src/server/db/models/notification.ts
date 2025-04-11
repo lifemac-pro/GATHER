@@ -5,7 +5,12 @@ export const NotificationSchema = z.object({
   userId: z.string().optional(), // Optional for global notifications
   title: z.string().min(1),
   message: z.string().min(1),
-  type: z.enum(["EVENT_UPDATE", "EVENT_REMINDER", "SURVEY_AVAILABLE", "REGISTRATION_CONFIRMATION"]),
+  type: z.enum([
+    "EVENT_UPDATE",
+    "EVENT_REMINDER",
+    "SURVEY_AVAILABLE",
+    "REGISTRATION_CONFIRMATION",
+  ]),
   read: z.boolean().default(false),
   isGlobal: z.boolean().optional().default(false),
   readBy: z.array(z.string()).optional().default([]),

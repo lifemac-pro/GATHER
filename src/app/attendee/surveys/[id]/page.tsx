@@ -1,38 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { Menu, X, ArrowLeft, AlertCircle } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
+
+// Define types for survey questions
+type SurveyQuestion = {
+  id: string;
+  text: string;
+  type: "MULTIPLE_CHOICE" | "TEXT" | "RATING" | "CHECKBOX" | string;
+  required: boolean;
+  options: string[];
+};
+
+// Define type for survey
+type Survey = {
+  _id: string;
+  title: string;
+  description: string;
+  questions: SurveyQuestion[];
+  createdAt: string;
+  updatedAt: string;
+};
 
 export default function SurveyDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  // Unwrap params using React.use()
-  const unwrappedParams = React.use(params);
-  const surveyId = unwrappedParams.id;
+  // Use React.use() to unwrap params
+  const { id: surveyId } = React.use(params);
 
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  // Define a more specific type for answers - exclude null to match API expectations
+  type SurveyAnswer = string | number | string[];
+  const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch survey data
-  const { data: survey, isLoading: surveyLoading } =
+  const {
+    data: survey,
+    isLoading: surveyLoading,
+  }: { data: Survey | undefined; isLoading: boolean } =
     trpc.survey.getById.useQuery(
       { id: surveyId },
       {
         enabled: !!surveyId,
         retry: 1,
-        onError: (error) => {
-          toast.error(`Error loading survey: ${error.message}`);
-          router.push("/attendee/surveys");
-        },
+        // onError callback removed as it's not supported in the type
       },
     );
 
@@ -43,14 +63,17 @@ export default function SurveyDetailPage({
       {
         enabled: !!surveyId,
         retry: 1,
-        onSuccess: (data) => {
-          if (data) {
-            toast.info("You have already completed this survey");
-            router.push("/attendee/surveys");
-          }
-        },
+        // onSuccess callback removed as it's not supported in the type
       },
     );
+
+  // Effect to handle hasResponded data
+  useEffect(() => {
+    if (hasResponded) {
+      toast.info("You have already completed this survey");
+      router.push("/attendee/surveys");
+    }
+  }, [hasResponded, router]);
 
   // Submit survey response
   const submitResponse = trpc.survey.submitResponse.useMutation({
@@ -65,7 +88,7 @@ export default function SurveyDetailPage({
   });
 
   // Handle answer change
-  const handleAnswerChange = (questionId: string, value: any) => {
+  const handleAnswerChange = (questionId: string, value: SurveyAnswer) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: value,
@@ -81,7 +104,7 @@ export default function SurveyDetailPage({
     // Check if all required questions are answered
     const unansweredRequired = survey.questions
       .filter((q) => q.required)
-      .filter((q) => !answers[q.id || ""] && answers[q.id || ""] !== 0);
+      .filter((q) => !answers[q.id] && answers[q.id] !== 0);
 
     if (unansweredRequired.length > 0) {
       toast.error(`Please answer all required questions`);
@@ -106,8 +129,8 @@ export default function SurveyDetailPage({
   };
 
   // Render question based on type
-  const renderQuestion = (question: any, index: number) => {
-    const questionId = question.id || "";
+  const renderQuestion = (question: SurveyQuestion, index: number) => {
+    const questionId = question.id;
 
     switch (question.type) {
       case "MULTIPLE_CHOICE":
@@ -158,7 +181,7 @@ export default function SurveyDetailPage({
             </label>
             <textarea
               id={questionId}
-              value={answers[questionId] || ""}
+              value={answers[questionId] ?? ""}
               onChange={(e) => handleAnswerChange(questionId, e.target.value)}
               className="w-full rounded-md border border-gray-300 bg-[#072446] p-2 text-gray-300 focus:border-[#E1A913] focus:outline-none focus:ring-1 focus:ring-[#E1A913]"
               rows={4}
@@ -304,7 +327,7 @@ export default function SurveyDetailPage({
         <div className="mx-auto max-w-3xl">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              {isLoading ? "Loading Survey..." : survey?.title || "Survey"}
+              {isLoading ? "Loading Survey..." : (survey?.title ?? "Survey")}
             </h1>
             <Button
               onClick={() => router.push("/attendee/surveys")}
@@ -326,9 +349,7 @@ export default function SurveyDetailPage({
 
               <form onSubmit={handleSubmit}>
                 {survey.questions.map((question, index) => (
-                  <div key={question.id || index}>
-                    {renderQuestion(question, index)}
-                  </div>
+                  <div key={question.id}>{renderQuestion(question, index)}</div>
                 ))}
 
                 <div className="mt-8 flex justify-end">
@@ -350,8 +371,8 @@ export default function SurveyDetailPage({
                   Survey Not Found
                 </h2>
                 <p className="mt-2 text-gray-400">
-                  The survey you're looking for could not be found or has been
-                  removed.
+                  The survey you&apos;re looking for could not be found or has
+                  been removed.
                 </p>
               </div>
               <Button

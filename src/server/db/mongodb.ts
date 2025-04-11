@@ -15,35 +15,37 @@ let clientPromise: Promise<MongoClient>;
 if (process.env.NODE_ENV === "development") {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  let globalWithMongo = globalThis as typeof globalThis & {
+  const globalWithMongo = globalThis as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>;
   };
 
   if (!globalWithMongo._mongoClientPromise) {
-    console.log('Connecting to MongoDB...');
+    console.log("Connecting to MongoDB...");
     client = new MongoClient(uri);
-    globalWithMongo._mongoClientPromise = client.connect()
+    globalWithMongo._mongoClientPromise = client
+      .connect()
       .then((client) => {
-        console.log('✅ Connected to MongoDB Atlas!');
+        console.log("✅ Connected to MongoDB Atlas!");
         return client;
       })
       .catch((err) => {
-        console.error('❌ Connection failed:', err);
+        console.error("❌ Connection failed:", err);
         throw err;
       });
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
   // In production mode, it's best to not use a global variable.
-  console.log('Connecting to MongoDB (production)...');
+  console.log("Connecting to MongoDB (production)...");
   client = new MongoClient(uri);
-  clientPromise = client.connect()
+  clientPromise = client
+    .connect()
     .then((client) => {
-      console.log('✅ Connected to MongoDB Atlas!');
+      console.log("✅ Connected to MongoDB Atlas!");
       return client;
     })
     .catch((err) => {
-      console.error('❌ Connection failed:', err);
+      console.error("❌ Connection failed:", err);
       throw err;
     });
 }

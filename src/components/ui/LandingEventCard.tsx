@@ -1,7 +1,8 @@
 "use client"; // Ensure this is a Client Component
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@clerk/nextjs";
+// This import is not used
+// import { useAuth } from "@clerk/nextjs";
 import { AuthButton } from "./auth-button";
 
 type EventProps = {
@@ -11,7 +12,12 @@ type EventProps = {
   image: string;
 };
 
-const LandingEventCard: React.FC<EventProps> = ({ title, date, status, image }) => {
+const LandingEventCard: React.FC<EventProps> = ({
+  title,
+  date,
+  status,
+  image,
+}) => {
   return (
     <Card className="overflow-hidden rounded-lg border border-gray-200 bg-[#072446] p-4 shadow-md transition hover:shadow-lg">
       {/* Event Image */}

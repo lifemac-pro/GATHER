@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 
 export function OAuthCallbackHandler() {
-  // Only run on the client side
-  if (typeof window === "undefined") return null;
-
+  // Initialize hooks unconditionally at the top level
   const { isSignedIn, isLoaded } = useAuth();
   const [hasHandled, setHasHandled] = useState(false);
 
   useEffect(() => {
+    // Only run on the client side
+    if (typeof window === "undefined") return;
     // Only run this effect on the client after auth is loaded
     if (!isLoaded || hasHandled) return;
 
@@ -21,7 +21,7 @@ export function OAuthCallbackHandler() {
       try {
         // Get the redirect URL from localStorage
         const redirectUrl =
-          localStorage.getItem("redirectAfterAuth") || "/attendee/dashboard";
+          localStorage.getItem("redirectAfterAuth") ?? "/attendee/dashboard";
 
         // Clear the redirect URL from localStorage
         localStorage.removeItem("redirectAfterAuth");

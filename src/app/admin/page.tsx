@@ -98,19 +98,23 @@ export default function AdminPage() {
     setIsSubmitting(true);
 
     // Use the image preview URL if available, otherwise use the selected image
-    const finalImageUrl = imagePreview || image;
+    const finalImageUrl = imagePreview ?? image;
 
-    createEvent.mutate({
-      title,
-      description,
-      date,
-      location,
-      image: finalImageUrl,
-      capacity,
-      createdBy: userId,
-      attendees: [],
-      createdAt: new Date(),
-    });
+    try {
+      await createEvent.mutateAsync({
+        title,
+        description,
+        date,
+        location,
+        image: finalImageUrl,
+        capacity,
+        createdBy: userId,
+        attendees: [],
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      console.error("Error creating event:", error);
+    }
   };
 
   // If not loaded yet, show loading state

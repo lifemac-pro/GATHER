@@ -1,62 +1,99 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+// import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { useAuth } from "@clerk/nextjs";
-import { toast } from "sonner";
-import { ArrowLeft, Bell, Calendar, MapPin, Users } from "lucide-react";
+// import { toast } from "sonner";
+import { ArrowLeft, Bell, Calendar } from "lucide-react"; // MapPin, Users removed as unused
 import { formatDistanceToNow } from "date-fns";
 import Sidebar from "@/components/ui/sidebar";
 
 export default function NotificationDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  // Unwrap params using React.use()
-  const unwrappedParams = React.use(params);
-  const notificationId = unwrappedParams.id;
-  
+  // Use React.use() to unwrap params
+  const { id: notificationId } = React.use(params);
+
   const router = useRouter();
-  const { userId, isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  // Track whether we've already marked this notification as read
+  const [hasMarkedAsRead, setHasMarkedAsRead] = useState(false);
+
   // Get the notification by ID
   const { data: notifications } = trpc.notification.getAll.useQuery();
-  const notification = notifications?.find(n => 
-    (typeof n._id === "string" ? n._id : n._id.toString()) === notificationId
+  const notification = notifications?.find(
+    (n) =>
+      (typeof n._id === "string" ? n._id : n._id.toString()) === notificationId,
   );
-  
+
   // Mark as read mutation
   const markAsRead = trpc.notification.markAsRead.useMutation({
     onSuccess: () => {
-      toast.success("Notification marked as read");
+      setHasMarkedAsRead(true);
+    },
+    onError: (error) => {
+      console.error("Error marking notification as read:", error);
+      // Don't show an error toast to the user, just log it
+      // Still set hasMarkedAsRead to true to prevent further attempts
+      setHasMarkedAsRead(true);
     },
   });
-  
-  // Mark notification as read when viewed
+
+  // Check if the notification ID is valid
+  const isValidObjectId = useMemo(() => {
+    try {
+      // Check if it's a valid MongoDB ObjectId format
+      return /^[0-9a-fA-F]{24}$/.test(notificationId);
+    } catch (error) {
+      return false;
+    }
+  }, [notificationId]);
+
+  // Mark notification as read when viewed - only once
   useEffect(() => {
-    if (notification && !notification.read && isSignedIn) {
+    // Only attempt to mark as read if we have a valid notification
+    if (
+      isValidObjectId &&
+      notification &&
+      !notification.read &&
+      isSignedIn &&
+      !hasMarkedAsRead &&
+      !markAsRead.isPending
+    ) {
       markAsRead.mutate({ id: notificationId });
     }
-  }, [notification, notificationId, isSignedIn]);
-  
+  }, [
+    notification,
+    notificationId,
+    isSignedIn,
+    markAsRead,
+    hasMarkedAsRead,
+    isValidObjectId,
+  ]);
+
   // If not loaded yet, show loading state
   if (!isLoaded) {
     return <div className="p-8">Loading...</div>;
   }
-  
+
   // If not signed in, show sign-in message
   if (!isSignedIn) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#6fc3f7] p-8">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h1 className="mb-6 text-2xl font-bold text-[#072446]">Sign In Required</h1>
-          <p className="mb-4 text-gray-600">You need to sign in to view notification details.</p>
-          <Button 
+          <h1 className="mb-6 text-2xl font-bold text-[#072446]">
+            Sign In Required
+          </h1>
+          <p className="mb-4 text-gray-600">
+            You need to sign in to view notification details.
+          </p>
+          <Button
             onClick={() => router.push("/sign-in")}
             className="w-full bg-[#072446] text-white hover:bg-[#0a3060]"
           >
@@ -66,7 +103,7 @@ export default function NotificationDetailPage({
       </div>
     );
   }
-  
+
   // If notification not found, show error message
   if (!notification) {
     return (
@@ -75,7 +112,7 @@ export default function NotificationDetailPage({
         <aside className="sticky top-0 hidden md:block">
           <Sidebar />
         </aside>
-        
+
         {/* Mobile Navbar */}
         <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
           <button
@@ -86,7 +123,7 @@ export default function NotificationDetailPage({
             <Bell size={24} />
           </button>
         </nav>
-        
+
         {/* Mobile Sidebar (Overlay) */}
         {mobileMenuOpen && (
           <div
@@ -110,7 +147,7 @@ export default function NotificationDetailPage({
             </aside>
           </div>
         )}
-        
+
         {/* Main Content */}
         <main className="flex-1 bg-[#6fc3f7] p-6">
           <div className="mx-auto max-w-4xl">
@@ -127,10 +164,11 @@ export default function NotificationDetailPage({
                 <span>Back to Notifications</span>
               </Button>
             </div>
-            
+
             <div className="rounded-lg bg-white p-6 shadow-lg">
               <p className="text-gray-600">
-                The notification you're looking for could not be found. It may have been deleted or you may not have permission to view it.
+                The notification you&apos;re looking for could not be found. It
+                may have been deleted or you may not have permission to view it.
               </p>
               <Button
                 onClick={() => router.push("/attendee/notifications")}
@@ -144,7 +182,7 @@ export default function NotificationDetailPage({
       </div>
     );
   }
-  
+
   // Get notification type color
   const getNotificationTypeColor = (type: string) => {
     switch (type) {
@@ -160,14 +198,14 @@ export default function NotificationDetailPage({
         return "bg-gray-100 text-gray-800";
     }
   };
-  
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 hidden md:block">
         <Sidebar />
       </aside>
-      
+
       {/* Mobile Navbar */}
       <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
         <button
@@ -178,7 +216,7 @@ export default function NotificationDetailPage({
           <Bell size={24} />
         </button>
       </nav>
-      
+
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
@@ -202,7 +240,7 @@ export default function NotificationDetailPage({
           </aside>
         </div>
       )}
-      
+
       {/* Main Content */}
       <main className="flex-1 bg-[#6fc3f7] p-6">
         <div className="mx-auto max-w-4xl">
@@ -219,7 +257,7 @@ export default function NotificationDetailPage({
               <span>Back to Notifications</span>
             </Button>
           </div>
-          
+
           <div className="rounded-lg bg-white p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-2xl font-semibold text-[#072446]">
@@ -231,39 +269,49 @@ export default function NotificationDetailPage({
                 })}
               </span>
             </div>
-            
+
             {notification.type && (
               <div className="mb-4">
-                <span className={`rounded-full px-3 py-1 text-sm ${getNotificationTypeColor(notification.type)}`}>
+                <span
+                  className={`rounded-full px-3 py-1 text-sm ${getNotificationTypeColor(notification.type)}`}
+                >
                   {notification.type.replace(/_/g, " ")}
                 </span>
               </div>
             )}
-            
+
             <div className="mb-6 rounded-lg bg-gray-50 p-4">
-              <p className="whitespace-pre-wrap text-gray-700">{notification.message}</p>
+              <p className="whitespace-pre-wrap text-gray-700">
+                {notification.message}
+              </p>
             </div>
-            
-            {notification.link && notification.link !== `/attendee/notification/${notificationId}` && (
-              <div className="mt-6">
-                <Button
-                  onClick={() => router.push(notification.link)}
-                  className="bg-[#00b0a6] text-white hover:bg-[#009991]"
-                >
-                  View Related Content
-                </Button>
-              </div>
-            )}
-            
+
+            {notification.link &&
+              notification.link !==
+                `/attendee/notification/${notificationId}` && (
+                <div className="mt-6">
+                  <Button
+                    onClick={() => router.push(notification.link)}
+                    className="bg-[#00b0a6] text-white hover:bg-[#009991]"
+                  >
+                    View Related Content
+                  </Button>
+                </div>
+              )}
+
             {notification.eventId && (
               <div className="mt-6 rounded-lg border border-gray-200 p-4">
-                <h3 className="mb-2 text-lg font-medium text-[#072446]">Related Event</h3>
+                <h3 className="mb-2 text-lg font-medium text-[#072446]">
+                  Related Event
+                </h3>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <Calendar size={16} />
                   <span>Event ID: {notification.eventId}</span>
                 </div>
                 <Button
-                  onClick={() => router.push(`/attendee/events/${notification.eventId}`)}
+                  onClick={() =>
+                    router.push(`/attendee/events/${notification.eventId}`)
+                  }
                   variant="outline"
                   className="mt-3 border-[#00b0a6] text-[#00b0a6] hover:bg-[#00b0a6] hover:text-white"
                 >

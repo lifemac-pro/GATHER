@@ -6,10 +6,10 @@ import { useEffect } from "react";
 
 export default function SignUpPage() {
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") || "/attendee/dashboard";
+  const redirectUrl = searchParams.get("redirect_url") ?? "/attendee/dashboard";
   const { isSignedIn, isLoaded } = useAuth();
   const { isLoaded: isSignUpLoaded } = useSignUp();
-  const router = useRouter();
+  // We don't need router here
 
   // Store redirect URL in localStorage for OAuth flow
   useEffect(() => {

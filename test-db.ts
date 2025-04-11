@@ -1,4 +1,4 @@
-import 'dotenv/config'; // 👈 This loads your .env file automatically
+import "dotenv/config"; // 👈 This loads your .env file automatically
 
 import { MongoClient } from "mongodb";
 

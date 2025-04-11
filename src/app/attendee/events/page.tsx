@@ -33,7 +33,7 @@ const EventsPage = () => {
       } else {
         toast.success("Registration successful!");
       }
-      refetch();
+      void refetch();
     },
     onError: (error) => {
       toast.error(`Registration failed: ${error.message}`);
@@ -75,13 +75,16 @@ const EventsPage = () => {
     if (!isSignedIn || !user) return false;
 
     // Check if user is in the event's attendees array
-    if (event.attendees && event.attendees.includes(user.id)) {
+    if (event.attendees?.includes(user.id)) {
       return true;
     }
 
     // Check if user has a registration for this event
     if (userRegistrations) {
-      return userRegistrations.some((reg) => reg.eventId === eventId);
+      return userRegistrations.some((reg) => {
+        // Check if the registration has an event and if that event's ID matches
+        return reg.event && reg.event._id === eventId;
+      });
     }
 
     return false;
@@ -140,88 +143,115 @@ const EventsPage = () => {
           </div>
         ) : events && events.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <Card
-                key={
-                  typeof event._id === "string"
-                    ? event._id
-                    : event._id.toString()
-                }
-                className="overflow-hidden rounded-lg bg-[#072446] text-[#E1A913] shadow-lg"
-              >
-                <div className="relative h-40 w-full">
-                  <img
-                    src={event.image || "/images/tech-conference.jpg"}
-                    alt={event.title}
-                    className="h-full w-full rounded-t-lg object-cover"
-                  />
-                </div>
+            {events.map((event) => {
+              // Type assertion for event properties
+              const typedEvent = event as {
+                _id: string | { toString(): string };
+                title: string;
+                date: string;
+                location?: string;
+                description?: string;
+                image?: string;
+                attendees?: string[];
+                capacity?: number;
+              };
 
-                <CardHeader className="p-4">
-                  <CardTitle>{event.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <p className="text-[#00b0a6]">📅 {event.date}</p>
-                  <p className="text-[#00b0a6]">📍 {event.location || "TBD"}</p>
-                  <p className="mt-2 text-sm text-gray-300">
-                    {event.description?.substring(0, 100)}
-                    {event.description && event.description.length > 100
-                      ? "..."
-                      : ""}
-                  </p>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm text-gray-400">
-                      {event.attendees?.length || 0} / {event.capacity || 100}{" "}
-                      registered
-                    </span>
-
-                    {isRegistered(
-                      typeof event._id === "string"
-                        ? event._id
-                        : event._id.toString(),
-                      event,
-                    ) ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                        Registered
-                      </span>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className={`mt-4 w-full ${
-                          loadingEvent ===
-                          (typeof event._id === "string"
-                            ? event._id
-                            : event._id.toString())
-                            ? "cursor-not-allowed bg-gray-500"
-                            : "bg-blue-600 hover:bg-blue-700"
-                        }`}
-                        disabled={
-                          loadingEvent ===
-                          (typeof event._id === "string"
-                            ? event._id
-                            : event._id.toString())
-                        }
-                        onClick={() =>
-                          handleRegister(
-                            typeof event._id === "string"
-                              ? event._id
-                              : event._id.toString(),
-                          )
-                        }
-                      >
-                        {loadingEvent ===
-                        (typeof event._id === "string"
-                          ? event._id
-                          : event._id.toString())
-                          ? "Registering..."
-                          : "Register"}
-                      </Button>
-                    )}
+              return (
+                <Card
+                  key={
+                    typeof typedEvent._id === "string"
+                      ? typedEvent._id
+                      : (typedEvent._id as { toString(): string }).toString()
+                  }
+                  className="overflow-hidden rounded-lg bg-[#072446] text-[#E1A913] shadow-lg"
+                >
+                  <div className="relative h-40 w-full">
+                    <img
+                      src={typedEvent.image || "/images/tech-conference.jpg"}
+                      alt={typedEvent.title}
+                      className="h-full w-full rounded-t-lg object-cover"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                  <CardHeader className="p-4">
+                    <CardTitle>{typedEvent.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <p className="text-[#00b0a6]">📅 {typedEvent.date}</p>
+                    <p className="text-[#00b0a6]">
+                      📍 {typedEvent.location || "TBD"}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-300">
+                      {typedEvent.description?.substring(0, 100)}
+                      {typedEvent.description &&
+                      typedEvent.description.length > 100
+                        ? "..."
+                        : ""}
+                    </p>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-sm text-gray-400">
+                        {typedEvent.attendees?.length || 0} /{" "}
+                        {typedEvent.capacity || 100} registered
+                      </span>
+
+                      {isRegistered(
+                        typeof typedEvent._id === "string"
+                          ? typedEvent._id
+                          : (
+                              typedEvent._id as { toString(): string }
+                            ).toString(),
+                        typedEvent,
+                      ) ? (
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                          Registered
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className={`mt-4 w-full ${
+                            loadingEvent ===
+                            (typeof typedEvent._id === "string"
+                              ? typedEvent._id
+                              : (
+                                  typedEvent._id as { toString(): string }
+                                ).toString())
+                              ? "cursor-not-allowed bg-gray-500"
+                              : "bg-blue-600 hover:bg-blue-700"
+                          }`}
+                          disabled={
+                            loadingEvent ===
+                            (typeof typedEvent._id === "string"
+                              ? typedEvent._id
+                              : (
+                                  typedEvent._id as { toString(): string }
+                                ).toString())
+                          }
+                          onClick={() =>
+                            handleRegister(
+                              typeof typedEvent._id === "string"
+                                ? typedEvent._id
+                                : (
+                                    typedEvent._id as { toString(): string }
+                                  ).toString(),
+                            )
+                          }
+                        >
+                          {loadingEvent ===
+                          (typeof typedEvent._id === "string"
+                            ? typedEvent._id
+                            : (
+                                typedEvent._id as { toString(): string }
+                              ).toString())
+                            ? "Registering..."
+                            : "Register"}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-lg bg-white p-8 text-center shadow-md">

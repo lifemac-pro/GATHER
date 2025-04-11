@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { ArrowLeft, Upload } from "lucide-react";
 import { useEventContext } from "@/context/event-context";
+import type { Event } from "@/server/db/models/event";
 
 export default function EditEventPage({
   params,
@@ -46,7 +47,7 @@ export default function EditEventPage({
   ];
 
   // Use trpc for data fetching
-  const [event, setEvent] = useState<any>(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Get the event by ID using trpc
@@ -65,7 +66,7 @@ export default function EditEventPage({
   );
 
   // Create a mock event with default values
-  const createMockEvent = () => {
+  const createMockEvent = useCallback(() => {
     return {
       _id: eventId,
       title: "Event Title",
@@ -74,11 +75,11 @@ export default function EditEventPage({
       location: "Event Location",
       image: "/images/tech-conference.jpg",
       capacity: 100,
-      createdBy: userId || "",
+      createdBy: userId ?? "",
       attendees: [],
       createdAt: new Date(),
     };
-  };
+  }, [eventId, userId]);
 
   // Effect to handle the tRPC query result
   useEffect(() => {
@@ -86,14 +87,17 @@ export default function EditEventPage({
       // Event found successfully
       console.log("Event data fetched successfully:", eventData);
 
+      // Type assertion for eventData
+      const typedEventData = eventData as Event;
+
       // Update form with event data
-      setTitle(eventData.title || "");
-      setDescription(eventData.description || "");
-      setDate(eventData.date || "");
-      setLocation(eventData.location || "");
-      setImage(eventData.image || "/images/tech-conference.jpg");
-      setCapacity(eventData.capacity || 100);
-      setEvent(eventData);
+      setTitle(typedEventData.title ?? "");
+      setDescription(typedEventData.description ?? "");
+      setDate(typedEventData.date ?? "");
+      setLocation(typedEventData.location ?? "");
+      setImage(typedEventData.image ?? "/images/tech-conference.jpg");
+      setCapacity(typedEventData.capacity ?? 100);
+      setEvent(typedEventData);
       setIsLoading(false);
     } else if (isError) {
       console.error("Error fetching event:", error);
@@ -111,7 +115,7 @@ export default function EditEventPage({
       setEvent(mockEvent);
       setIsLoading(false);
     }
-  }, [eventData, isError, error, eventId, userId]);
+  }, [eventData, isError, error, eventId, userId, createMockEvent]);
 
   // Add a timeout as a fallback
   useEffect(() => {
@@ -136,7 +140,7 @@ export default function EditEventPage({
     }, 5000); // 5 second timeout
 
     return () => clearTimeout(timeout);
-  }, [isLoading, eventId, userId]);
+  }, [isLoading, eventId, userId, createMockEvent]);
 
   // Add effect to log the current form state
   useEffect(() => {
@@ -200,20 +204,24 @@ export default function EditEventPage({
     setIsSubmitting(true);
 
     // Use the image preview URL if available, otherwise use the selected image
-    const finalImageUrl = imagePreview || image;
+    const finalImageUrl = imagePreview ?? image;
 
-    updateEvent.mutate({
-      _id: eventId,
-      title,
-      description,
-      date,
-      location,
-      image: finalImageUrl,
-      capacity,
-      createdBy: event?.createdBy || userId,
-      attendees: event?.attendees || [],
-      createdAt: event?.createdAt ? new Date(event.createdAt) : new Date(),
-    });
+    try {
+      await updateEvent.mutateAsync({
+        _id: eventId,
+        title,
+        description,
+        date,
+        location,
+        image: finalImageUrl,
+        capacity,
+        createdBy: event?.createdBy ?? userId,
+        attendees: event?.attendees ?? [],
+        createdAt: event?.createdAt ? new Date(event.createdAt) : new Date(),
+      });
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
 
     console.log("Submitting update with data:", {
       _id: eventId,
@@ -223,7 +231,7 @@ export default function EditEventPage({
       location,
       image: finalImageUrl,
       capacity,
-      createdBy: event?.createdBy || userId,
+      createdBy: event?.createdBy ?? userId,
     });
   };
 

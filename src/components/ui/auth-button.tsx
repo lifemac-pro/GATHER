@@ -19,7 +19,7 @@ export function AuthButton({
   children,
 }: AuthButtonProps) {
   const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
+  // We don't need router here as we're using redirectUrl prop
   const [mounted, setMounted] = useState(false);
 
   // This effect runs only on the client after hydration

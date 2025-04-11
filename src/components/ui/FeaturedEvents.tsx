@@ -5,6 +5,29 @@ import { trpc } from "@/utils/trpc";
 import LandingEventCard from "./LandingEventCard";
 import { useUser } from "@clerk/nextjs";
 
+// Define type for Event
+type Event = {
+  _id: string | { toString(): string };
+  title: string;
+  date: string;
+  location?: string;
+  description?: string;
+  image?: string;
+  attendees?: string[];
+  capacity?: number;
+};
+
+// Add Clerk to the Window interface
+declare global {
+  interface Window {
+    Clerk?: {
+      user?: {
+        id: string;
+      };
+    };
+  }
+}
+
 export default function FeaturedEvents() {
   const { data: events, isLoading } = trpc.event.getAll.useQuery();
   const { isSignedIn } = useUser();
@@ -16,7 +39,7 @@ export default function FeaturedEvents() {
     });
 
   // Check if user is registered for an event
-  const isRegistered = (eventId: string, event: any) => {
+  const isRegistered = (eventId: string, event: Event) => {
     if (!isSignedIn) return false;
 
     // Check if user is in the event's attendees array
@@ -27,7 +50,10 @@ export default function FeaturedEvents() {
 
     // Check if user has a registration for this event
     if (userRegistrations) {
-      return userRegistrations.some((reg) => reg.eventId === eventId);
+      return userRegistrations.some((reg) => {
+        // Check if the registration has an event and if that event's ID matches
+        return reg.event && reg.event._id === eventId;
+      });
     }
 
     return false;
@@ -60,22 +86,33 @@ export default function FeaturedEvents() {
 
   return (
     <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-      {featuredEvents.map((event) => (
-        <LandingEventCard
-          key={typeof event._id === "string" ? event._id : event._id.toString()}
-          title={event.title}
-          date={`📅 ${event.date}`}
-          status={
-            isRegistered(
-              typeof event._id === "string" ? event._id : event._id.toString(),
-              event,
-            )
-              ? "Registered"
-              : "Not Registered"
-          }
-          image={event.image || "/images/tech-conference.jpg"}
-        />
-      ))}
+      {featuredEvents.map((event) => {
+        // Type assertion for event object
+        const typedEvent = event as Event;
+
+        return (
+          <LandingEventCard
+            key={
+              typeof typedEvent._id === "string"
+                ? typedEvent._id
+                : (typedEvent._id as { toString(): string }).toString()
+            }
+            title={typedEvent.title}
+            date={`📅 ${typedEvent.date}`}
+            status={
+              isRegistered(
+                typeof typedEvent._id === "string"
+                  ? typedEvent._id
+                  : (typedEvent._id as { toString(): string }).toString(),
+                typedEvent,
+              )
+                ? "Registered"
+                : "Not Registered"
+            }
+            image={typedEvent.image ?? "/images/tech-conference.jpg"}
+          />
+        );
+      })}
     </div>
   );
 }

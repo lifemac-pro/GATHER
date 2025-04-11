@@ -1,19 +1,23 @@
-/** @type {import("eslint").Linter.Config} */
-const config = {
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": true
+// This is a CommonJS file used by ESLint
+// We're using module.exports instead of export default
+
+// @ts-nocheck
+/* eslint-disable */
+
+module.exports = {
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: true
   },
-  "plugins": [
-    "@typescript-eslint",
-    "drizzle"
+  plugins: [
+    "@typescript-eslint"
   ],
-  "extends": [
+  extends: [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked"
   ],
-  "rules": {
+  rules: {
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
     "@typescript-eslint/consistent-type-imports": [
@@ -29,7 +33,6 @@ const config = {
         "argsIgnorePattern": "^_"
       }
     ],
-    "@typescript-eslint/require-await": "off",
     "@typescript-eslint/no-misused-promises": [
       "error",
       {
@@ -37,25 +40,6 @@ const config = {
           "attributes": false
         }
       }
-    ],
-    "drizzle/enforce-delete-with-where": [
-      "error",
-      {
-        "drizzleObjectName": [
-          "db",
-          "ctx.db"
-        ]
-      }
-    ],
-    "drizzle/enforce-update-with-where": [
-      "error",
-      {
-        "drizzleObjectName": [
-          "db",
-          "ctx.db"
-        ]
-      }
     ]
   }
-}
-module.exports = config;
+};

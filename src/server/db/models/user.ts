@@ -10,17 +10,19 @@ export const UserSchema = z.object({
   organization: z.string().optional(),
   jobTitle: z.string().optional(),
   phoneNumber: z.string().optional(),
-  notificationPreferences: z.object({
-    email: z.boolean().default(true),
-    inApp: z.boolean().default(true),
-    eventReminders: z.boolean().default(true),
-    surveyNotifications: z.boolean().default(true),
-  }).default({
-    email: true,
-    inApp: true,
-    eventReminders: true,
-    surveyNotifications: true,
-  }),
+  notificationPreferences: z
+    .object({
+      email: z.boolean().default(true),
+      inApp: z.boolean().default(true),
+      eventReminders: z.boolean().default(true),
+      surveyNotifications: z.boolean().default(true),
+    })
+    .default({
+      email: true,
+      inApp: true,
+      eventReminders: true,
+      surveyNotifications: true,
+    }),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });

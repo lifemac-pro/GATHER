@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "./button";
 
 interface Props {
@@ -40,11 +40,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return (
-        this.props.fallback || (
+        this.props.fallback ?? (
           <div className="flex min-h-[200px] w-full flex-col items-center justify-center rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-2 text-xl font-semibold text-red-600">Something went wrong</h2>
+            <h2 className="mb-2 text-xl font-semibold text-red-600">
+              Something went wrong
+            </h2>
             <p className="mb-4 text-gray-600">
-              {this.state.error?.message || "An unexpected error occurred"}
+              {this.state.error?.message ?? "An unexpected error occurred"}
             </p>
             <div className="flex space-x-4">
               <Button

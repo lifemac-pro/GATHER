@@ -3,6 +3,7 @@ import "server-only";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { headers } from "next/headers";
 import { cache } from "react";
+import { NextRequest } from "next/server";
 
 import { createCaller, type AppRouter } from "@/server/api/root";
 import { createTRPCContext } from "@/server/api/trpc";
@@ -17,9 +18,12 @@ const createContext = cache(async () => {
   const heads = new Headers(rawHeaders); // ✅ Use after awaiting
   heads.set("x-trpc-source", "rsc");
 
-  return createTRPCContext({
-    req: { headers: heads } as Request, // ✅ Ensure `req` is a valid `Request` object
+  // Create a NextRequest object with the headers
+  const req = new NextRequest('http://localhost', {
+    headers: heads,
   });
+
+  return createTRPCContext({ req });
 });
 
 const getQueryClient = cache(createQueryClient);
@@ -27,5 +31,5 @@ const caller = async () => createCaller(await createContext()); // ✅ Fix: Awai
 
 export const { trpc: api, HydrateClient } = createHydrationHelpers<AppRouter>(
   await caller(),
-  getQueryClient
+  getQueryClient,
 );

@@ -5,13 +5,25 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { useAuth } from "@clerk/nextjs";
-import { toast } from "sonner";
-import Link from "next/link";
+// import { toast } from "sonner";
+// import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+
+// Define type for event object
+type Event = {
+  _id: string | { toString(): string };
+  title: string;
+  date: string;
+  location?: string;
+  description?: string;
+  image?: string;
+  attendees?: string[];
+  capacity?: number;
+};
 
 export default function AdminRegistrationsPage() {
   const router = useRouter();
-  const { userId, isSignedIn, isLoaded } = useAuth();
+  const { /* userId, */ isSignedIn, isLoaded } = useAuth();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Fetch all events
@@ -22,23 +34,12 @@ export default function AdminRegistrationsPage() {
   const {
     data: registrations,
     isLoading: registrationsLoading,
-    refetch: refetchRegistrations,
+    // refetch: refetchRegistrations,
   } = trpc.registration.getEventRegistrations.useQuery(
-    { eventId: selectedEventId || "" },
+    { eventId: selectedEventId ?? "" },
     {
       enabled: !!selectedEventId,
-      onSuccess: (data) => {
-        console.log("Registrations fetched:", data);
-        if (data && data.length > 0) {
-          console.log("Sample registration:", data[0]);
-        } else {
-          console.log("No registrations found");
-        }
-      },
-      onError: (error) => {
-        console.error("Error fetching registrations:", error);
-        toast.error(`Error fetching registrations: ${error.message}`);
-      },
+      // Remove onSuccess and onError callbacks as they're not supported in the type
       // Refetch every 5 seconds for testing
       refetchInterval: 5000,
     },
@@ -105,52 +106,67 @@ export default function AdminRegistrationsPage() {
             <p className="text-gray-600">Loading events...</p>
           ) : events && events.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {events.map((event) => (
-                <div
-                  key={event._id.toString()}
-                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${
-                    selectedEventId ===
-                    (typeof event._id === "string"
-                      ? event._id
-                      : event._id.toString())
-                      ? "border-[#E1A913] bg-[#072446] text-white"
-                      : "border-gray-200 bg-gray-50 hover:border-[#E1A913]"
-                  }`}
-                  onClick={() => {
-                    const eventId =
-                      typeof event._id === "string"
-                        ? event._id
-                        : event._id.toString();
-                    console.log("Selected event ID:", eventId);
-                    setSelectedEventId(eventId);
-                  }}
-                >
-                  <h3
-                    className={`font-semibold ${
+              {events.map((event) => {
+                // Type assertion for event object
+                const typedEvent = event as Event;
+                return (
+                  <div
+                    key={
+                      typeof typedEvent._id === "string"
+                        ? typedEvent._id
+                        : (typedEvent._id as { toString(): string }).toString()
+                    }
+                    className={`cursor-pointer rounded-lg border p-4 transition-colors ${
                       selectedEventId ===
-                      (typeof event._id === "string"
-                        ? event._id
-                        : event._id.toString())
-                        ? "text-[#E1A913]"
-                        : "text-[#072446]"
+                      (typeof typedEvent._id === "string"
+                        ? typedEvent._id
+                        : (typedEvent._id as { toString(): string }).toString())
+                        ? "border-[#E1A913] bg-[#072446] text-white"
+                        : "border-gray-200 bg-gray-50 hover:border-[#E1A913]"
                     }`}
+                    onClick={() => {
+                      const eventId =
+                        typeof typedEvent._id === "string"
+                          ? typedEvent._id
+                          : (
+                              typedEvent._id as { toString(): string }
+                            ).toString();
+                      console.log("Selected event ID:", eventId);
+                      setSelectedEventId(eventId);
+                    }}
                   >
-                    {event.title}
-                  </h3>
-                  <p
-                    className={`text-sm ${
-                      selectedEventId ===
-                      (typeof event._id === "string"
-                        ? event._id
-                        : event._id.toString())
-                        ? "text-gray-300"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {event.date} • {event.attendees?.length || 0} registrations
-                  </p>
-                </div>
-              ))}
+                    <h3
+                      className={`font-semibold ${
+                        selectedEventId ===
+                        (typeof typedEvent._id === "string"
+                          ? typedEvent._id
+                          : (
+                              typedEvent._id as { toString(): string }
+                            ).toString())
+                          ? "text-[#E1A913]"
+                          : "text-[#072446]"
+                      }`}
+                    >
+                      {typedEvent.title}
+                    </h3>
+                    <p
+                      className={`text-sm ${
+                        selectedEventId ===
+                        (typeof typedEvent._id === "string"
+                          ? typedEvent._id
+                          : (
+                              typedEvent._id as { toString(): string }
+                            ).toString())
+                          ? "text-gray-300"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {typedEvent.date} • {typedEvent.attendees?.length || 0}{" "}
+                      registrations
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-600">No events available.</p>
@@ -162,9 +178,24 @@ export default function AdminRegistrationsPage() {
           <div className="rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-6 text-xl font-semibold text-[#072446]">
               Registrations
-              {events?.find((e) => e._id.toString() === selectedEventId)
-                ?.title &&
-                ` for ${events.find((e) => e._id.toString() === selectedEventId)?.title}`}
+              {(() => {
+                const selectedEvent = events?.find((e) => {
+                  const typedE = e as Event;
+                  return (
+                    (typeof typedE._id === "string"
+                      ? typedE._id
+                      : (typedE._id as { toString(): string }).toString()) ===
+                    selectedEventId
+                  );
+                });
+
+                // Type assertion for the selected event
+                const typedSelectedEvent = selectedEvent as Event | undefined;
+
+                return typedSelectedEvent?.title
+                  ? ` for ${typedSelectedEvent.title}`
+                  : "";
+              })()}
             </h2>
 
             {registrationsLoading ? (
@@ -197,20 +228,26 @@ export default function AdminRegistrationsPage() {
                         key={registration._id.toString()}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
-                        <td className="p-3">{registration.userName}</td>
-                        <td className="p-3">{registration.userEmail}</td>
+                        <td className="p-3">
+                          {(registration as any).userName}
+                        </td>
+                        <td className="p-3">
+                          {(registration as any).userEmail}
+                        </td>
                         <td className="p-3">
                           <span
                             className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                              registration.status === "confirmed"
+                              (registration as any).status === "confirmed"
                                 ? "bg-green-100 text-green-800"
-                                : registration.status === "cancelled"
+                                : (registration as any).status === "cancelled"
                                   ? "bg-red-100 text-red-800"
                                   : "bg-yellow-100 text-yellow-800"
                             }`}
                           >
-                            {registration.status.charAt(0).toUpperCase() +
-                              registration.status.slice(1)}
+                            {((registration as any).status as string)
+                              .charAt(0)
+                              .toUpperCase() +
+                              ((registration as any).status as string).slice(1)}
                           </span>
                         </td>
                         <td className="p-3 text-sm text-gray-600">
@@ -222,7 +259,7 @@ export default function AdminRegistrationsPage() {
                             : "Unknown date"}
                         </td>
                         <td className="p-3 text-sm text-gray-600">
-                          {registration.notes || "-"}
+                          {(registration as any).notes || "-"}
                         </td>
                       </tr>
                     ))}

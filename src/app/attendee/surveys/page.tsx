@@ -116,9 +116,12 @@ const SurveysPage = () => {
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
                             Created{" "}
-                            {formatDistanceToNow(new Date(survey.createdAt), {
-                              addSuffix: true,
-                            })}
+                            {formatDistanceToNow(
+                              new Date(survey.createdAt as string),
+                              {
+                                addSuffix: true,
+                              },
+                            )}
                           </p>
                         </div>
                         <div className="mt-4 md:mt-0">
@@ -209,7 +212,7 @@ const SurveysPage = () => {
               <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-600 p-4">
                 <AlertCircle size={24} className="text-gray-400" />
                 <p className="text-center text-gray-400">
-                  You haven't completed any surveys yet.
+                  You haven&apos;t completed any surveys yet.
                 </p>
               </div>
             )}

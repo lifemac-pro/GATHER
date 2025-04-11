@@ -33,7 +33,7 @@ export const SurveyResponseSchema = z.object({
     z.object({
       questionId: z.string(),
       answer: z.union([z.string(), z.array(z.string()), z.number()]),
-    })
+    }),
   ),
 });
 

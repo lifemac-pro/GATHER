@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { useAuth } from "@clerk/nextjs";
@@ -37,7 +37,7 @@ export default function AdminNotificationsPage() {
     onSuccess: () => {
       toast.success("Notification sent successfully!");
       resetForm();
-      refetch();
+      void refetch();
     },
     onError: (error) => {
       toast.error(`Failed to send notification: ${error.message}`);
@@ -177,7 +177,15 @@ export default function AdminNotificationsPage() {
                 </label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as any)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setType(
+                      e.target.value as
+                        | "EVENT_UPDATE"
+                        | "EVENT_REMINDER"
+                        | "SURVEY_AVAILABLE"
+                        | "REGISTRATION_CONFIRMATION",
+                    )
+                  }
                   className="w-full rounded-md border border-gray-300 p-2"
                   required
                 >
@@ -202,8 +210,8 @@ export default function AdminNotificationsPage() {
                   className="w-full rounded-md border border-gray-300 p-2"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Enter a valid path like "/attendee/events" or
-                  "/attendee/dashboard"
+                  Enter a valid path like &quot;/attendee/events&quot; or
+                  &quot;/attendee/dashboard&quot;
                 </p>
               </div>
             </div>
@@ -251,12 +259,13 @@ export default function AdminNotificationsPage() {
                       </p>
                       <div className="mt-2 flex flex-wrap items-center text-xs text-gray-500">
                         <span className="mr-4">
-                          Type: {notification.type.replace(/_/g, " ")}
+                          Type:{" "}
+                          {(notification.type as string).replace(/_/g, " ")}
                         </span>
                         <span className="mr-4">
                           Sent:{" "}
                           {new Date(
-                            notification.createdAt,
+                            notification.createdAt as string | number | Date,
                           ).toLocaleDateString()}
                         </span>
                         <span className="mr-4">

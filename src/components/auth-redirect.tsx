@@ -5,15 +5,15 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter, usePathname } from "next/navigation";
 
 export function AuthRedirect() {
-  // Only run on the client side
-  if (typeof window === "undefined") return null;
-
+  // Initialize hooks unconditionally at the top level
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
+    // Only run on the client side
+    if (typeof window === "undefined") return;
     // Only run this effect on the client after auth is loaded
     if (!isLoaded) return;
 
@@ -37,7 +37,7 @@ export function AuthRedirect() {
         isOAuthCallback
       ) {
         // Clear the redirect URL from localStorage
-        const finalRedirectUrl = redirectUrl || "/attendee/dashboard";
+        const finalRedirectUrl = redirectUrl ?? "/attendee/dashboard";
         localStorage.removeItem("redirectAfterAuth");
         // Mark that we've redirected to prevent loops
         setHasRedirected(true);

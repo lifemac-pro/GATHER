@@ -16,7 +16,7 @@ export function TrpcProvider({ children }: { children: React.ReactNode }) {
           transformer: superjson, // ✅ Add transformer to fix the error
         }),
       ],
-    })
+    }),
   );
 
   return (

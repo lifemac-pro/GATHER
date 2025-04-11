@@ -4,7 +4,8 @@ import { notificationRouter } from "@/server/api/routers/notification";
 import { registrationRouter } from "@/server/api/routers/registration";
 import { surveyRouter } from "@/server/api/routers/survey";
 import { userRouter } from "@/server/api/routers/user";
-import { createTRPCRouter, createTRPCContext } from "@/server/api/trpc";
+import { createTRPCRouter } from "@/server/api/trpc";
+import type { createTRPCContext } from "@/server/api/trpc";
 
 /**
  * This is the primary router for your server.
@@ -30,6 +31,8 @@ export type AppRouter = typeof appRouter;
  * const res = await trpc.post.all();
  *       ^? Post[]
  */
-export const createCaller = (context: Awaited<ReturnType<typeof createTRPCContext>>) => {
+export const createCaller = (
+  context: Awaited<ReturnType<typeof createTRPCContext>>,
+) => {
   return appRouter.createCaller(context);
 };

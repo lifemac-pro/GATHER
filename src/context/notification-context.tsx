@@ -17,8 +17,14 @@ const NotificationContext = createContext<NotificationContextType>({
   unreadCount: 0,
   isLoading: false,
   isError: false,
-  markAsRead: () => {},
-  refetchCount: () => {},
+  markAsRead: (id: string) => {
+    // This is a placeholder implementation that will be overridden
+    console.log(`Default markAsRead called with id: ${id}`);
+  },
+  refetchCount: () => {
+    // This is a placeholder implementation that will be overridden
+    console.log("Default refetchCount called");
+  },
 });
 
 // Hook to use the notification context
@@ -46,7 +52,7 @@ export function NotificationProvider({
   // Mark notification as read mutation
   const markAsReadMutation = trpc.notification.markAsRead.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
     },
   });
 
@@ -64,7 +70,7 @@ export function NotificationProvider({
 
   // Function to refetch the unread count
   const refetchCount = () => {
-    refetch();
+    void refetch();
   };
 
   return (

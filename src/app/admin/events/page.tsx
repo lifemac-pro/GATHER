@@ -2,13 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+// import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Edit, Trash2, ArrowLeft, Calendar, Users } from "lucide-react";
 import { useEventContext } from "@/context/event-context";
+
+// Define type for event object
+type Event = {
+  _id: string | { toString(): string };
+  title: string;
+  date: string;
+  location?: string;
+  capacity?: number;
+  description?: string;
+  image?: string;
+};
 
 export default function EventsManagementPage() {
   const router = useRouter();
@@ -23,7 +34,7 @@ export default function EventsManagementPage() {
   useEffect(() => {
     if (lastUpdated) {
       console.log("Event updated, refetching events...", lastUpdated);
-      refetch();
+      void refetch();
     }
   }, [lastUpdated, refetch]);
 
@@ -31,7 +42,7 @@ export default function EventsManagementPage() {
   const deleteEventMutation = trpc.event.delete.useMutation({
     onSuccess: () => {
       toast.success("Event deleted successfully!");
-      refetch();
+      void refetch();
     },
     onError: (error) => {
       toast.error(`Failed to delete event: ${error.message}`);
@@ -123,17 +134,19 @@ export default function EventsManagementPage() {
           ) : events && events.length > 0 ? (
             <div className="space-y-4">
               {events.map((event) => {
+                // Type assertion for event object
+                const typedEvent = event as Event;
                 // Ensure we have a valid string ID
                 const eventId =
-                  typeof event._id === "string"
-                    ? event._id
-                    : event._id
-                      ? event._id.toString()
+                  typeof typedEvent._id === "string"
+                    ? typedEvent._id
+                    : typedEvent._id
+                      ? (typedEvent._id as { toString(): string }).toString()
                       : `event-${Math.random().toString(36).substring(2, 9)}`;
 
                 console.log("Event in list:", {
                   id: eventId,
-                  title: event.title,
+                  title: typedEvent.title,
                 });
                 const isDeleting = deletingEventId === eventId;
 
@@ -144,8 +157,8 @@ export default function EventsManagementPage() {
                   >
                     <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md">
                       <img
-                        src={event.image || "/images/tech-conference.jpg"}
-                        alt={event.title}
+                        src={typedEvent.image ?? "/images/tech-conference.jpg"}
+                        alt={typedEvent.title}
                         className="h-full w-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = "/images/tech-conference.jpg";
@@ -155,20 +168,20 @@ export default function EventsManagementPage() {
 
                     <div className="mt-4 flex-grow sm:ml-6 sm:mt-0">
                       <h3 className="text-lg font-medium text-[#072446]">
-                        {event.title}
+                        {typedEvent.title}
                       </h3>
                       <div className="mt-1 flex flex-wrap items-center text-sm text-gray-500">
                         <span className="mr-4 flex items-center">
                           <Calendar size={14} className="mr-1" />
-                          {event.date}
+                          {typedEvent.date}
                         </span>
                         <span className="mr-4">
-                          Location: {event.location || "TBD"}
+                          Location: {typedEvent.location ?? "TBD"}
                         </span>
-                        <span>Capacity: {event.capacity}</span>
+                        <span>Capacity: {typedEvent.capacity}</span>
                       </div>
                       <p className="mt-2 line-clamp-2 text-sm text-gray-600">
-                        {event.description || "No description provided."}
+                        {typedEvent.description ?? "No description provided."}
                       </p>
                     </div>
 

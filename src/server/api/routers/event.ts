@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 import clientPromise from "@/server/db/mongodb";
 import { EventSchema, EventCollection } from "@/server/db/models/event";
 import { ObjectId } from "mongodb";
@@ -7,7 +11,7 @@ import { ObjectId } from "mongodb";
 export const eventRouter = createTRPCRouter({
   // Get all events (public)
   getAll: publicProcedure.query(async () => {
-    console.log('Fetching all events');
+    console.log("Fetching all events");
     try {
       const client = await clientPromise;
       const db = client.db();
@@ -16,12 +20,12 @@ export const eventRouter = createTRPCRouter({
       console.log(`Found ${events.length} events`);
 
       // Convert ObjectIds to strings to ensure proper serialization
-      return events.map(event => ({
+      return events.map((event) => ({
         ...event,
-        _id: event._id.toString()
+        _id: event._id.toString(),
       }));
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error("Error fetching events:", error);
       throw error;
     }
   }),
@@ -30,21 +34,22 @@ export const eventRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
-      console.log('Fetching event with ID:', input.id);
+      console.log("Fetching event with ID:", input.id);
       try {
         // Validate ObjectId format
         if (!ObjectId.isValid(input.id)) {
-          console.error('Invalid ObjectId format:', input.id);
+          console.error("Invalid ObjectId format:", input.id);
           // Return a mock event instead of throwing an error
           return {
             _id: input.id,
-            title: 'Sample Event',
-            description: 'This is a sample event because the ID format was invalid.',
-            date: 'January 1, 2025',
-            location: 'Sample Location',
-            image: '/images/tech-conference.jpg',
+            title: "Sample Event",
+            description:
+              "This is a sample event because the ID format was invalid.",
+            date: "January 1, 2025",
+            location: "Sample Location",
+            image: "/images/tech-conference.jpg",
             capacity: 100,
-            createdBy: 'system',
+            createdBy: "system",
             attendees: [],
             createdAt: new Date(),
           };
@@ -55,20 +60,20 @@ export const eventRouter = createTRPCRouter({
 
         // Create a new ObjectId from the input ID
         const objectId = new ObjectId(input.id);
-        console.log('Created ObjectId:', objectId.toString());
+        console.log("Created ObjectId:", objectId.toString());
 
         // Find the event by ID
         const event = await db
           .collection(EventCollection)
           .findOne({ _id: objectId });
 
-        console.log('Event found:', event ? 'Yes' : 'No');
+        console.log("Event found:", event ? "Yes" : "No");
         if (event) {
-          console.log('Event details:', JSON.stringify(event, null, 2));
+          console.log("Event details:", JSON.stringify(event, null, 2));
           // Convert ObjectId to string to ensure proper serialization
           const formattedEvent = {
             ...event,
-            _id: event._id.toString()
+            _id: event._id.toString(),
           };
           return formattedEvent;
         }
@@ -76,28 +81,28 @@ export const eventRouter = createTRPCRouter({
         // Return a mock event if not found
         return {
           _id: input.id,
-          title: 'Event Not Found',
-          description: 'This event could not be found in the database.',
-          date: 'January 1, 2025',
-          location: 'Unknown Location',
-          image: '/images/tech-conference.jpg',
+          title: "Event Not Found",
+          description: "This event could not be found in the database.",
+          date: "January 1, 2025",
+          location: "Unknown Location",
+          image: "/images/tech-conference.jpg",
           capacity: 100,
-          createdBy: 'system',
+          createdBy: "system",
           attendees: [],
           createdAt: new Date(),
         };
       } catch (error) {
-        console.error('Error fetching event:', error);
+        console.error("Error fetching event:", error);
         // Return a mock event instead of throwing an error
         return {
           _id: input.id,
-          title: 'Error Event',
-          description: 'There was an error fetching this event.',
-          date: 'January 1, 2025',
-          location: 'Error Location',
-          image: '/images/tech-conference.jpg',
+          title: "Error Event",
+          description: "There was an error fetching this event.",
+          date: "January 1, 2025",
+          location: "Error Location",
+          image: "/images/tech-conference.jpg",
           capacity: 100,
-          createdBy: 'system',
+          createdBy: "system",
           attendees: [],
           createdAt: new Date(),
         };
@@ -122,13 +127,17 @@ export const eventRouter = createTRPCRouter({
     .input(EventSchema)
     .mutation(async ({ input, ctx }) => {
       const { _id, ...updateData } = input;
-      console.log('Updating event with ID:', _id);
-      console.log('Update data:', updateData);
+      console.log("Updating event with ID:", _id);
+      console.log("Update data:", updateData);
 
       try {
-        // Validate ObjectId format
+        // Check if _id exists and validate ObjectId format
+        if (!_id) {
+          throw new Error("Event ID is required for updates");
+        }
+
         if (!ObjectId.isValid(_id)) {
-          console.error('Invalid ObjectId format for update:', _id);
+          console.error("Invalid ObjectId format for update:", _id);
           throw new Error(`Invalid event ID format: ${_id}`);
         }
 
@@ -141,13 +150,18 @@ export const eventRouter = createTRPCRouter({
           .findOne({ _id: new ObjectId(_id) });
 
         if (!event) {
-          console.error('Event not found for update:', _id);
+          console.error("Event not found for update:", _id);
           throw new Error(`Event not found: ${_id}`);
         }
 
         // Skip permission check if it's a system-created event or for testing purposes
         // For now, we'll allow any user to update any event for testing
-        console.log('Event creator:', event.createdBy, 'Current user:', ctx.userId);
+        console.log(
+          "Event creator:",
+          event.createdBy,
+          "Current user:",
+          ctx.userId,
+        );
 
         // Uncomment this when ready to enforce permissions
         /*
@@ -159,15 +173,12 @@ export const eventRouter = createTRPCRouter({
 
         const result = await db
           .collection(EventCollection)
-          .updateOne(
-            { _id: new ObjectId(_id) },
-            { $set: updateData }
-          );
+          .updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
 
-        console.log('Update result:', result);
+        console.log("Update result:", result);
         return input;
       } catch (error) {
-        console.error('Error updating event:', error);
+        console.error("Error updating event:", error);
         throw error;
       }
     }),
@@ -214,10 +225,12 @@ export const eventRouter = createTRPCRouter({
         throw new Error("You are already registered for this event");
       }
 
-      await db.collection(EventCollection).updateOne(
-        { _id: new ObjectId(input.eventId) },
-        { $addToSet: { attendees: ctx.userId } }
-      );
+      await db
+        .collection(EventCollection)
+        .updateOne(
+          { _id: new ObjectId(input.eventId) },
+          { $addToSet: { attendees: ctx.userId } },
+        );
       return { success: true };
     }),
 
@@ -241,10 +254,16 @@ export const eventRouter = createTRPCRouter({
         throw new Error("You are not registered for this event");
       }
 
-      await db.collection(EventCollection).updateOne(
-        { _id: new ObjectId(input.eventId) },
-        { $pull: { attendees: ctx.userId } }
-      );
+      // Use $pull to remove the userId from the attendees array
+      // Use type assertion to satisfy TypeScript
+      const updateOperation = { $pull: { attendees: ctx.userId } } as any;
+
+      await db
+        .collection(EventCollection)
+        .updateOne(
+          { _id: new ObjectId(input.eventId) },
+          updateOperation
+        );
       return { success: true };
     }),
 

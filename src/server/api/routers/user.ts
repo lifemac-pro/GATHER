@@ -9,12 +9,12 @@ export const userRouter = createTRPCRouter({
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
     const client = await clientPromise;
     const db = client.db();
-    
+
     // Find user by Clerk userId
     const user = await db
       .collection(UserCollection)
       .findOne({ userId: ctx.userId });
-    
+
     if (!user) {
       // If user doesn't exist, create a default profile
       const defaultUser = {
@@ -30,25 +30,23 @@ export const userRouter = createTRPCRouter({
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       // Insert the default user
-      const result = await db
-        .collection(UserCollection)
-        .insertOne(defaultUser);
-      
+      const result = await db.collection(UserCollection).insertOne(defaultUser);
+
       return {
         ...defaultUser,
         _id: result.insertedId.toString(),
       };
     }
-    
+
     // Convert ObjectId to string
     return {
       ...user,
       _id: user._id.toString(),
     };
   }),
-  
+
   // Update user profile
   updateProfile: protectedProcedure
     .input(
@@ -59,17 +57,17 @@ export const userRouter = createTRPCRouter({
         organization: z.string().optional(),
         jobTitle: z.string().optional(),
         phoneNumber: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Find user by Clerk userId
       const user = await db
         .collection(UserCollection)
         .findOne({ userId: ctx.userId });
-      
+
       if (!user) {
         // If user doesn't exist, create a new profile
         const newUser = {
@@ -84,40 +82,38 @@ export const userRouter = createTRPCRouter({
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        
-        const result = await db
-          .collection(UserCollection)
-          .insertOne(newUser);
-        
+
+        const result = await db.collection(UserCollection).insertOne(newUser);
+
         return {
           ...newUser,
           _id: result.insertedId.toString(),
         };
       }
-      
+
       // Update existing user
       const updatedUser = {
         ...user,
         ...input,
         updatedAt: new Date(),
       };
-      
-      await db
-        .collection(UserCollection)
-        .updateOne(
-          { userId: ctx.userId },
-          { $set: {
+
+      await db.collection(UserCollection).updateOne(
+        { userId: ctx.userId },
+        {
+          $set: {
             ...input,
             updatedAt: new Date(),
-          }}
-        );
-      
+          },
+        },
+      );
+
       return {
         ...updatedUser,
         _id: user._id.toString(),
       };
     }),
-  
+
   // Update notification preferences
   updateNotificationPreferences: protectedProcedure
     .input(
@@ -126,17 +122,17 @@ export const userRouter = createTRPCRouter({
         inApp: z.boolean(),
         eventReminders: z.boolean(),
         surveyNotifications: z.boolean(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const client = await clientPromise;
       const db = client.db();
-      
+
       // Find user by Clerk userId
       const user = await db
         .collection(UserCollection)
         .findOne({ userId: ctx.userId });
-      
+
       if (!user) {
         // If user doesn't exist, create a new profile with these preferences
         const newUser = {
@@ -147,30 +143,26 @@ export const userRouter = createTRPCRouter({
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        
-        const result = await db
-          .collection(UserCollection)
-          .insertOne(newUser);
-        
+
+        const result = await db.collection(UserCollection).insertOne(newUser);
+
         return {
           ...newUser,
           _id: result.insertedId.toString(),
         };
       }
-      
+
       // Update notification preferences
-      await db
-        .collection(UserCollection)
-        .updateOne(
-          { userId: ctx.userId },
-          { 
-            $set: {
-              notificationPreferences: input,
-              updatedAt: new Date(),
-            }
-          }
-        );
-      
+      await db.collection(UserCollection).updateOne(
+        { userId: ctx.userId },
+        {
+          $set: {
+            notificationPreferences: input,
+            updatedAt: new Date(),
+          },
+        },
+      );
+
       return {
         ...user,
         notificationPreferences: input,

@@ -6,10 +6,10 @@ import { useEffect } from "react";
 
 export default function SignInPage() {
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") || "/attendee/dashboard";
+  const redirectUrl = searchParams.get("redirect_url") ?? "/attendee/dashboard";
   const { isSignedIn, isLoaded } = useAuth();
-  const { isLoaded: isSignInLoaded, setActive } = useSignIn();
-  const router = useRouter();
+  // We need isSignInLoaded for the component to work properly
+  const { isLoaded: isSignInLoaded } = useSignIn();
 
   // Store redirect URL in localStorage for OAuth flow
   useEffect(() => {

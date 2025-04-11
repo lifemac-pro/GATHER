@@ -15,10 +15,8 @@ export const createQueryClient = () =>
         retry: false,
         // Disable refetching on window focus
         refetchOnWindowFocus: false,
-        // Silent error handling
-        onError: () => {
-          // Suppress error logging
-        },
+        // Silent error handling - no callbacks needed
+        // Error handling will be done at the component level
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,

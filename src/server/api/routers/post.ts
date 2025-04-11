@@ -13,13 +13,15 @@ export const postRouter = createTRPCRouter({
 
   // ✅ Create a new event
   create: publicProcedure
-    .input(z.object({
-      title: z.string(),
-      description: z.string().optional(),
-      date: z.date(),
-      location: z.string().optional(),
-      organizerId: z.string(),
-    }))
+    .input(
+      z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        date: z.date(),
+        location: z.string().optional(),
+        organizerId: z.string(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const result = await collections.events.insertOne({
         ...input,
@@ -31,7 +33,7 @@ export const postRouter = createTRPCRouter({
 
   getAll: publicProcedure.query(async () => {
     const events = await collections.events.find().toArray();
-    return events.map(event => ({
+    return events.map((event) => ({
       ...event,
       id: event._id.toString(),
       _id: undefined,
@@ -41,7 +43,9 @@ export const postRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
-      const event = await collections.events.findOne({ _id: new ObjectId(input.id) });
+      const event = await collections.events.findOne({
+        _id: new ObjectId(input.id),
+      });
       if (!event) return null;
       return {
         ...event,
@@ -51,23 +55,25 @@ export const postRouter = createTRPCRouter({
     }),
 
   update: publicProcedure
-    .input(z.object({
-      id: z.string(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      date: z.date().optional(),
-      location: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        date: z.date().optional(),
+        location: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const { id, ...updateData } = input;
       const result = await collections.events.updateOne(
         { _id: new ObjectId(id) },
-        { 
-          $set: { 
+        {
+          $set: {
             ...updateData,
             updatedAt: new Date(),
-          }
-        }
+          },
+        },
       );
       return { success: result.modifiedCount > 0 };
     }),
@@ -75,18 +81,21 @@ export const postRouter = createTRPCRouter({
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const result = await collections.events.deleteOne({ _id: new ObjectId(input.id) });
+      const result = await collections.events.deleteOne({
+        _id: new ObjectId(input.id),
+      });
       return { success: result.deletedCount > 0 };
     }),
 
   // ✅ Get the latest event
-  getLatestEvent: publicProcedure.query(async ({ ctx }) => {
+  getLatestEvent: publicProcedure.query(async () => {
     try {
-      const event = await ctx.db
-        .select()
-        .from(events)
-        .orderBy(desc(events.createdAt))
-        .limit(1);
+      // Use MongoDB methods instead of SQL-style ORM
+      const event = await collections.events
+        .find({})
+        .sort({ createdAt: -1 })
+        .limit(1)
+        .toArray();
 
       return event[0] ?? null;
     } catch (error) {
@@ -96,9 +105,9 @@ export const postRouter = createTRPCRouter({
   }),
 
   // ✅ Get all event registrations
-  getRegistrations: publicProcedure.query(async ({ ctx }) => {
+  getRegistrations: publicProcedure.query(async () => {
     try {
-      return await ctx.db.select().from(attendees);
+      return await collections.attendees.find({}).toArray();
     } catch (error) {
       console.error("Error fetching registrations:", error);
       throw new Error("Failed to fetch registrations");
@@ -111,43 +120,37 @@ export const postRouter = createTRPCRouter({
       z.object({
         username: z.string(),
         eventTitle: z.string(),
-      })
+      }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       try {
         // 🔄 Fetch user ID from username
-        const user = await ctx.db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.name, input.username))
-          .limit(1);
+        const user = await collections.users.findOne({ name: input.username });
 
-        const userId = user[0]?.id;
+        const userId = user?._id.toString();
         if (!userId) return { success: false, message: "User not found." };
 
         // 🔄 Fetch event ID from event title
-        const event = await ctx.db
-          .select({ id: events.id })
-          .from(events)
-          .where(eq(events.title, input.eventTitle))
-          .limit(1);
+        const event = await collections.events.findOne({ title: input.eventTitle });
 
-        const eventId = event[0]?.id;
+        const eventId = event?._id.toString();
         if (!eventId) return { success: false, message: "Event not found." };
 
         // ✅ Check if the user is already registered
-        const existing = await ctx.db
-          .select()
-          .from(attendees)
-          .where(and(eq(attendees.userId, userId), eq(attendees.eventId, eventId)))
-          .limit(1);
+        const existing = await collections.attendees.findOne({
+          userId,
+          eventId
+        });
 
-        if (existing.length > 0) {
-          return { success: false, message: "You are already registered for this event." };
+        if (existing) {
+          return {
+            success: false,
+            message: "You are already registered for this event.",
+          };
         }
 
         // ✅ Insert new registration with `userId` and `eventId`
-        await ctx.db.insert(attendees).values({
+        await collections.attendees.insertOne({
           userId,
           eventId,
           registeredAt: new Date(),
@@ -156,7 +159,10 @@ export const postRouter = createTRPCRouter({
         return { success: true, message: "Successfully registered!" };
       } catch (error) {
         console.error("Error registering for event:", error);
-        return { success: false, message: "Registration failed. Please try again." };
+        return {
+          success: false,
+          message: "Registration failed. Please try again.",
+        };
       }
     }),
 });

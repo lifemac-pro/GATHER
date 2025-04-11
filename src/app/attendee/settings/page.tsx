@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../../components/ui/sidebar";
-import { Menu, X, Save, User, Bell, Lock, Loader2 } from "lucide-react";
+import { Menu, X, Save, Loader2 } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 const SettingsPage = () => {
-  const { userId, isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
 
   // State for settings
   const [fullName, setFullName] = useState("");
@@ -68,23 +68,46 @@ const SettingsPage = () => {
       },
     });
 
+  // Define a type for the user data
+  type UserData = {
+    _id: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    bio?: string;
+    organization?: string;
+    jobTitle?: string;
+    phoneNumber?: string;
+    notificationPreferences: {
+      email: boolean;
+      inApp: boolean;
+      eventReminders: boolean;
+      surveyNotifications: boolean;
+    };
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
   // Load user data when available
   useEffect(() => {
     if (userData) {
-      setFullName(userData.fullName || "");
-      setEmail(userData.email || "");
-      setBio(userData.bio || "");
-      setOrganization(userData.organization || "");
-      setJobTitle(userData.jobTitle || "");
-      setPhoneNumber(userData.phoneNumber || "");
+      // Type assertion to tell TypeScript that userData has the expected properties
+      const typedUserData = userData as UserData;
+
+      setFullName(typedUserData.fullName || "");
+      setEmail(typedUserData.email || "");
+      setBio(typedUserData.bio || "");
+      setOrganization(typedUserData.organization || "");
+      setJobTitle(typedUserData.jobTitle || "");
+      setPhoneNumber(typedUserData.phoneNumber || "");
 
       // Set notification preferences
-      if (userData.notificationPreferences) {
-        setEmailNotifications(userData.notificationPreferences.email);
-        setInAppNotifications(userData.notificationPreferences.inApp);
-        setEventReminders(userData.notificationPreferences.eventReminders);
+      if (typedUserData.notificationPreferences) {
+        setEmailNotifications(typedUserData.notificationPreferences.email);
+        setInAppNotifications(typedUserData.notificationPreferences.inApp);
+        setEventReminders(typedUserData.notificationPreferences.eventReminders);
         setSurveyNotifications(
-          userData.notificationPreferences.surveyNotifications,
+          typedUserData.notificationPreferences.surveyNotifications,
         );
       }
     }
@@ -117,7 +140,7 @@ const SettingsPage = () => {
 
     setIsProfileSaving(true);
 
-    updateProfile.mutate({
+    void updateProfile.mutate({
       fullName,
       email,
       bio,
@@ -138,7 +161,7 @@ const SettingsPage = () => {
 
     setIsNotificationsSaving(true);
 
-    updateNotificationPreferences.mutate({
+    void updateNotificationPreferences.mutate({
       email: emailNotifications,
       inApp: inAppNotifications,
       eventReminders,
@@ -418,7 +441,7 @@ const SettingsPage = () => {
               <p className="mb-4 text-gray-400">
                 Password management is handled by our authentication provider.
                 To change your password, please use the authentication
-                provider's settings.
+                provider&apos;s settings.
               </p>
 
               <div className="flex justify-end">

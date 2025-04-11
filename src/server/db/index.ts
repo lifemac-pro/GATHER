@@ -21,7 +21,8 @@ export const collections = {
 
 // Connect to MongoDB
 console.log("Connecting to MongoDB...");
-client.connect()
+client
+  .connect()
   .then(() => {
     console.log("Successfully connected to MongoDB");
   })
@@ -29,4 +30,4 @@ client.connect()
     console.error("Failed to connect to MongoDB:", error);
     // Don't exit the process, just log the error
     // This allows the application to continue running even if the database connection fails
-  }); 
+  });

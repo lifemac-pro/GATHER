@@ -44,9 +44,8 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     queries: {
       retry: false,
       refetchOnWindowFocus: false,
-      onError: () => {
-        // Silent error handling
-      },
+      // Silent error handling - no callbacks needed
+      // Error handling will be done at the component level
     },
   });
 

@@ -1,8 +1,9 @@
 "use client"; // Ensure this is a Client Component
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@clerk/nextjs";
-import { AuthButton } from "./auth-button";
+// These imports are not used
+// import { useAuth } from "@clerk/nextjs";
+// import { AuthButton } from "./auth-button";
 
 type EventProps = {
   id?: string;
@@ -53,7 +54,7 @@ const EventCard: React.FC<EventProps> = ({
             <button
               className={`w-full rounded-lg px-4 py-2 text-white transition ${isLoading ? "cursor-not-allowed bg-gray-500" : "bg-blue-600 hover:bg-blue-700"}`}
               onClick={() => id && onRegister && onRegister(id)}
-              disabled={isLoading || !id || !onRegister}
+              disabled={isLoading ?? !id ?? !onRegister}
             >
               {isLoading ? "Registering..." : "Register"}
             </button>

@@ -1,12 +1,12 @@
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar"
-import { Card, CardContent } from "./card"
-import { Button } from "./button"
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+import { Card, CardContent } from "./card";
+import { Button } from "./button";
 
 export default function Profile() {
   return (
     <Card className="w-full max-w-sm p-4">
       <CardContent className="flex flex-col items-center space-y-4">
-        <Avatar className="w-16 h-16">
+        <Avatar className="h-16 w-16">
           <AvatarImage src="/profile-pic.jpg" alt="User Profile" />
           <AvatarFallback>U</AvatarFallback>
         </Avatar>
@@ -15,5 +15,5 @@ export default function Profile() {
         <Button>Edit Profile</Button>
       </CardContent>
     </Card>
-  )
+  );
 }

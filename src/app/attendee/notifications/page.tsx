@@ -31,20 +31,28 @@ const NotificationsPage = () => {
   const { data: unreadCount } = trpc.notification.getUnreadCount.useQuery();
   const markAsRead = trpc.notification.markAsRead.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.success("Notification marked as read");
     },
   });
   const markAllAsRead = trpc.notification.markAllAsRead.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.success("All notifications marked as read");
     },
   });
   const deleteNotification = trpc.notification.delete.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.success("Notification deleted");
+    },
+  });
+
+  const deleteAllNotifications = trpc.notification.deleteAll.useMutation({
+    onSuccess: () => {
+      void refetch();
+      toast.success("All notifications deleted");
+      refetchCount();
     },
   });
 
@@ -64,6 +72,16 @@ const NotificationsPage = () => {
     await deleteNotification.mutateAsync({ id });
     // Update the global notification count
     refetchCount();
+  };
+
+  const handleDeleteAll = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete all notifications? This action cannot be undone.",
+      )
+    ) {
+      await deleteAllNotifications.mutateAsync();
+    }
   };
 
   return (
@@ -115,14 +133,24 @@ const NotificationsPage = () => {
             <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
               Notifications
             </h1>
-            {unreadCount && unreadCount > 0 && (
-              <Button
-                onClick={handleMarkAllAsRead}
-                className="bg-[#E1A913] text-white hover:bg-[#c99a0f]"
-              >
-                Mark all as read
-              </Button>
-            )}
+            <div className="flex space-x-2">
+              {unreadCount && unreadCount > 0 && (
+                <Button
+                  onClick={handleMarkAllAsRead}
+                  className="bg-[#E1A913] text-white hover:bg-[#c99a0f]"
+                >
+                  Mark all as read
+                </Button>
+              )}
+              {notifications && notifications.length > 0 && (
+                <Button
+                  onClick={handleDeleteAll}
+                  className="bg-red-500 text-white hover:bg-red-600"
+                >
+                  Delete all
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Main Card Container */}
@@ -155,13 +183,13 @@ const NotificationsPage = () => {
                       className={`rounded-lg border-l-4 ${notification.read ? "border-gray-600" : "border-[#E1A913]"} bg-[#072446] p-4 shadow-md`}
                     >
                       {/* Notification Header - Always Visible */}
-                      <div
-                        className="flex cursor-pointer items-center justify-between"
-                        onClick={() =>
-                          toggleNotificationExpansion(notificationId)
-                        }
-                      >
-                        <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() =>
+                            toggleNotificationExpansion(notificationId)
+                          }
+                        >
                           <div className="flex items-center">
                             <h2 className="text-lg font-semibold text-[#E1A913]">
                               {notification.title}
@@ -179,11 +207,31 @@ const NotificationsPage = () => {
                             )}
                           </p>
                         </div>
-                        {expandedNotificationId === notificationId ? (
-                          <ChevronUp size={16} className="text-gray-400" />
-                        ) : (
-                          <ChevronDown size={16} className="text-gray-400" />
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 text-red-500 hover:bg-red-100 hover:text-red-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleDelete(notificationId);
+                            }}
+                            title="Delete notification"
+                          >
+                            <X size={16} />
+                          </Button>
+                          {expandedNotificationId === notificationId ? (
+                            <ChevronUp size={16} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown
+                              size={16}
+                              className="cursor-pointer text-gray-400"
+                              onClick={() =>
+                                toggleNotificationExpansion(notificationId)
+                              }
+                            />
+                          )}
+                        </div>
                       </div>
 
                       {/* Expanded Content */}
@@ -218,7 +266,7 @@ const NotificationsPage = () => {
                                 className="border-[#E1A913] bg-[#072446] text-[#E1A913] hover:bg-[#E1A913] hover:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMarkAsRead(notificationId);
+                                  void handleMarkAsRead(notificationId);
                                 }}
                                 disabled={notification.read}
                               >
@@ -230,7 +278,7 @@ const NotificationsPage = () => {
                                 className="border-red-500 bg-[#072446] text-red-500 hover:bg-red-500 hover:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDelete(notificationId);
+                                  void handleDelete(notificationId);
                                 }}
                               >
                                 Delete

@@ -3,15 +3,15 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 import { getAuth } from "@clerk/nextjs/server";
 import clientPromise from "@/server/db/mongodb";
-import { NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 
 /**
  * 1. CONTEXT
  * Defines the context available in the backend API.
  */
-export const createTRPCContext = async (opts: { req: NextRequest }) => {
+export const createTRPCContext = async (opts: { req: NextRequest; }) => {
   const { userId } = getAuth(opts.req);
-  
+
   const client = await clientPromise;
   const db = client.db();
 

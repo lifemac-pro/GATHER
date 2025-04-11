@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -8,47 +8,90 @@ import { Menu, X, ArrowLeft, CheckCircle } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
 
+// Define types for survey and question
+type SurveyQuestion = {
+  id?: string;
+  text: string;
+  type: "MULTIPLE_CHOICE" | "TEXT" | "RATING" | "YES_NO";
+  required: boolean;
+  options?: string[];
+};
+
+type Survey = {
+  _id: string;
+  title: string;
+  description?: string;
+  isActive?: boolean;
+  questions: SurveyQuestion[];
+  responses?: Array<{
+    _id: string;
+    surveyId: string;
+    userId: string;
+    answers: Array<{
+      questionId: string;
+      answer: string | number | string[];
+    }>;
+    createdAt: string;
+  }>;
+};
+
 export default function SurveyResultsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  // Unwrap params using React.use()
-  const unwrappedParams = React.use(params);
-  const surveyId = unwrappedParams.id;
+  // Use React.use() to unwrap params
+  const { id: surveyId } = React.use(params);
 
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch survey data
-  const { data: survey, isLoading: surveyLoading } =
-    trpc.survey.getById.useQuery(
-      { id: surveyId },
-      {
-        enabled: !!surveyId,
-        retry: 1,
-        onError: (error) => {
-          toast.error(`Error loading survey: ${error.message}`);
-          router.push("/attendee/surveys");
-        },
-      },
-    );
+  const {
+    data: survey,
+    isLoading: surveyLoading,
+    error: surveyError,
+  } = trpc.survey.getById.useQuery(
+    { id: surveyId },
+    {
+      enabled: !!surveyId,
+      retry: 1,
+    },
+  );
 
   // Check if user has responded to this survey
-  const { data: hasResponded, isLoading: checkingResponse } =
-    trpc.survey.hasResponded.useQuery(
-      { surveyId },
-      {
-        enabled: !!surveyId,
-        retry: 1,
-        onError: (error) => {
-          toast.error(`Error checking response: ${error.message}`);
-        },
-      },
-    );
+  const {
+    data: hasResponded,
+    isLoading: checkingResponse,
+    error: responseError,
+  } = trpc.survey.hasResponded.useQuery(
+    { surveyId },
+    {
+      enabled: !!surveyId,
+      retry: 1,
+    },
+  );
+
+  // Handle survey data and errors with useEffect
+  useEffect(() => {
+    if (surveyError) {
+      toast.error(`Error loading survey: ${surveyError.message}`);
+      router.push("/attendee/surveys");
+    }
+  }, [surveyError, router]);
+
+  // Handle response check errors
+  useEffect(() => {
+    if (responseError) {
+      toast.error(`Error checking response: ${responseError.message}`);
+    }
+  }, [responseError]);
 
   // Loading state
   const isLoading = surveyLoading || checkingResponse;
+
+  // Type assertion for survey data
+  const typedSurvey = survey as unknown as Survey;
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -99,7 +142,7 @@ export default function SurveyResultsPage({
             <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
               {isLoading
                 ? "Loading Results..."
-                : `${survey?.title || "Survey"} Results`}
+                : `${typedSurvey?.title || "Survey"} Results`}
             </h1>
             <Button
               onClick={() => router.push("/attendee/surveys")}
@@ -115,7 +158,7 @@ export default function SurveyResultsPage({
             <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
               <p className="text-gray-400">Loading survey results...</p>
             </div>
-          ) : survey ? (
+          ) : typedSurvey ? (
             <div className="rounded-lg bg-[#072446] p-6 shadow-md">
               {hasResponded ? (
                 <>
@@ -128,7 +171,9 @@ export default function SurveyResultsPage({
                     <h2 className="text-xl font-semibold text-[#E1A913]">
                       Survey Summary
                     </h2>
-                    <p className="mt-2 text-gray-400">{survey.description}</p>
+                    <p className="mt-2 text-gray-400">
+                      {typedSurvey.description}
+                    </p>
                   </div>
 
                   <div className="space-y-6">
@@ -144,7 +189,7 @@ export default function SurveyResultsPage({
 
                     <div className="rounded-lg border border-gray-600 p-4">
                       <h3 className="text-lg font-medium text-[#E1A913]">
-                        What's Next?
+                        What&apos;s Next?
                       </h3>
                       <p className="mt-2 text-gray-400">
                         Your responses have been recorded. The event organizers
@@ -157,7 +202,7 @@ export default function SurveyResultsPage({
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
                   <p className="text-gray-400">
-                    You haven't completed this survey yet.
+                    You haven&apos;t completed this survey yet.
                   </p>
                   <Button
                     onClick={() => router.push(`/attendee/surveys/${surveyId}`)}
@@ -175,8 +220,8 @@ export default function SurveyResultsPage({
                   Survey Not Found
                 </h2>
                 <p className="mt-2 text-gray-600">
-                  The survey you're looking for could not be found or has been
-                  removed.
+                  The survey you&apos;re looking for could not be found or has
+                  been removed.
                 </p>
               </div>
               <Button
