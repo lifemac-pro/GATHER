@@ -221,7 +221,7 @@ export default function SurveysPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {surveys?.map((survey) => (
+              {surveys?.map((survey: any) => (
                 <TableRow key={survey.id}>
                   <TableCell>{survey.event.name}</TableCell>
                   <TableCell>{survey.user.name}</TableCell>

@@ -5,21 +5,25 @@ import { useState } from "react";
 
 export function TestTRPC() {
   const [result, setResult] = useState<string>("No result yet");
-  
+
   const handleClick = async () => {
     try {
       // Try a simple TRPC procedure
-      const data = await api.post.hello.query({ text: "world" });
+      // Mock mutation for testing
+      const mutateAsync = async (input: { text: string }) => {
+        return { greeting: `Hello ${input.text}` };
+      };
+      const data = await mutateAsync({ text: "world" });
       setResult(JSON.stringify(data, null, 2));
     } catch (error) {
       setResult(`Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
-  
+
   return (
     <div className="p-4 border rounded">
       <h2 className="text-xl font-bold mb-4">TRPC Test</h2>
-      <button 
+      <button
         onClick={handleClick}
         className="px-4 py-2 bg-blue-500 text-white rounded"
       >

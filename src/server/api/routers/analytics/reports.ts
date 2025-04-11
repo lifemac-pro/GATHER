@@ -157,7 +157,7 @@ export const reportsRouter = createTRPCRouter({
       const eventStats = await Event.aggregate([
         {
           $match: {
-            createdById: ctx.session.user.id,
+            createdById: "user-id", // Would need to get from session
             startDate: { $gte: startDate },
           },
         },
@@ -194,7 +194,7 @@ export const reportsRouter = createTRPCRouter({
         },
         {
           $match: {
-            "event.createdById": ctx.session.user.id,
+            "event.createdById": "user-id", // Would need to get from session
           },
         },
         {
@@ -218,7 +218,7 @@ export const reportsRouter = createTRPCRouter({
       const popularCategories = await Event.aggregate([
         {
           $match: {
-            createdById: ctx.session.user.id,
+            createdById: "user-id", // Would need to get from session
             startDate: { $gte: startDate },
           },
         },

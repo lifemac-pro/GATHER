@@ -7,6 +7,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@/trpc/react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 import "@/styles/globals.css";
 
@@ -27,19 +28,21 @@ export default function RootLayout({
           signUpUrl="/sign-up"
         >
           <TRPCReactProvider>
-            {isAdminPage ? (
-              <div className="flex h-screen">
-                <Sidebar />
-                <div className="flex-1 overflow-auto">
-                  {children}
+            <ErrorBoundary>
+              {isAdminPage ? (
+                <div className="flex h-screen">
+                  <Sidebar />
+                  <div className="flex-1 overflow-auto">
+                    {children}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <>
-                <Navbar />
-                {children}
-              </>
-            )}
+              ) : (
+                <>
+                  <Navbar />
+                  {children}
+                </>
+              )}
+            </ErrorBoundary>
           </TRPCReactProvider>
           <Toaster />
         </ClerkProvider>

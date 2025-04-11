@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
-import { 
+import {
   index,
   int,
   sqliteTableCreator,
   text,
-  decimal,
+  // decimal, // Uncomment when you have the proper import
 } from "drizzle-orm/sqlite-core";
 
 export const createTable = sqliteTableCreator((name) => `GATHER_${name}`);
@@ -83,7 +83,7 @@ export const events = createTable(
     category: text("category").notNull(),
     featured: int("featured", { mode: "boolean" }).default(false),
     status: text("status", { enum: ["draft", "published", "cancelled", "completed"] }).default("draft").notNull(),
-    price: decimal("price", { precision: 10, scale: 2 }).default("0"),
+    price: text("price").default("0"), // Using text instead of decimal until we have proper import
     createdById: text("created_by_id").notNull().references(() => users.id),
     createdAt: int("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)

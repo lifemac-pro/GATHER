@@ -6,13 +6,13 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { Context, initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
 import { headers } from "next/headers";
 import { getAuth } from "@/server/auth";
+import { trpcErrorHandler, handleZodError, AppError, ErrorCode } from "@/utils/error-handling";
 
 /**
  * 1. CONTEXT
@@ -21,12 +21,13 @@ import { getAuth } from "@/server/auth";
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
-declare module "@trpc/server" {
-  interface Context {
-    db: any;
-    headers: Headers;
-    session: any | null;
-  }
+/**
+ * Context type for TRPC
+ */
+export interface Context {
+  db: typeof db;
+  headers: Headers;
+  session: any | null;
 }
 
 export const createTRPCContext = async (opts: { headers: Headers }): Promise<Context> => {
@@ -34,10 +35,32 @@ export const createTRPCContext = async (opts: { headers: Headers }): Promise<Con
 
   try {
     const auth = await getAuth({ headers: opts.headers });
-    session = auth?.sessionId;
+
+    // If auth is available, include the full auth object as session
+    if (auth) {
+      session = {
+        userId: auth.userId,
+        sessionId: auth.sessionId,
+        user: auth.user
+      };
+    }
   } catch (error) {
     console.error('Auth error in TRPC context:', error);
     // Continue without authentication
+
+    // In development, provide a mock session
+    if (process.env.NODE_ENV === 'development') {
+      session = {
+        userId: 'dev-user-id',
+        sessionId: 'dev-session',
+        user: {
+          id: 'dev-user-id',
+          firstName: 'Dev',
+          lastName: 'User',
+          email: 'dev@example.com'
+        }
+      };
+    }
   }
 
   return {
@@ -56,10 +79,27 @@ export const createTRPCContext = async (opts: { headers: Headers }): Promise<Con
  */
 const t = initTRPC.create({
   transformer: superjson,
-  errorFormatter({ shape }) {
-    return shape;
+  errorFormatter({ shape, error }) {
+    // Format ZodErrors in a more user-friendly way
+    const zodError = error.cause instanceof ZodError ? error.cause.flatten() : null;
+
+    // Extract additional error details from AppError
+    const appError = error.cause instanceof AppError ? error.cause.toApiError() : null;
+
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError,
+        appError,
+      },
+    };
   },
 });
+
+// Add error handling middleware
+const middleware = t.middleware;
+const errorHandlerMiddleware = middleware(trpcErrorHandler());
 
 /**
  * Create a server-side caller.
@@ -89,7 +129,10 @@ export const createTRPCRouter = t.router;
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure;
+// Apply error handling middleware to all procedures
+const enhancedProcedure = t.procedure.use(errorHandlerMiddleware);
+
+export const publicProcedure = enhancedProcedure;
 
 /**
  * Protected (authenticated) procedure
@@ -99,23 +142,21 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }: { ctx: any, next: any }) => {
-  // Get the userId from the session
-  const userId = ctx.session?.userId;
-
-  // For development purposes, allow access even without authentication
-  if (!userId && process.env.NODE_ENV === 'development') {
-    return next({
-      ctx: {
-        ...ctx,
-        session: { userId: 'dev-user-id' }
-      }
+export const protectedProcedure = enhancedProcedure.use(({ ctx, next }: { ctx: any, next: any }) => {
+  // Check if we have a session with a userId
+  if (!ctx.session || !ctx.session.userId) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to access this resource',
     });
   }
 
-  if (!userId) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-
-  return next({ ctx });
+  // If we have a session, continue with the request
+  return next({
+    ctx: {
+      ...ctx,
+      // Ensure the session is passed to the next handler
+      session: ctx.session,
+    },
+  });
 });

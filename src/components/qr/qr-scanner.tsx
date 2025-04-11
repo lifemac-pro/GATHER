@@ -18,11 +18,11 @@ export function QRScanner({ onScan }: QRScannerProps) {
     try {
       setIsScanning(true);
       const codeReader = new BrowserQRCodeReader();
-      
+
       // Get video element
       const video = document.getElementById("qr-video") as HTMLVideoElement;
       setVideoElement(video);
-      
+
       // Start scanning
       await codeReader.decodeFromVideoDevice(
         undefined,
@@ -33,8 +33,8 @@ export function QRScanner({ onScan }: QRScannerProps) {
               const data = JSON.parse(result.getText());
               if (data.eventId && data.attendeeId) {
                 await onScan(data);
+                // Stop scanning
                 setIsScanning(false);
-                codeReader.reset();
               }
             } catch (error) {
               toast.error("Invalid QR code");

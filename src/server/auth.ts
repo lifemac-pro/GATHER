@@ -22,7 +22,13 @@ export const getAuth = (req: { headers: Headers }) => {
     if (process.env.NODE_ENV === 'development') {
       return {
         sessionId: 'dev-session',
-        userId: 'dev-user-id'
+        userId: 'dev-user-id',
+        user: {
+          id: 'dev-user-id',
+          firstName: 'Dev',
+          lastName: 'User',
+          email: 'dev@example.com'
+        }
       };
     }
     return null;

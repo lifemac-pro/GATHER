@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
+import { NotificationDocument } from "./types";
 
 const notificationSchema = new mongoose.Schema({
   id: {
@@ -41,4 +42,4 @@ const notificationSchema = new mongoose.Schema({
   actionUrl: String,
 });
 
-export const Notification = mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
+export const Notification = (mongoose.models.Notification || mongoose.model<NotificationDocument>("Notification", notificationSchema)) as mongoose.Model<NotificationDocument>;

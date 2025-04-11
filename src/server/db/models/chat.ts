@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
+import { ChatDocument } from "./types";
 
 const chatSchema = new mongoose.Schema({
   id: {
@@ -32,8 +33,4 @@ const chatSchema = new mongoose.Schema({
   },
 });
 
-export const Chat = mongoose.models.Chat || mongoose.model("Chat", chatSchema);
-
-export function create(arg0: { eventId: string; userId: any; message: string; type: string; }) {
-  throw new Error("Function not implemented.");
-}
+export const Chat = (mongoose.models.Chat || mongoose.model<ChatDocument>("Chat", chatSchema)) as mongoose.Model<ChatDocument>;

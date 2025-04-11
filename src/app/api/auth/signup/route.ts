@@ -1,60 +1,72 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { hash } from "bcryptjs";
-import { User } from "@/models/user";
-import { clientPromise } from "@/lib/mongodb";
+import { z } from "zod";
+import { User } from "@/server/db/models/user";
+import { AppError, ErrorCode } from "@/utils/error-handling";
+import { createApiRouteHandler, createSuccessResponse } from "@/utils/api-route-handler";
+import { ApiResponse, UserResponse } from "@/types/api-responses";
 
-export async function POST(req: Request) {
-  try {
-    const { email, password, firstName, lastName } = await req.json();
+// Define the request schema using Zod
+const signupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
 
-    // Validate input
-    if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
+// Define the request type based on the schema
+type SignupRequest = z.infer<typeof signupSchema>;
+
+// Create the route handler
+export const POST = createApiRouteHandler<SignupRequest>(
+  async ({ body }): Promise<Response> => {
+    if (!body) {
+      throw new AppError(
+        ErrorCode.INVALID_INPUT,
+        "Request body is required",
+        400
       );
     }
 
-    await clientPromise;
-
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findByEmail(body.email);
+
     if (existingUser) {
-      return NextResponse.json(
-        { message: "User already exists" },
-        { status: 400 }
+      throw new AppError(
+        ErrorCode.ALREADY_EXISTS,
+        "User with this email already exists",
+        409
       );
     }
 
     // Hash password
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await hash(body.password, 12);
 
     // Create user
     const user = await User.create({
-      email,
+      email: body.email,
       password: hashedPassword,
-      firstName,
-      lastName,
+      firstName: body.firstName,
+      lastName: body.lastName,
       role: "admin", // Default role
     });
 
-    return NextResponse.json(
-      {
-        message: "User created successfully",
-        user: {
-          id: user._id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
+    // Create response
+    const response: ApiResponse<UserResponse> = {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        profileImage: user.profileImage || undefined,
+        role: user.role,
       },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Signup error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    };
+
+    return createSuccessResponse(response, 201);
+  },
+  {
+    bodySchema: signupSchema,
   }
-}
+);

@@ -3,19 +3,19 @@ import { api } from "@/trpc/server";
 export default async function TestPage() {
   let result = "No result";
   let error = null;
-  
+
   try {
     // Try a simple procedure from the post router
-    const data = await api.post.hello.query({ text: "world" });
+    const data = await api.post.hello({ text: "world" });
     result = JSON.stringify(data, null, 2);
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
   }
-  
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">TRPC Test Page</h1>
-      
+
       {error ? (
         <div className="p-4 bg-red-100 border border-red-400 rounded mb-4">
           <h2 className="font-bold text-red-800">Error:</h2>
@@ -27,7 +27,7 @@ export default async function TestPage() {
           <pre className="mt-2">{result}</pre>
         </div>
       )}
-      
+
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Debugging Information</h2>
         <ul className="list-disc pl-5">

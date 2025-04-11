@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
+import { SettingDocument } from "./types";
 
 const settingSchema = new mongoose.Schema({
   id: {
@@ -37,4 +38,4 @@ settingSchema.pre('save', function(next) {
   next();
 });
 
-export const Setting = mongoose.models.Setting || mongoose.model("Setting", settingSchema);
+export const Setting = (mongoose.models.Setting || mongoose.model<SettingDocument>("Setting", settingSchema)) as mongoose.Model<SettingDocument>;

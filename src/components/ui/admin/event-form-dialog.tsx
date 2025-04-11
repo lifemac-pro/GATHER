@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Popover,
   PopoverContent,
@@ -44,6 +46,7 @@ const formSchema = z.object({
   maxAttendees: z.number().optional(),
   category: z.string().min(1, "Category is required"),
   featured: z.boolean().optional(),
+  image: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -73,11 +76,16 @@ export function EventFormDialog({
       maxAttendees: undefined,
       category: "",
       featured: false,
+      image: "",
     },
   });
 
+  const utils = api.useUtils();
+
   const createEvent = api.event.create.useMutation({
     onSuccess: () => {
+      // Invalidate the events query to refetch the data
+      utils.event.getAll.invalidate();
       router.refresh();
       onOpenChange(false);
     },
@@ -85,6 +93,8 @@ export function EventFormDialog({
 
   const updateEvent = api.event.update.useMutation({
     onSuccess: () => {
+      // Invalidate the events query to refetch the data
+      utils.event.getAll.invalidate();
       router.refresh();
       onOpenChange(false);
     },
@@ -95,18 +105,46 @@ export function EventFormDialog({
     try {
       if (event?.id) {
         await updateEvent.mutateAsync({ id: event.id, ...data });
+        toast.success("Event updated successfully");
       } else {
-        await createEvent.mutateAsync(data);
+        const result = await createEvent.mutateAsync(data);
+        console.log("Created event:", result);
+        toast.success("Event created successfully");
       }
     } catch (error) {
       console.error("Failed to save event:", error);
+      toast.error("Failed to save event. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Reset form when dialog is opened or closed
+  useEffect(() => {
+    if (open) {
+      // Reset form with default values when dialog opens
+      form.reset(event || {
+        name: "",
+        description: "",
+        location: "",
+        startDate: new Date(),
+        endDate: new Date(),
+        maxAttendees: undefined,
+        category: "",
+        featured: false,
+        image: "",
+      });
+    }
+  }, [open, event, form]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // If closing the dialog, reset the form
+      if (!newOpen) {
+        form.reset();
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[#072446]">
@@ -126,7 +164,7 @@ export function EventFormDialog({
                 <FormItem>
                   <FormLabel>Event Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input value={field.value || ''} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,7 +178,7 @@ export function EventFormDialog({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea value={field.value || ''} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,8 +216,8 @@ export function EventFormDialog({
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date: number) =>
-                            date < new Date() || date > form.getValues("endDate")
+                          disabled={(date) =>
+                            date < new Date() || (form.getValues("endDate") && date > form.getValues("endDate"))
                           }
                           initialFocus
                         />
@@ -220,8 +258,8 @@ export function EventFormDialog({
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date: number) =>
-                            date < form.getValues("startDate")
+                          disabled={(date) =>
+                            form.getValues("startDate") && date < form.getValues("startDate")
                           }
                           initialFocus
                         />
@@ -241,7 +279,7 @@ export function EventFormDialog({
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input value={field.value || ''} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -255,7 +293,7 @@ export function EventFormDialog({
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input value={field.value || ''} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,27 +301,46 @@ export function EventFormDialog({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="maxAttendees"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Attendees</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? parseInt(e.target.value) : undefined
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="maxAttendees"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Max Attendees</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        value={field.value === undefined ? '' : field.value}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? parseInt(e.target.value) : undefined
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Image</FormLabel>
+                    <FormControl>
+                      <ImageUpload
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter>
               <Button

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
+import { WaitlistDocument } from "./types";
 
 const waitlistSchema = new mongoose.Schema({
   id: {
@@ -37,4 +38,4 @@ const waitlistSchema = new mongoose.Schema({
 // Add compound index for uniqueness
 waitlistSchema.index({ eventId: 1, userId: 1 }, { unique: true });
 
-export const Waitlist = mongoose.models.Waitlist || mongoose.model("Waitlist", waitlistSchema);
+export const Waitlist = (mongoose.models.Waitlist || mongoose.model<WaitlistDocument>("Waitlist", waitlistSchema)) as mongoose.Model<WaitlistDocument>;

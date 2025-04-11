@@ -19,7 +19,7 @@ export const qrRouter = createTRPCRouter({
 
       // Generate a unique check-in code
       const checkInCode = nanoid(10);
-      
+
       // Update event with check-in code
       await Event.updateOne(
         { id: input.eventId },
@@ -44,7 +44,7 @@ export const qrRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const event = await Event.findOne({ 
+      const event = await Event.findOne({
         id: input.eventId,
         checkInCode: input.code,
       });
@@ -92,7 +92,16 @@ export const qrRouter = createTRPCRouter({
       const attendee = await Attendee.findOne({
         eventId: input.eventId,
         ticketCode: input.ticketCode,
-      }).populate("event", "name startDate");
+      });
+
+      // Mock the populate functionality
+      const event = await Event.findOne({ id: attendee?.eventId });
+      if (attendee && event) {
+        (attendee as any).event = {
+          name: event.name,
+          startDate: event.startDate
+        };
+      }
 
       if (!attendee) {
         throw new TRPCError({

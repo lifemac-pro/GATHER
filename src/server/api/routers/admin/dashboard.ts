@@ -103,9 +103,9 @@ export const adminDashboardRouter = createTRPCRouter({
 
       monthlyTrends.unshift({
         month: monthStart.toLocaleString('default', { month: 'short' }),
-        events: monthStats[0] || 0,
-        attendees: monthStats[1] || 0,
-        surveys: monthStats[2] || 0,
+        events: Array.isArray(monthStats) && monthStats.length > 0 ? monthStats[0] : 0,
+        attendees: Array.isArray(monthStats) && monthStats.length > 1 ? monthStats[1] : 0,
+        surveys: Array.isArray(monthStats) && monthStats.length > 2 ? monthStats[2] : 0,
       });
     }
 

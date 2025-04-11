@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Search, Filter, Calendar, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { EventImage } from "@/components/events/event-image";
 import { api } from "@/trpc/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,11 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: events, isLoading } = api.event.getAll.useQuery();
+  // Fetch events from the API
+  const { data: events, isLoading, refetch } = api.event.getAll.useQuery();
+
+  // Refetch events after mutations
+  const utils = api.useUtils();
   const deleteEvent = api.event.delete.useMutation({
     onSuccess: () => {
       toast({
@@ -36,6 +41,9 @@ export default function EventsPage() {
         description: "The event has been successfully deleted.",
       });
       setDeleteDialogOpen(false);
+
+      // Invalidate the events query to refetch the data
+      utils.event.getAll.invalidate();
     },
   });
 
@@ -90,9 +98,43 @@ export default function EventsPage() {
       </div>
 
       {/* Events Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {events?.map((event: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; startDate: string | number | Date; location: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; status: string; description: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; }) => (
+      {isLoading ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <div className="h-48 animate-pulse bg-gray-200"></div>
+              <div className="p-6 space-y-4">
+                <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-4 w-full animate-pulse rounded bg-gray-200"></div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : events?.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-center">
+            <h3 className="text-lg font-medium">No events found</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating a new event.
+            </p>
+            <Button
+              onClick={() => {
+                setSelectedEvent(null);
+                setFormDialogOpen(true);
+              }}
+              className="mt-4"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Event
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {events?.map((event: any) => (
           <Card key={event.id} className="overflow-hidden">
+            <EventImage src={event.image} alt={event.name} />
             <div className="p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -137,6 +179,20 @@ export default function EventsPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => router.push(`/events/${event.id}`)}
+                >
+                  View Event
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/admin/events/${event.id}/attendees`)}
+                >
+                  View Attendees
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleEdit(event)}
                 >
                   Edit
@@ -153,7 +209,8 @@ export default function EventsPage() {
             </div>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Create/Edit Event Dialog */}
       <EventFormDialog

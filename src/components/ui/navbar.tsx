@@ -32,7 +32,7 @@ export function Navbar() {
               >
                 Dashboard
               </Link>
-              <Link
+              {/* <Link
                 href="/trpc-test"
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive("/trpc-test")
@@ -41,7 +41,7 @@ export function Navbar() {
                 }`}
               >
                 TRPC Test
-              </Link>
+              </Link> */}
             </div>
           </div>
           <div className="flex items-center">

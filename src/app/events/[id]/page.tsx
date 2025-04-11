@@ -8,7 +8,9 @@ import { AddToCalendar } from "@/components/events/add-to-calendar";
 import { QRGenerator } from "@/components/qr/qr-generator";
 import { PaymentProvider } from "@/components/payments/payment-provider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useSession } from "next-auth/react";
+import { EventImage } from "@/components/events/event-image";
+// Using Clerk authentication instead of NextAuth
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -17,7 +19,8 @@ export default function EventDetailsPage({
 }: {
   params: { id: string };
 }) {
-  const { data: session } = useSession();
+  // Get user session from Clerk
+  const { isSignedIn, user } = useUser();
   const [showPayment, setShowPayment] = useState(false);
   const { data: event, isLoading } = api.event.getById.useQuery({ id: params.id });
   const register = api.attendee.register.useMutation({
@@ -30,10 +33,17 @@ export default function EventDetailsPage({
     },
   });
 
-  const { data: registration } = api.attendee.getRegistration.useQuery({
-    eventId: params.id,
-    userId: session?.user?.id ?? "",
-  });
+  // Get registration status for current user
+  const { data: registration, isLoading: isRegistrationLoading } = api.attendee.getRegistration.useQuery(
+    { eventId: params.id },
+    { enabled: !!isSignedIn && !!params.id }
+  );
+
+  // Get attendees for this event
+  const { data: attendees, isLoading: isAttendeesLoading } = api.attendee.getByEvent.useQuery(
+    { eventId: params.id },
+    { enabled: !!params.id }
+  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -44,7 +54,7 @@ export default function EventDetailsPage({
   }
 
   const handleRegister = async () => {
-    if (!session) {
+    if (!isSignedIn) {
       toast.error("Please sign in to register");
       return;
     }
@@ -54,7 +64,8 @@ export default function EventDetailsPage({
     } else {
       await register.mutateAsync({
         eventId: params.id,
-        userId: session.user.id,
+        name: user?.fullName || '',
+        email: user?.primaryEmailAddress?.emailAddress || '',
       });
     }
   };
@@ -62,7 +73,8 @@ export default function EventDetailsPage({
   const handlePaymentSuccess = async () => {
     await register.mutateAsync({
       eventId: params.id,
-      userId: session.user.id,
+      name: user?.fullName || '',
+      email: user?.primaryEmailAddress?.emailAddress || '',
     });
   };
 
@@ -90,6 +102,11 @@ export default function EventDetailsPage({
           </div>
         </CardHeader>
         <CardContent>
+          {event.image && (
+            <div className="mb-6 max-h-[400px] overflow-hidden rounded-lg">
+              <EventImage src={event.image} alt={event.name} />
+            </div>
+          )}
           <div className="grid gap-4">
             <div>
               <h3 className="font-semibold">Date & Time</h3>
@@ -111,22 +128,81 @@ export default function EventDetailsPage({
                 <p>{event.description}</p>
               </div>
             )}
-            {event.price > 0 && (
+            {event.price && event.price > 0 && (
               <div>
                 <h3 className="font-semibold">Price</h3>
-                <p>${event.price.toFixed(2)}</p>
+                <p>${(event.price || 0).toFixed(2)}</p>
               </div>
             )}
-            {!registration && (
+            {isSignedIn ? (
+              registration ? (
+                <div className="mt-4 rounded-md bg-green-50 p-3 text-green-800">
+                  <p className="font-medium">You are registered for this event!</p>
+                  <p className="text-sm">Ticket code: {registration.ticketCode}</p>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleRegister}
+                  disabled={register.isPending}
+                  className="mt-4"
+                >
+                  {event.price && event.price > 0 ? "Register and Pay" : "Register for Event"}
+                </Button>
+              )
+            ) : (
               <Button
-                onClick={handleRegister}
-                disabled={register.isLoading}
+                onClick={() => window.location.href = "/sign-in"}
                 className="mt-4"
               >
-                {event.price > 0 ? "Register and Pay" : "Register for Event"}
+                Sign in to Register
               </Button>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Attendees List */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Registered Attendees</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isAttendeesLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+            </div>
+          ) : attendees && attendees.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 text-left font-medium">Name</th>
+                    <th className="py-2 text-left font-medium">Email</th>
+                    <th className="py-2 text-left font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendees.map((attendee) => (
+                    <tr key={attendee.id} className="border-b hover:bg-muted/50">
+                      <td className="py-2">{attendee.name}</td>
+                      <td className="py-2">{attendee.email}</td>
+                      <td className="py-2">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          attendee.status === 'checked-in'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {attendee.status === 'checked-in' ? 'Checked In' : 'Registered'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No attendees registered yet.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -136,7 +212,7 @@ export default function EventDetailsPage({
             <DialogTitle>Complete Payment</DialogTitle>
           </DialogHeader>
           <PaymentProvider
-            amount={event.price}
+            amount={event.price || 0}
             eventId={event.id}
             onSuccess={handlePaymentSuccess}
           />

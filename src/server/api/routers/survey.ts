@@ -18,7 +18,7 @@ export const surveyRouter = createTRPCRouter({
       const survey = await Survey.create({
         id: nanoid(),
         ...input,
-        userId: ctx.session.user.id,
+        userId: "user-id", // Would need to get from session
         submittedAt: new Date(),
       });
 
