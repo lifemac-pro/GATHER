@@ -5,7 +5,8 @@ import { nanoid } from "nanoid";
 import { Event, Attendee } from "@/server/db/models";
 
 // Import connectToDatabase to ensure MongoDB connection
-import { connectToDatabase, mockData } from "@/server/db/mongo";
+import { connectToDatabase } from "@/server/db/mongo";
+import { cache } from "@/lib/cache";
 
 const eventInputSchema = z.object({
   name: z.string(),
@@ -57,12 +58,8 @@ export const eventRouter = createTRPCRouter({
           maxAttendees: input.maxAttendees ? [input.maxAttendees.toString()] : [],
         };
 
-        // Add to mock data first for fallback
-        mockData.events.push(newEvent);
-        console.log("Added event to mock data:", newEvent.id);
-
         try {
-          // Try to create the event in MongoDB with a timeout
+          // Create the event in MongoDB with a timeout
           const event = await Promise.race([
             Event.create(newEvent),
             new Promise((_, reject) =>
@@ -71,72 +68,57 @@ export const eventRouter = createTRPCRouter({
           ]);
 
           console.log("Event created in MongoDB:", event.id);
+
+          // Invalidate cache
+          cache.delete('events:all');
+
           return event.toObject();
         } catch (dbError) {
-          console.error("Error saving to MongoDB, using mock data:", dbError);
-          // Return the mock event if MongoDB fails
-          return newEvent;
+          console.error("Error saving to MongoDB:", dbError);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create event in database"
+          });
         }
       } catch (error) {
         console.error("Error creating event:", error);
-
-        // Create a new event in mock data as fallback
-        const newEvent = {
-          id: nanoid(),
-          ...input,
-          createdById: ctx.session?.userId || "user-id",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: "published",
-          image: input.image || "",
-          maxAttendees: input.maxAttendees ? [input.maxAttendees.toString()] : [],
-          attendees: [],
-        };
-
-        // Add to mock data
-        mockData.events.push(newEvent);
-        console.log("Added event to mock data as fallback:", newEvent.id);
-
-        return newEvent;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create event"
+        });
       }
     }),
 
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
-      try {
-        // Ensure MongoDB is connected
-        await connectToDatabase();
+      // Try to get event from cache first
+      return await cache.getOrSet(`event:${input.id}`, async () => {
+        try {
+          // Ensure MongoDB is connected
+          await connectToDatabase();
 
-        // Try to find event in MongoDB with a timeout
-        const event = await Promise.race([
-          Event.findOne({ id: input.id }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
-          )
-        ]);
+          // Try to find event in MongoDB with a timeout
+          const event = await Promise.race([
+            Event.findOne({ id: input.id }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
+            )
+          ]);
 
-        if (!event) {
-          // Check mock data
-          const mockEvent = mockData.events.find(e => e.id === input.id);
-          if (mockEvent) {
-            return mockEvent;
+          if (!event) {
+            throw new TRPCError({ code: "NOT_FOUND" });
           }
-          throw new TRPCError({ code: "NOT_FOUND" });
+
+          return event.toObject();
+        } catch (error) {
+          console.error("Error getting event by ID:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to retrieve event from database"
+          });
         }
-
-        return event.toObject();
-      } catch (error) {
-        console.error("Error getting event by ID:", error);
-
-        // Check mock data
-        const mockEvent = mockData.events.find(e => e.id === input.id);
-        if (mockEvent) {
-          return mockEvent;
-        }
-
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
+      }, { ttl: 60 * 1000 }); // Cache for 1 minute
     }),
 
   getFeatured: publicProcedure.query(async () => {
@@ -151,33 +133,46 @@ export const eventRouter = createTRPCRouter({
       return events.map(e => e.toObject());
     } catch (error) {
       console.error('Error in getFeatured:', error);
-      throw error;
+      // Return empty array instead of throwing
+      return [];
     }
   }),
 
   getUpcoming: publicProcedure.query(async () => {
-    // Ensure MongoDB is connected
-    await connectToDatabase();
+    try {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
 
-    // Get upcoming events from MongoDB
-    const now = new Date();
-    const events = await Event.find({
-      status: "published",
-      startDate: { $gt: now }
-    }).sort({ startDate: 1 }); // Sort by startDate ascending
+      // Get upcoming events from MongoDB
+      const now = new Date();
+      const events = await Event.find({
+        status: "published",
+        startDate: { $gt: now }
+      }).sort({ startDate: 1 }); // Sort by startDate ascending
 
-    return events.map(e => e.toObject());
+      return events.map(e => e.toObject());
+    } catch (error) {
+      console.error('Error in getUpcoming:', error);
+      // Return empty array instead of throwing
+      return [];
+    }
   }),
 
   getByUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
+      try {
+        // Ensure MongoDB is connected
+        await connectToDatabase();
 
-      // Get events created by the user from MongoDB
-      const events = await Event.find({ createdById: input.userId });
-      return events.map(e => e.toObject());
+        // Get events created by the user from MongoDB
+        const events = await Event.find({ createdById: input.userId });
+        return events.map(e => e.toObject());
+      } catch (error) {
+        console.error('Error in getByUser:', error);
+        // Return empty array instead of throwing
+        return [];
+      }
     }),
 
   update: protectedProcedure
@@ -216,6 +211,10 @@ export const eventRouter = createTRPCRouter({
         { new: true } // Return the updated document
       );
 
+      // Invalidate cache
+      cache.delete('events:all');
+      cache.delete(`event:${input.id}`);
+
       return updatedEvent?.toObject();
     }),
 
@@ -245,6 +244,10 @@ export const eventRouter = createTRPCRouter({
       // Also delete all attendees for this event
       await Attendee.deleteMany({ eventId: input.id });
 
+      // Invalidate cache
+      cache.delete('events:all');
+      cache.delete(`event:${input.id}`);
+
       return { success: true };
     }),
 
@@ -269,43 +272,31 @@ export const eventRouter = createTRPCRouter({
   }),
 
   getAll: publicProcedure.query(async () => {
-    try {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
+    // Try to get events from cache first
+    return await cache.getOrSet('events:all', async () => {
+      try {
+        // Ensure MongoDB is connected
+        await connectToDatabase();
 
-      // Try to get events from MongoDB with a timeout
-      const events = await Promise.race([
-        Event.find({}),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
-        )
-      ]);
+        // Try to get events from MongoDB with a timeout
+        const events = await Promise.race([
+          Event.find({}),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
+          )
+        ]);
 
-      const result = events.map(e => e.toObject());
+        const result = events.map(e => e.toObject());
 
-      // If we have mock data but no MongoDB data, use the mock data
-      if (result.length === 0 && mockData.events.length > 0) {
-        console.log("No events in MongoDB, using mock data");
-        return mockData.events;
+        // Return the MongoDB results
+        return result;
+      } catch (error) {
+        console.error("Error getting all events:", error);
+
+        // Return empty array if there's an error
+        console.log("Returning empty events array due to error");
+        return [];
       }
-
-      // Merge mock data with MongoDB data to ensure we have all events
-      const allEvents = [...result];
-
-      // Add any mock events that aren't in the MongoDB result
-      mockData.events.forEach(mockEvent => {
-        if (!allEvents.some(e => e.id === mockEvent.id)) {
-          allEvents.push(mockEvent);
-        }
-      });
-
-      return allEvents;
-    } catch (error) {
-      console.error("Error getting all events:", error);
-
-      // Fallback to mock data
-      console.log("Returning mock events data");
-      return mockData.events;
-    }
+    }, { ttl: 60 * 1000 }); // Cache for 1 minute
   }),
 });

@@ -13,6 +13,7 @@ import { EventImage } from "@/components/events/event-image";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useState } from "react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function EventDetailsPage({
   params,
@@ -46,7 +47,11 @@ export default function EventDetailsPage({
   );
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="container px-4 sm:px-6 py-8 flex items-center justify-center min-h-[50vh]">
+        <LoadingSpinner size="lg" text="Loading event details..." />
+      </div>
+    );
   }
 
   if (!event) {
@@ -79,11 +84,11 @@ export default function EventDetailsPage({
   };
 
   return (
-    <div className="container py-8">
+    <div className="container px-4 sm:px-6 py-8">
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">{event.name}</CardTitle>
-          <div className="mt-2 flex items-center gap-4">
+          <div className="mt-2 flex flex-wrap items-center gap-4">
             <AddToCalendar
               eventId={event.id}
               name={event.name}
@@ -107,7 +112,7 @@ export default function EventDetailsPage({
               <EventImage src={event.image} alt={event.name} />
             </div>
           )}
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <h3 className="font-semibold">Date & Time</h3>
               <p>
@@ -172,9 +177,9 @@ export default function EventDetailsPage({
               <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
             </div>
           ) : attendees && attendees.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
               <table className="w-full border-collapse">
-                <thead>
+                <thead className="hidden sm:table-header-group">
                   <tr className="border-b">
                     <th className="py-2 text-left font-medium">Name</th>
                     <th className="py-2 text-left font-medium">Email</th>
@@ -183,10 +188,17 @@ export default function EventDetailsPage({
                 </thead>
                 <tbody>
                   {attendees.map((attendee) => (
-                    <tr key={attendee.id} className="border-b hover:bg-muted/50">
-                      <td className="py-2">{attendee.name}</td>
-                      <td className="py-2">{attendee.email}</td>
-                      <td className="py-2">
+                    <tr key={attendee.id} className="block border-b sm:table-row hover:bg-muted/50">
+                      <td className="block py-2 sm:table-cell">
+                        <span className="inline-block font-medium sm:hidden">Name: </span>
+                        {attendee.name}
+                      </td>
+                      <td className="block py-2 sm:table-cell">
+                        <span className="inline-block font-medium sm:hidden">Email: </span>
+                        {attendee.email}
+                      </td>
+                      <td className="block py-2 sm:table-cell">
+                        <span className="inline-block font-medium sm:hidden">Status: </span>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           attendee.status === 'checked-in'
                             ? 'bg-green-100 text-green-800'

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -230,7 +231,11 @@ export default function AttendeesPage() {
   };
 
   if (!attendeesData || !stats || !events) {
-    return <div>Loading...</div>;
+    return (
+      <div className="container flex justify-center items-center min-h-[50vh]">
+        <LoadingSpinner size="lg" text="Loading attendee data..." />
+      </div>
+    );
   }
 
   return (

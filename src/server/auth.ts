@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth as getClerkAuth } from "@clerk/nextjs/server";
 
 // Extend the default session type
 declare module "@trpc/server" {
@@ -10,12 +10,18 @@ declare module "@trpc/server" {
 }
 
 // This is for API route middleware
-export const authHandler = auth();
+export const authHandler = (req: Request) => getClerkAuth({ request: req });
 
 // This is for context
 export const getAuth = (req: { headers: Headers }) => {
   try {
-    return auth();
+    // Create a Request object from the headers
+    const request = new Request('http://localhost', {
+      headers: req.headers,
+    });
+
+    // Use the request object with Clerk's getAuth
+    return getClerkAuth({ request });
   } catch (error) {
     console.error('Auth error:', error);
     // Fallback for development

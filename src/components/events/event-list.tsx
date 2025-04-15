@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/trpc/react';
 import { EventCard } from './event-card';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export function EventList() {
   const [page, setPage] = useState(1);
@@ -17,13 +18,8 @@ export function EventList() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-[350px] animate-pulse rounded-lg bg-muted"
-          />
-        ))}
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="lg" text="Loading events..." />
       </div>
     );
   }
@@ -49,7 +45,7 @@ export function EventList() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {data.map((event) => (
           <EventCard
             key={event.id}

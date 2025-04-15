@@ -1,48 +1,7 @@
 import mongoose from "mongoose";
 import { env } from "@/env";
 
-// Mock data for fallback when MongoDB is not available
-export const mockData = {
-  events: [
-    {
-      id: "sample-event-1",
-      name: "Tech Conference 2023",
-      description: "Join us for the biggest tech event of the year with industry leaders and innovators.",
-      location: "San Francisco, CA",
-      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 8 * 60 * 60 * 1000), // 8 hours after start
-      category: "Conference",
-      price: 99.99,
-      maxAttendees: ["100"],
-      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop",
-      createdById: "user-id",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: "published",
-      featured: true,
-      attendees: []
-    },
-    {
-      id: "sample-event-2",
-      name: "Design Workshop",
-      description: "Learn the latest design trends and techniques from expert designers.",
-      location: "New York, NY",
-      startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-      endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000), // 4 hours after start
-      category: "Workshop",
-      price: 49.99,
-      maxAttendees: ["30"],
-      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop",
-      createdById: "user-id",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: "published",
-      featured: false,
-      attendees: []
-    }
-  ],
-  attendees: []
-};
+// No mock data - using real database only
 
 if (!env.DATABASE_URL) {
   throw new Error('Please add your MongoDB connection string to .env');
@@ -116,10 +75,12 @@ export async function connectToDatabase() {
   } catch (error) {
     console.error(`MongoDB connection error (attempt ${connectionAttempts + 1}/${MAX_RETRY_ATTEMPTS}):`, error);
 
-    // In development, we'll use mock data instead of failing
+    // In development, we'll provide a fallback to allow the app to run without MongoDB
     if (process.env.NODE_ENV === 'development') {
-      console.log("Using mock data in development mode");
-      isConnected = true; // Pretend we're connected
+      console.error("MongoDB connection failed in development mode. Please check your connection string and make sure MongoDB is running.");
+      // Set connected flag to true to prevent further connection attempts
+      isConnected = true;
+      connectionAttempts = 0;
       return mongoose;
     }
 

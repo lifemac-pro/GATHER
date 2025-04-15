@@ -7,7 +7,7 @@ import { startOfMonth, addMonths, subMonths, format, eachDayOfInterval } from "d
 import { sendEmail, getSurveyEmailTemplate } from "@/server/email";
 import { stringify } from "csv-stringify";
 import { env } from "@/env.mjs";
-import { connectToDatabase, mockData } from "@/server/db/mongo";
+import { connectToDatabase } from "@/server/db/mongo";
 
 const PAGE_SIZE = 10;
 
@@ -107,12 +107,8 @@ export const attendeeRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error getting registration:", error);
 
-        // Check mock data
-        const mockRegistration = mockData.attendees.find(
-          a => a.eventId === input.eventId && a.userId === userId
-        );
-
-        return mockRegistration || null;
+        // No fallback to mock data
+        return null;
       }
     }),
   register: protectedProcedure
@@ -141,43 +137,9 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        // If no event in MongoDB, check mock data
+        // If no event found, return error
         if (!event) {
-          const mockEvent = mockData.events.find(e => e.id === input.eventId);
-          if (!mockEvent) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
-          }
-
-          // Check if user is already registered in mock data
-          const existingMockRegistration = mockData.attendees.find(
-            a => a.eventId === input.eventId && a.userId === userId
-          );
-
-          if (existingMockRegistration) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "You are already registered for this event"
-            });
-          }
-
-          // Create new mock registration
-          const newAttendee = {
-            id: nanoid(),
-            eventId: input.eventId,
-            userId,
-            name: input.name || 'Anonymous',
-            email: input.email || '',
-            phone: input.phone,
-            status: "registered",
-            ticketCode: nanoid(8).toUpperCase(),
-            registeredAt: new Date(),
-          };
-
-          // Add to mock data
-          mockData.attendees.push(newAttendee);
-          console.log("Added attendee to mock data:", newAttendee.id);
-
-          return newAttendee;
+          throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
         }
 
         // Check if user is already registered
@@ -238,34 +200,18 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        // Add to mock data for fallback
-        mockData.attendees.push(attendeeData);
+        // No need to add to mock data
 
         return attendee.toObject();
       } catch (error) {
         console.error("Error registering for event:", error);
 
-        // If it's a timeout error, use mock data
+        // If it's a timeout error, return a specific error
         if (error.message === 'MongoDB operation timed out') {
-          console.log("Using mock data for registration due to timeout");
-
-          const newAttendee = {
-            id: nanoid(),
-            eventId: input.eventId,
-            userId,
-            name: input.name || 'Anonymous',
-            email: input.email || '',
-            phone: input.phone,
-            status: "registered",
-            ticketCode: nanoid(8).toUpperCase(),
-            registeredAt: new Date(),
-          };
-
-          // Add to mock data
-          mockData.attendees.push(newAttendee);
-          console.log("Added attendee to mock data:", newAttendee.id);
-
-          return newAttendee;
+          throw new TRPCError({
+            code: "TIMEOUT",
+            message: "Database operation timed out. Please try again."
+          });
         }
 
         if (error instanceof TRPCError) {
@@ -386,52 +332,11 @@ export const attendeeRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error getting attendees:", error);
 
-        // Return mock data as fallback
-        let filteredAttendees = [...mockData.attendees];
-
-        // Apply filters to mock data
-        if (input.eventId && input.eventId !== 'all') {
-          filteredAttendees = filteredAttendees.filter(a => a.eventId === input.eventId);
-        }
-
-        if (input.status) {
-          filteredAttendees = filteredAttendees.filter(a => a.status === input.status);
-        }
-
-        if (input.search) {
-          const search = input.search.toLowerCase();
-          filteredAttendees = filteredAttendees.filter(a =>
-            (a.name && a.name.toLowerCase().includes(search)) ||
-            (a.email && a.email.toLowerCase().includes(search)) ||
-            (a.ticketCode && a.ticketCode.toLowerCase().includes(search))
-          );
-        }
-
-        // Sort mock data
-        const sortField = input.sortBy || 'registeredAt';
-        filteredAttendees.sort((a, b) => {
-          const aValue = a[sortField];
-          const bValue = b[sortField];
-          const sortOrder = input.sortOrder === 'asc' ? 1 : -1;
-
-          if (aValue < bValue) return -1 * sortOrder;
-          if (aValue > bValue) return 1 * sortOrder;
-          return 0;
+        // Return error instead of mock data
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve attendees from database"
         });
-
-        // Paginate mock data
-        const start = (input.page - 1) * input.pageSize;
-        const paginatedAttendees = filteredAttendees.slice(start, start + input.pageSize);
-
-        return {
-          items: paginatedAttendees,
-          pagination: {
-            total: filteredAttendees.length,
-            pageCount: Math.ceil(filteredAttendees.length / input.pageSize),
-            page: input.page,
-            pageSize: input.pageSize,
-          },
-        };
       }
     }),
 
@@ -583,10 +488,27 @@ export const attendeeRouter = createTRPCRouter({
   bulkCheckIn: protectedProcedure
     .input(z.object({ ids: z.array(z.string()) }))
     .mutation(async ({ input }) => {
-      // Mock implementation to avoid TypeScript errors
-      return {
-        success: true
-      };
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      try {
+        // Update all attendees with the given IDs
+        const result = await Attendee.updateMany(
+          { id: { $in: input.ids } },
+          { $set: { status: 'checked-in', checkedInAt: new Date() } }
+        );
+
+        return {
+          success: true,
+          count: result.modifiedCount
+        };
+      } catch (error) {
+        console.error("Error bulk checking in attendees:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to check in attendees"
+        });
+      }
     }),
 
   bulkRequestFeedback: protectedProcedure
@@ -598,11 +520,28 @@ export const attendeeRouter = createTRPCRouter({
       }))
     }))
     .mutation(async ({ input }) => {
-      // Mock implementation to avoid TypeScript errors
-      return {
-        success: true,
-        results: input.attendees.map(a => `Sent to ${a.userEmail}`)
-      };
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      try {
+        // In a real implementation, you would send emails here
+        // For now, we'll just mark the attendees as having feedback requested
+        const result = await Attendee.updateMany(
+          { id: { $in: input.attendees.map(a => a.id) } },
+          { $set: { feedbackRequested: true, feedbackRequestedAt: new Date() } }
+        );
+
+        return {
+          success: true,
+          results: input.attendees.map(a => `Feedback request recorded for ${a.userEmail}`)
+        };
+      } catch (error) {
+        console.error("Error requesting feedback:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to request feedback"
+        });
+      }
     }),
 
   exportToCSV: protectedProcedure

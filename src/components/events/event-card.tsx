@@ -34,15 +34,15 @@ export function EventCard({
   attendeeCount,
 }: EventCardProps) {
   return (
-    <Card className="h-full overflow-hidden transition-all hover:shadow-md">
+    <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border hover:border-primary/20">
       <div className="relative">
         <EventImage src={image} alt={name} />
-        <Badge className="absolute right-2 top-2">{category}</Badge>
+        <Badge variant="secondary" className="absolute right-2 top-2">{category}</Badge>
       </div>
 
       <CardHeader className="pb-2">
         <div className="space-y-1">
-          <h3 className="line-clamp-1 text-xl font-bold">{name}</h3>
+          <h3 className="line-clamp-1 text-xl font-bold text-foreground">{name}</h3>
           <div className="flex items-center text-sm text-muted-foreground">
             <CalendarIcon className="mr-1 h-4 w-4" />
             <span>{format(new Date(startDate), "PPP")}</span>
@@ -71,7 +71,7 @@ export function EventCard({
       <CardFooter className="flex justify-between">
         <div>
           {price !== undefined && price > 0 ? (
-            <span className="font-semibold">${price.toFixed(2)}</span>
+            <span className="font-semibold text-primary">${price.toFixed(2)}</span>
           ) : (
             <span className="text-sm text-muted-foreground">Free</span>
           )}

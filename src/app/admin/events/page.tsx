@@ -9,6 +9,7 @@ import { EventImage } from "@/components/events/event-image";
 import { api } from "@/trpc/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EventFormDialog } from "@/components/ui/admin/event-form-dialog";
 import {
   AlertDialog,
@@ -66,7 +67,7 @@ export default function EventsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <h1 className="text-3xl font-bold text-[#072446]">Events</h1>
         <Button
           className="bg-[#E1A913] text-[#072446] hover:bg-[#E1A913]/90"
@@ -81,8 +82,8 @@ export default function EventsPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative w-full sm:flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search events..."
@@ -99,17 +100,8 @@ export default function EventsPage() {
 
       {/* Events Grid */}
       {isLoading ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden">
-              <div className="h-48 animate-pulse bg-gray-200"></div>
-              <div className="p-6 space-y-4">
-                <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200"></div>
-                <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
-                <div className="h-4 w-full animate-pulse rounded bg-gray-200"></div>
-              </div>
-            </Card>
-          ))}
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner size="lg" text="Loading events..." />
         </div>
       ) : events?.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12">

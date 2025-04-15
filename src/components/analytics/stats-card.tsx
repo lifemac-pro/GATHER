@@ -24,19 +24,19 @@ export function StatsCard({
   trend,
 }: StatsCardProps) {
   return (
-    <Card className={cn("", className)}>
+    <Card className={cn("border-border hover:border-primary/20 transition-all", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+        <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
+        {icon && <div className="text-primary">{icon}</div>}
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-2xl font-bold text-foreground">{value}</div>
           {trend && (
             <span
               className={cn(
                 "text-xs",
-                trend.positive ? "text-green-500" : "text-red-500"
+                trend.positive ? "text-primary" : "text-destructive"
               )}
             >
               {trend.positive ? "+" : "-"}

@@ -21,6 +21,12 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
       <body className={`font-sans ${GeistSans.variable}`}>
         <ClerkProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
@@ -31,7 +37,6 @@ export default function RootLayout({
             <ErrorBoundary>
               {isAdminPage ? (
                 <div className="flex h-screen">
-                  <Sidebar />
                   <div className="flex-1 overflow-auto">
                     {children}
                   </div>

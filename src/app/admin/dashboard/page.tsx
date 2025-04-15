@@ -4,6 +4,7 @@ import { StatsCard } from "@/components/analytics/stats-card";
 import { AttendanceChart } from "@/components/analytics/attendance-chart";
 import { DemographicsChart } from "@/components/analytics/demographics-chart";
 import { api } from "@/trpc/react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Users,
   CalendarDays,
@@ -12,9 +13,9 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
-  const { data: stats } = api.analytics.getStats.useQuery();
-  const { data: attendanceData } = api.analytics.getAttendanceData.useQuery();
-  const { data: demographicsData } = api.analytics.getDemographicsData.useQuery();
+  const { data: stats, isLoading: isStatsLoading } = api.analytics.getStats.useQuery();
+  const { data: attendanceData, isLoading: isAttendanceLoading } = api.analytics.getAttendanceData.useQuery();
+  const { data: demographicsData, isLoading: isDemographicsLoading } = api.analytics.getDemographicsData.useQuery();
 
   // Transform data to match the expected types
   const formattedAttendanceData = attendanceData ? attendanceData.map(item => ({
@@ -28,16 +29,26 @@ export default function AdminDashboardPage() {
     value: item.count
   })) : [];
 
+  const isLoading = isStatsLoading || isAttendanceLoading || isDemographicsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="container flex justify-center items-center min-h-[50vh]">
+        <LoadingSpinner size="lg" text="Loading dashboard data..." />
+      </div>
+    );
+  }
+
   return (
-    <div className="container space-y-8 py-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="container space-y-8 py-8 bg-background">
+      <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Attendees"
           value={stats?.totalAttendees ?? 0}
           icon={<Users className="h-4 w-4" />}
-          trend={{ value: 12, positive: true }}
+          trend={stats?.attendeeTrend ?? { value: 0, positive: true }}
         />
         <StatsCard
           title="Upcoming Events"
@@ -48,17 +59,17 @@ export default function AdminDashboardPage() {
           title="Registration Rate"
           value={`${stats?.checkedInRate.toFixed(1) ?? 0}%`}
           icon={<TrendingUp className="h-4 w-4" />}
-          trend={{ value: 8, positive: true }}
+          trend={stats?.registrationTrend ?? { value: 0, positive: true }}
         />
         <StatsCard
           title="Attendance Rate"
           value={`${stats?.checkedInRate.toFixed(1) ?? 0}%`}
           icon={<Percent className="h-4 w-4" />}
-          trend={{ value: 5, positive: true }}
+          trend={stats?.attendanceTrend ?? { value: 0, positive: true }}
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2">
         <AttendanceChart data={formattedAttendanceData} />
         <DemographicsChart data={formattedDemographicsData} />
       </div>

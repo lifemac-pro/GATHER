@@ -2,25 +2,25 @@ import { CalendarDays, Bell, CheckCircle2, BarChart3 } from "lucide-react";
 
 export function AboutSection() {
   return (
-    <section className="bg-white px-4 py-16">
+    <section className="bg-background px-4 py-16">
       <div className="mx-auto max-w-6xl">
-        <h2 className="mb-12 text-center text-3xl font-bold text-[#E1A913] md:text-4xl">
+        <h2 className="mb-12 text-center text-3xl font-bold text-primary md:text-4xl">
           About GatherEase
         </h2>
-        
+
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
             <div
               key={feature.title}
               className="flex flex-col items-center text-center"
             >
-              <div className="mb-4 rounded-full bg-[#072446] p-3 text-[#00b0a6]">
+              <div className="mb-4 rounded-full bg-primary/10 p-3 text-primary">
                 <feature.icon size={24} />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-[#072446]">
+              <h3 className="mb-2 text-xl font-semibold text-foreground">
                 {feature.title}
               </h3>
-              <p className="text-[#B0B8C5]">{feature.description}</p>
+              <p className="text-muted-foreground">{feature.description}</p>
             </div>
           ))}
         </div>
