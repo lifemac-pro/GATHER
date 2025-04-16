@@ -11,24 +11,33 @@ export default function Navbar() {
   const { isSignedIn, isLoaded } = useAuth();
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-[#072446] px-6 py-4 text-white shadow-md">
+    <nav className="fixed top-0 z-50 w-full bg-[#082865] px-6 py-4 text-white shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/">
-          <span className="cursor-pointer text-2xl font-bold text-[#E1A913]">
+          <span className="cursor-pointer text-2xl font-bold text-white">
             GatherEase
           </span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden space-x-6 md:flex">
-          <Link href="/about" className="transition hover:text-[#E1A913]">
+        <div className="hidden space-x-8 md:flex">
+          <Link
+            href="/about"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
+          >
             About
           </Link>
-          <Link href="/events" className="transition hover:text-[#E1A913]">
+          <Link
+            href="/events"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
+          >
             Events
           </Link>
-          <Link href="/contact" className="transition hover:text-[#E1A913]">
+          <Link
+            href="/contact"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
+          >
             Contact
           </Link>
         </div>
@@ -38,7 +47,7 @@ export default function Navbar() {
           <AuthButton
             mode="sign-in"
             redirectUrl="/attendee/dashboard"
-            className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]"
+            className="rounded-lg bg-[#0055FF] px-6 py-2 font-medium text-white shadow-lg transition-colors hover:bg-[#004BD9]"
           >
             Sign In
           </AuthButton>
@@ -52,24 +61,24 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="flex flex-col items-center space-y-4 bg-[#0A2A4A] py-4 md:hidden">
+        <div className="absolute left-0 right-0 top-full z-20 flex flex-col items-center space-y-4 bg-[#082865] py-6 shadow-lg md:hidden">
           <Link
             href="/about"
-            className="transition hover:text-[#E1A913]"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
             onClick={() => setIsOpen(false)}
           >
             About
           </Link>
           <Link
             href="/events"
-            className="transition hover:text-[#E1A913]"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
             onClick={() => setIsOpen(false)}
           >
             Events
           </Link>
           <Link
             href="/contact"
-            className="transition hover:text-[#E1A913]"
+            className="text-sm font-medium uppercase tracking-wide text-white/80 transition hover:text-white"
             onClick={() => setIsOpen(false)}
           >
             Contact
@@ -77,7 +86,7 @@ export default function Navbar() {
           <AuthButton
             mode="sign-in"
             redirectUrl="/attendee/dashboard"
-            className="rounded-lg border-2 border-[#E1A913] bg-[#072446] px-6 py-2 font-semibold text-[#E1A913] transition-colors hover:bg-[#0a3060]"
+            className="mt-2 rounded-lg bg-[#0055FF] px-6 py-2 font-medium text-white shadow-lg transition-colors hover:bg-[#004BD9]"
           >
             Sign In
           </AuthButton>

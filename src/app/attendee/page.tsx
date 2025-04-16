@@ -11,20 +11,25 @@ export default function AttendeePage() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
 
+      {/* Hero Section - Moved to top */}
+      <HeroSection />
+
       {/* Main Content */}
-      <main className="flex-grow bg-[#6fc3f7] px-6 pt-20 text-white">
-        <section className="py-10 text-center">
-          <h1 className="text-4xl font-bold text-[#E1A913]">Featured Events</h1>
-          <p className="mt-2 text-lg text-[#B0B8C5]">
-            Check out our latest events and register now!
+      <main className="flex-grow bg-gradient-to-b from-[#006EFF] to-[#0055FF] px-6 py-20 text-white">
+        <section className="container mx-auto py-10 text-center">
+          <h1 className="text-4xl font-bold text-white">Featured Events</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-white/80">
+            Discover and register for our upcoming events. Join us for memorable
+            experiences and networking opportunities.
           </p>
         </section>
 
         {/* Event Cards using FeaturedEvents component */}
-        <FeaturedEvents />
+        <div className="container mx-auto">
+          <FeaturedEvents />
+        </div>
       </main>
 
-      <HeroSection />
       <Testimonials />
       <CTA />
       <Footer />
