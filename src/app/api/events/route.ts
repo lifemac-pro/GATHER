@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { Event } from "@/server/db/models/event";
+import { Event } from "@/server/db/models";
+import { connectToDatabase } from "@/server/db/mongo";
 import { AppError, ErrorCode } from "@/utils/error-handling";
 import { createApiRouteHandler, createSuccessResponse } from "@/utils/api-route-handler";
 import { ApiResponse, EventListResponse, EventResponse } from "@/types/api-responses";
@@ -57,11 +58,49 @@ export const GET = createApiRouteHandler<void>(
       const limit = parsedQuery.limit || 10;
       const skip = (page - 1) * limit;
 
-      // Execute query - use a safer approach
-      const eventsQuery = Event.find(queryConditions);
-      const events = await eventsQuery;
+      console.log('API route: Fetching events with conditions:', queryConditions);
 
-      const totalEvents = await Event.countDocuments(queryConditions);
+      // Execute query - use a safer approach with direct MongoDB access
+      let events = [];
+      try {
+        console.log('API route: Attempting to fetch events with mongoose model');
+        const eventsQuery = Event.find(queryConditions);
+        events = await eventsQuery;
+
+        console.log('API route: Found', events.length, 'events with mongoose model');
+
+        // If no events found, try fetching all events
+        if (events.length === 0) {
+          console.log('API route: No events found with filters, fetching all events');
+          events = await Event.find({});
+          console.log('API route: Found', events.length, 'events without filters');
+        }
+
+        // If still no events, try direct MongoDB access
+        if (events.length === 0) {
+          console.log('API route: No events found with mongoose, trying direct MongoDB access');
+          try {
+            const mongoose = await connectToDatabase();
+            if (mongoose.connection && mongoose.connection.readyState === 1) {
+              const db = mongoose.connection.db;
+              if (db) {
+                const directEvents = await db.collection('events').find({}).toArray();
+                console.log('API route: Found', directEvents.length, 'events with direct MongoDB access');
+                events = directEvents;
+              }
+            } else {
+              console.log('API route: MongoDB connection not ready, state:', mongoose.connection?.readyState);
+            }
+          } catch (directError) {
+            console.error('API route: Error with direct MongoDB access:', directError);
+          }
+        }
+      } catch (dbError) {
+        console.error('API route: Error fetching events:', dbError);
+        // Continue with empty events array
+      }
+
+      const totalEvents = events.length;
 
       // Map to response format
       const items = events.map((event: any) => ({
@@ -131,21 +170,45 @@ export const POST = createApiRouteHandler<CreateEventRequest>(
     }
 
     try {
-      // Create event
-      const event = await Event.create({
-        name: body.name,
-        description: body.description,
-        location: body.location,
-        startDate: body.startDate,
-        endDate: body.endDate,
-        category: body.category,
-        price: body.price,
-        maxAttendees: body.maxAttendees ? [body.maxAttendees.toString()] : undefined,
-        createdById: session?.userId || "unknown",
-        image: body.image,
-        featured: false,
-        status: "published",
-      });
+      // Connect to MongoDB first
+      console.log('API POST: Connecting to MongoDB');
+      await connectToDatabase();
+
+      // Create event with timeout
+      console.log('API POST: Creating event');
+      let event;
+      try {
+        // Use Promise.race to add a timeout
+        event = await Promise.race([
+          Event.create({
+            name: body.name,
+            description: body.description,
+            location: body.location,
+            startDate: body.startDate,
+            endDate: body.endDate,
+            category: body.category,
+            price: body.price,
+            maxAttendees: body.maxAttendees ? [body.maxAttendees.toString()] : undefined,
+            createdById: session?.userId || "unknown",
+            image: body.image,
+            featured: false,
+            status: "published",
+          }),
+          new Promise((_, reject) => setTimeout(() => {
+            console.error('API POST: Event creation timed out');
+            reject(new Error('Event creation timed out after 30 seconds'));
+          }, 30000))
+        ]);
+      } catch (createError) {
+        console.error('API POST: Error creating event:', createError);
+        throw new AppError(
+          ErrorCode.DATABASE_ERROR,
+          "Failed to create event: " + (createError instanceof Error ? createError.message : String(createError)),
+          500
+        );
+      }
+
+      console.log('API POST: Event created successfully with ID:', event.id);
 
       // Create response
       const response: ApiResponse<EventResponse> = {

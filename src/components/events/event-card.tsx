@@ -45,7 +45,11 @@ export function EventCard({
           <h3 className="line-clamp-1 text-xl font-bold text-foreground">{name}</h3>
           <div className="flex items-center text-sm text-muted-foreground">
             <CalendarIcon className="mr-1 h-4 w-4" />
-            <span>{format(new Date(startDate), "PPP")}</span>
+            <span>
+              {typeof startDate === 'string'
+                ? format(new Date(startDate), "PPP")
+                : format(startDate, "PPP")}
+            </span>
           </div>
           {location && (
             <div className="flex items-center text-sm text-muted-foreground">
@@ -56,7 +60,12 @@ export function EventCard({
           <div className="flex items-center text-sm text-muted-foreground">
             <Clock className="mr-1 h-4 w-4" />
             <span>
-              {format(new Date(startDate), "p")} - {format(new Date(endDate), "p")}
+              {typeof startDate === 'string'
+                ? format(new Date(startDate), "p")
+                : format(startDate, "p")} -
+              {typeof endDate === 'string'
+                ? format(new Date(endDate), "p")
+                : format(endDate, "p")}
             </span>
           </div>
         </div>

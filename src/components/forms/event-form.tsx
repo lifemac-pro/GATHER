@@ -139,13 +139,18 @@ export function EventForm({ event, mode }: EventFormProps) {
     },
     {
       onSuccess: (data) => {
-        router.push(`/events/${data.id}`);
+        if (data && typeof data === 'object' && 'id' in data) {
+          router.push(`/events/${data.id}`);
+        } else {
+          console.error('Invalid data returned from mutation:', data);
+          router.push('/events');
+        }
       },
     }
   );
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+    <form onSubmit={handleSubmit(data => { void submit(data); return undefined; })} className="space-y-6">
       {error && (
         <div className="rounded-md bg-red-50 p-4">
           <div className="flex">

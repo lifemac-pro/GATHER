@@ -267,13 +267,17 @@ export default function AttendeesPage() {
 
       {/* Analytics */}
       <AttendeeAnalytics
-        dailyTrends={stats.dailyTrends.map(trend => ({
-          // Ensure date is always a string
-          date: (trend.date ? trend.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
-          registrations: trend.count,
-          checkIns: Math.floor(trend.count * 0.8),
-          cancellations: Math.floor(trend.count * 0.1)
-        }))}
+        dailyTrends={stats.dailyTrends.map(trend => {
+          // Ensure date is always a string and never undefined
+          const dateStr = trend.date ? new Date(trend.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+          const count = typeof trend.count === 'number' ? trend.count : 0;
+          return {
+            date: dateStr, // Explicitly typed as string
+            registrations: count,
+            checkIns: Math.floor(count * 0.8),
+            cancellations: Math.floor(count * 0.1)
+          };
+        }) as Array<{ date: string; registrations: number; checkIns: number; cancellations: number; }>}
         statusDistribution={Object.entries(stats.attendeesByStatus).map(([status, count]) => ({
           status,
           count,
@@ -462,7 +466,7 @@ export default function AttendeesPage() {
               currentPage={page}
               pageCount={attendeesData.pagination.pageCount}
               pageSize={pageSize}
-              total={attendeesData.pagination.total}
+              total={Number(attendeesData.pagination.total) || 0}
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
             />

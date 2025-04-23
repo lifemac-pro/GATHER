@@ -10,7 +10,7 @@ if (!uri) {
 }
 
 async function testMongoConnection() {
-  const client = new MongoClient(uri);
+  const client = new MongoClient(uri || '');
   try {
     await client.connect();
     console.log("✅ Connected to MongoDB Atlas!");

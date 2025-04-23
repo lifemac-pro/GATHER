@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { Event } from "@/server/db/models/event";
+import { Event } from "@/server/db/models";
 import { Attendee } from "@/server/db/models/attendee";
 import { AppError, ErrorCode } from "@/utils/error-handling";
 import { createApiRouteHandler, createSuccessResponse } from "@/utils/api-route-handler";

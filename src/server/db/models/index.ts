@@ -1,5 +1,5 @@
 export * from './user';
-export * from './event';
+export * from './event-fixed';
 export * from './attendee';
 export * from './survey';
 export * from './waitlist';

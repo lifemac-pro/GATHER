@@ -1,9 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 
 // Define public routes that don't require authentication
-const publicRoutes = createRouteMatcher([
+const publicRoutes = (req: NextRequest) => createRouteMatcher([
   '/',
   '/sign-in',
   '/sign-in/(.*)',
@@ -53,36 +53,40 @@ function addSecurityHeaders(response: NextResponse) {
   return response;
 }
 
-export default clerkMiddleware({
-  // Allow public routes without authentication
-  publicRoutes,
-
-  // Add security headers and handle errors
-  afterAuth: (auth, req, evt) => {
-    try {
-      // Check for admin routes
-      const url = new URL(req.url);
-      const isAdminRoute = url.pathname.startsWith('/admin');
-
-      // If the user is trying to access admin routes and isn't signed in
-      if (isAdminRoute && !auth.userId) {
-        const signInUrl = new URL('/sign-in', req.url);
-        signInUrl.searchParams.set('redirect_url', req.url);
-        return addSecurityHeaders(NextResponse.redirect(signInUrl));
-      }
-
-      // Continue with the request
-      const response = NextResponse.next();
-
-      // Add security headers
-      return addSecurityHeaders(response);
-    } catch (error) {
-      // Log any errors
-      logger.error('Middleware error:', { error: error instanceof Error ? error.message : String(error) });
-
-      // Continue with the request even if there's an error in our custom code
+export default clerkMiddleware((auth, req) => {
+  try {
+    // Check if the route is public
+    const matcher = publicRoutes(req);
+    // Convert pathname to string to avoid type error
+    const pathname = req.nextUrl.pathname.toString();
+    if (matcher(pathname)) {
       return addSecurityHeaders(NextResponse.next());
     }
+
+    // Check for admin routes
+    const url = new URL(req.url);
+    const isAdminRoute = url.pathname.startsWith('/admin');
+
+    // If the user is trying to access admin routes and isn't signed in
+    // Check if user is authenticated for admin routes
+    const userId = auth && typeof auth === 'object' && 'userId' in auth ? auth.userId : undefined;
+    if (isAdminRoute && !userId) {
+      const signInUrl = new URL('/sign-in', req.url);
+      signInUrl.searchParams.set('redirect_url', req.url);
+      return addSecurityHeaders(NextResponse.redirect(signInUrl));
+    }
+
+    // Continue with the request
+    const response = NextResponse.next();
+
+    // Add security headers
+    return addSecurityHeaders(response);
+  } catch (error) {
+    // Log any errors
+    logger.error('Middleware error:', { error: error instanceof Error ? error.message : String(error) });
+
+    // Continue with the request even if there's an error in our custom code
+    return addSecurityHeaders(NextResponse.next());
   }
 })
 

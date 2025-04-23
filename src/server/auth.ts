@@ -10,18 +10,37 @@ declare module "@trpc/server" {
 }
 
 // This is for API route middleware
-export const authHandler = (req: Request) => getClerkAuth({ request: req });
-
-// This is for context
-export const getAuth = (req: { headers: Headers }) => {
+export const authHandler = (req: Request) => {
   try {
-    // Create a Request object from the headers
-    const request = new Request('http://localhost', {
-      headers: req.headers,
+    // Convert Request to a compatible format
+    const headers = new Headers();
+    req.headers.forEach((value, key) => {
+      headers.set(key, value);
     });
 
-    // Use the request object with Clerk's getAuth
-    return getClerkAuth({ request });
+    const compatibleReq = {
+      headers,
+      url: req.url
+    };
+
+    return getClerkAuth(compatibleReq as any);
+  } catch (error) {
+    console.error('Auth handler error:', error);
+    return null;
+  }
+};
+
+// This is for context
+export const getAuth = (req: { headers: Headers, url?: string }) => {
+  try {
+    // Create a compatible request object
+    const compatibleReq = {
+      headers: req.headers,
+      url: req.url || 'http://localhost:3000'
+    };
+
+    // Use the compatible request object with Clerk's getAuth
+    return getClerkAuth(compatibleReq as any);
   } catch (error) {
     console.error('Auth error:', error);
     // Fallback for development

@@ -1,7 +1,8 @@
 import { postRouter } from "@/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { adminDashboardRouter } from "@/server/api/routers/admin/dashboard";
-import { eventRouter } from "@/server/api/routers/event";
+// Use the event router that works with direct MongoDB operations
+import { eventRouter } from "@/server/api/routers/event-router";
 import { analyticsRouter } from "@/server/api/routers/analytics";
 import { settingsRouter } from "@/server/api/routers/settings";
 import { qrRouter } from "@/server/api/routers/qr";

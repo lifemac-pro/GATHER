@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { AppError, ErrorCode } from "@/utils/error-handling";
 import { ApiResponse, EventListResponse, EventResponse } from "@/types/api-responses";
-import { Event } from "@/server/db/models/event";
+import { Event } from "@/server/db/models";
 
 // Input validation schemas
 const getEventSchema = z.object({

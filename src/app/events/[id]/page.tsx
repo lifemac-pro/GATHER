@@ -187,7 +187,7 @@ export default function EventDetailsPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {attendees.map((attendee) => (
+                  {attendees && attendees.map((attendee) => (
                     <tr key={attendee.id} className="block border-b sm:table-row hover:bg-muted/50">
                       <td className="block py-2 sm:table-cell">
                         <span className="inline-block font-medium sm:hidden">Name: </span>

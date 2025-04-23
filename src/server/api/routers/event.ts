@@ -1,22 +1,39 @@
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
+                                                                                                              import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 import { Context, TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
-import { Event, Attendee } from "@/server/db/models";
+import { Attendee } from "@/server/db/models";
+import { EventOps } from "@/server/db/operations/event-ops";
+import { isValid } from "date-fns";
 
 // Import connectToDatabase to ensure MongoDB connection
 import { connectToDatabase } from "@/server/db/mongo";
 import { cache } from "@/lib/cache";
 
+// Helper function to ensure dates are valid
+const ensureValidDate = (date: any): Date => {
+  if (!date) return new Date();
+
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return isValid(dateObj) ? dateObj : new Date();
+  } catch (e) {
+    console.error('Invalid date:', date, e);
+    return new Date();
+  }
+};
+
 const eventInputSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  location: z.string().optional(),
+  name: z.string().min(1, "Event name is required"),
+  description: z.string().optional().default(""),
+  location: z.string().optional().default(""),
   startDate: z.date(),
   endDate: z.date(),
   maxAttendees: z.number().optional(),
-  category: z.string(),
+  category: z.string().min(1, "Category is required"),
   price: z.number().default(0),
+  image: z.string().optional().default(""),
+  featured: z.boolean().optional().default(false),
 });
 
 type EventInput = z.infer<typeof eventInputSchema>;
@@ -33,6 +50,7 @@ interface EventUpdateInput {
   featured?: boolean;
   status?: "draft" | "published" | "cancelled" | "completed";
   price?: number;
+  image?: string;
 }
 
 export const eventRouter = createTRPCRouter({
@@ -40,51 +58,48 @@ export const eventRouter = createTRPCRouter({
     .input(eventInputSchema)
     .mutation(async ({ input, ctx }) => {
       try {
-        // Ensure MongoDB is connected
-        await connectToDatabase();
+        console.log('Creating event with input:', {
+          ...input,
+          image: input.image ? 'Image data present (truncated)' : 'No image data'
+        });
 
         // Get user ID from session
-        const userId = ctx.session?.userId || "user-id";
+        const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : "user-id";
+        console.log('User ID for event creation:', userId);
 
-        // Create a new event object
-        const newEvent = {
-          id: nanoid(),
-          ...input,
-          createdById: userId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: "published", // Set to published so it shows up immediately
+        // Create the event using direct operations
+        const event = await EventOps.create({
+          name: input.name,
+          description: input.description || "",
+          location: input.location || "",
+          startDate: input.startDate,
+          endDate: input.endDate,
+          category: input.category,
+          featured: input.featured || false,
+          price: input.price || 0,
           image: input.image || "",
+          createdById: String(userId),
+          status: "published", // Set to published so it shows up immediately
           maxAttendees: input.maxAttendees ? [input.maxAttendees.toString()] : [],
-        };
+        });
 
-        try {
-          // Create the event in MongoDB with a timeout
-          const event = await Promise.race([
-            Event.create(newEvent),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
-            )
-          ]);
+        console.log("Event created:", event.id);
 
-          console.log("Event created in MongoDB:", event.id);
+        // Invalidate all event-related caches
+        cache.clear(); // Clear all cache to ensure fresh data
 
-          // Invalidate cache
-          cache.delete('events:all');
-
-          return event.toObject();
-        } catch (dbError) {
-          console.error("Error saving to MongoDB:", dbError);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create event in database"
-          });
-        }
+        return event;
       } catch (error) {
         console.error("Error creating event:", error);
+        console.error("Error details:", {
+          name: error && typeof error === 'object' && 'name' in error ? error.name : 'Unknown error',
+          message: error && typeof error === 'object' && 'message' in error ? error.message : String(error),
+          stack: error && typeof error === 'object' && 'stack' in error ? error.stack : 'No stack trace',
+        });
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create event"
+          message: `Failed to create event: ${error && typeof error === 'object' && 'message' in error ? error.message : String(error)}`
         });
       }
     }),
@@ -95,22 +110,13 @@ export const eventRouter = createTRPCRouter({
       // Try to get event from cache first
       return await cache.getOrSet(`event:${input.id}`, async () => {
         try {
-          // Ensure MongoDB is connected
-          await connectToDatabase();
-
-          // Try to find event in MongoDB with a timeout
-          const event = await Promise.race([
-            Event.findOne({ id: input.id }),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
-            )
-          ]);
+          const event = await EventOps.getById(input.id);
 
           if (!event) {
             throw new TRPCError({ code: "NOT_FOUND" });
           }
 
-          return event.toObject();
+          return event;
         } catch (error) {
           console.error("Error getting event by ID:", error);
           throw new TRPCError({
@@ -123,14 +129,22 @@ export const eventRouter = createTRPCRouter({
 
   getFeatured: publicProcedure.query(async () => {
     try {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
-
       console.log('Executing getFeatured procedure');
-      // Get featured events from MongoDB
-      const events = await Event.find({ featured: true, status: "published" });
-      console.log('Found featured events:', events.length);
-      return events.map(e => e.toObject());
+      let events = await EventOps.getFeatured();
+
+      // Log all featured events without filtering
+      console.log('Found featured events in database:', events.length);
+      if (events.length > 0 && events[0]) {
+        console.log('First featured event details:', {
+          id: events[0]?.id || 'unknown',
+          name: events[0]?.name || 'Unnamed Event',
+          category: events[0]?.category || 'general',
+          createdById: events[0]?.createdById || 'unknown'
+        });
+      }
+
+      console.log('Found real featured events:', events.length);
+      return events;
     } catch (error) {
       console.error('Error in getFeatured:', error);
       // Return empty array instead of throwing
@@ -140,17 +154,23 @@ export const eventRouter = createTRPCRouter({
 
   getUpcoming: publicProcedure.query(async () => {
     try {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
+      console.log('Executing getUpcoming procedure');
+      let events = await EventOps.getUpcoming();
 
-      // Get upcoming events from MongoDB
-      const now = new Date();
-      const events = await Event.find({
-        status: "published",
-        startDate: { $gt: now }
-      }).sort({ startDate: 1 }); // Sort by startDate ascending
+      // Log all upcoming events without filtering
+      console.log('Found upcoming events in database:', events.length);
+      if (events.length > 0 && events[0]) {
+        console.log('First upcoming event details:', {
+          id: events[0]?.id || 'unknown',
+          name: events[0]?.name || 'Unnamed Event',
+          category: events[0]?.category || 'general',
+          startDate: events[0]?.startDate || new Date(),
+          createdById: events[0]?.createdById || 'unknown'
+        });
+      }
 
-      return events.map(e => e.toObject());
+      console.log('Found real upcoming events:', events.length);
+      return events;
     } catch (error) {
       console.error('Error in getUpcoming:', error);
       // Return empty array instead of throwing
@@ -162,12 +182,16 @@ export const eventRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       try {
-        // Ensure MongoDB is connected
-        await connectToDatabase();
+        console.log('Executing getByUser procedure for user:', input.userId);
+        let events = await EventOps.getByUser(input.userId);
 
-        // Get events created by the user from MongoDB
-        const events = await Event.find({ createdById: input.userId });
-        return events.map(e => e.toObject());
+        // Filter out any test events that might have been created by the system
+        events = events.filter(event =>
+          !event.name.toLowerCase().includes('test event')
+        );
+
+        console.log('Found real user events:', events.length);
+        return events;
       } catch (error) {
         console.error('Error in getByUser:', error);
         // Return empty array instead of throwing
@@ -183,120 +207,181 @@ export const eventRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
+      try {
+        // Get user ID from session
+        const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : "user-id";
 
-      // Find event in MongoDB
-      const event = await Event.findOne({ id: input.id });
-      if (!event) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+        // Find event
+        const event = await EventOps.getById(input.id);
+        if (!event) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        // Check if user is the creator
+        if (event.createdById !== userId) {
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
+
+        // Update the event
+        const updatedEvent = await EventOps.update(input.id, {
+          name: input.name,
+          description: input.description || "",
+          location: input.location || "",
+          startDate: input.startDate,
+          endDate: input.endDate,
+          category: input.category,
+          featured: input.featured || false,
+          price: input.price || 0,
+          image: input.image || "",
+        });
+
+        // Invalidate all event-related caches
+        cache.clear(); // Clear all cache to ensure fresh data
+
+        return updatedEvent;
+      } catch (error) {
+        console.error("Error updating event:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to update event: ${error && typeof error === 'object' && 'message' in error ? error.message : String(error)}`
+        });
       }
-
-      // Get user ID from session
-      const userId = ctx.session?.userId || "user-id";
-
-      // Check if user is the creator
-      if (event.createdById !== userId) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-
-      // Update the event in MongoDB
-      const updatedEvent = await Event.findOneAndUpdate(
-        { id: input.id },
-        {
-          ...input,
-          updatedAt: new Date(),
-          maxAttendees: input.maxAttendees ? [input.maxAttendees.toString()] : event.maxAttendees
-        },
-        { new: true } // Return the updated document
-      );
-
-      // Invalidate cache
-      cache.delete('events:all');
-      cache.delete(`event:${input.id}`);
-
-      return updatedEvent?.toObject();
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      // Ensure MongoDB is connected
-      await connectToDatabase();
-
-      // Find event in MongoDB
-      const event = await Event.findOne({ id: input.id });
-      if (!event) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-
-      // Get user ID from session
-      const userId = ctx.session?.userId || "user-id";
-
-      // Check if user is authorized to delete the event
-      if (event.createdById !== userId) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-
-      // Delete the event from MongoDB
-      await Event.deleteOne({ id: input.id });
-
-      // Also delete all attendees for this event
-      await Attendee.deleteMany({ eventId: input.id });
-
-      // Invalidate cache
-      cache.delete('events:all');
-      cache.delete(`event:${input.id}`);
-
-      return { success: true };
-    }),
-
-  getCategories: publicProcedure.query(async () => {
-    // Ensure MongoDB is connected
-    await connectToDatabase();
-
-    // Get categories from MongoDB using aggregation
-    const categories = await Event.aggregate([
-      {
-        $group: {
-          _id: "$category",
-          count: { $sum: 1 }
-        }
-      },
-      {
-        $sort: { count: -1 }
-      }
-    ]);
-
-    return categories.map(c => ({ name: c._id, count: c.count }));
-  }),
-
-  getAll: publicProcedure.query(async () => {
-    // Try to get events from cache first
-    return await cache.getOrSet('events:all', async () => {
+      console.log('Executing delete procedure for event ID:', input.id);
       try {
         // Ensure MongoDB is connected
         await connectToDatabase();
+        console.log('MongoDB connected for delete operation');
 
-        // Try to get events from MongoDB with a timeout
-        const events = await Promise.race([
-          Event.find({}),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
-          )
-        ]);
+        // Get user ID from session
+        const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : "user-id";
+        console.log('User ID for delete operation:', userId);
 
-        const result = events.map(e => e.toObject());
+        // Find event with error handling
+        let event;
+        try {
+          event = await EventOps.getById(input.id);
+          console.log('Event found for deletion:', event ? 'Yes' : 'No');
+        } catch (getError) {
+          console.error('Error finding event for deletion:', getError);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to retrieve event for deletion"
+          });
+        }
 
-        // Return the MongoDB results
-        return result;
+        if (!event) {
+          console.log('Event not found for deletion');
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        // Check if user is authorized to delete the event
+        if (event.createdById !== userId) {
+          console.log('User not authorized to delete event. Event creator:', event.createdById, 'Current user:', userId);
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
+
+        // Delete the event with error handling
+        try {
+          console.log('Attempting to delete event:', input.id);
+          const deleteResult = await EventOps.delete(input.id);
+          console.log('Event deletion result:', deleteResult);
+
+          if (!deleteResult) {
+            console.log('Event deletion returned false');
+            throw new Error('Event deletion failed');
+          }
+        } catch (deleteError) {
+          console.error('Error during event deletion:', deleteError);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete event from database"
+          });
+        }
+
+        // Invalidate all event-related caches
+        try {
+          console.log('Clearing cache after event deletion');
+          cache.clear(); // Clear all cache to ensure fresh data
+        } catch (cacheError) {
+          console.error('Error clearing cache:', cacheError);
+          // Continue even if cache clearing fails
+        }
+
+        console.log('Event deletion completed successfully');
+        return { success: true };
       } catch (error) {
-        console.error("Error getting all events:", error);
+        console.error("Error deleting event:", error);
+        console.error("Error details:", {
+          name: error && typeof error === 'object' && 'name' in error ? error.name : 'Unknown error',
+          message: error && typeof error === 'object' && 'message' in error ? error.message : String(error),
+          stack: error && typeof error === 'object' && 'stack' in error ? error.stack : 'No stack trace',
+        });
 
-        // Return empty array if there's an error
-        console.log("Returning empty events array due to error");
-        return [];
+        // Determine appropriate error code
+        const errorCode =
+          error instanceof TRPCError ? error.code : "INTERNAL_SERVER_ERROR";
+
+        throw new TRPCError({
+          code: errorCode,
+          message: `Failed to delete event: ${error && typeof error === 'object' && 'message' in error ? error.message : String(error)}`
+        });
       }
-    }, { ttl: 60 * 1000 }); // Cache for 1 minute
+    }),
+
+  getCategories: publicProcedure.query(async () => {
+    try {
+      return await EventOps.getCategories();
+    } catch (error) {
+      console.error('Error getting categories:', error);
+      return [];
+    }
+  }),
+
+  getAll: publicProcedure.query(async () => {
+    console.log('Executing getAll procedure');
+    try {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get all real events with better error handling
+      let events: Array<any> = [];
+      try {
+        events = await EventOps.getAll();
+
+        // Log all events without filtering
+        console.log('Found events in database:', events.length);
+        if (events.length > 0 && events[0]) {
+          console.log('First event details:', {
+            id: events[0]?.id || 'unknown',
+            name: events[0]?.name || 'Unnamed Event',
+            category: events[0]?.category || 'general',
+            createdById: events[0]?.createdById || 'unknown'
+          });
+        }
+
+        console.log('Found real events:', events.length);
+      } catch (getAllError) {
+        console.error('Error in EventOps.getAll:', getAllError);
+        // Continue with empty events array
+      }
+
+      return events;
+    } catch (error) {
+      console.error("Error getting all events:", error);
+      console.error("Error details:", {
+        name: error && typeof error === 'object' && 'name' in error ? error.name : 'Unknown error',
+        message: error && typeof error === 'object' && 'message' in error ? error.message : String(error),
+        stack: error && typeof error === 'object' && 'stack' in error ? error.stack : 'No stack trace',
+      });
+
+      // Return empty array if there's an error
+      console.log("Returning empty events array due to error");
+      return [];
+    }
   }),
 });

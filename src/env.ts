@@ -72,7 +72,7 @@ if (!!process.env.SKIP_ENV_VALIDATION == false) {
     throw new Error("Invalid environment variables");
   }
 
-  env = new Proxy(parsed.data, {
+  env = new Proxy({ ...parsed.data, NODE_ENV: process.env.NODE_ENV || 'development' }, {
     get(target, prop) {
       if (typeof prop !== "string") return undefined;
       // Throw a descriptive error if a server-side env var is accessed on the client
@@ -83,7 +83,7 @@ if (!!process.env.SKIP_ENV_VALIDATION == false) {
             ? "❌ Attempted to access a server-side environment variable on the client"
             : `❌ Attempted to access server-side environment variable '${prop}' on the client`,
         );
-      return target[/** @type {keyof typeof target} */ (prop)];
+      return target[prop as keyof typeof target];
     },
   });
 }

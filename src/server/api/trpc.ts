@@ -13,6 +13,7 @@ import { db } from "@/server/db";
 import { headers } from "next/headers";
 import { getAuth } from "@/server/auth";
 import { trpcErrorHandler, handleZodError, AppError, ErrorCode } from "@/utils/error-handling";
+import { connectToDatabase } from "@/server/db/mongo";
 
 /**
  * 1. CONTEXT
@@ -34,6 +35,9 @@ export const createTRPCContext = async (opts: { headers: Headers }): Promise<Con
   let session = null;
 
   try {
+    // Ensure MongoDB is connected
+    await connectToDatabase();
+
     const auth = await getAuth({ headers: opts.headers });
 
     // If auth is available, include the full auth object as session
@@ -41,11 +45,16 @@ export const createTRPCContext = async (opts: { headers: Headers }): Promise<Con
       session = {
         userId: auth.userId,
         sessionId: auth.sessionId,
-        user: auth.user
+        user: auth && 'user' in auth && auth.user ? {
+          id: auth.user.id,
+          firstName: auth.user.firstName || '',
+          lastName: auth.user.lastName || '',
+          email: auth.user.email || ''
+        } : undefined
       };
     }
   } catch (error) {
-    console.error('Auth error in TRPC context:', error);
+    console.error('Error in TRPC context:', error);
     // Continue without authentication
 
     // In development, provide a mock session
@@ -142,9 +151,9 @@ export const publicProcedure = enhancedProcedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = enhancedProcedure.use(({ ctx, next }: { ctx: any, next: any }) => {
+export const protectedProcedure = enhancedProcedure.use(({ ctx, next }) => {
   // Check if we have a session with a userId
-  if (!ctx.session || !ctx.session.userId) {
+  if (!ctx || !('session' in ctx) || !ctx.session || typeof ctx.session !== 'object' || !('userId' in ctx.session)) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
       message: 'You must be logged in to access this resource',
@@ -156,7 +165,7 @@ export const protectedProcedure = enhancedProcedure.use(({ ctx, next }: { ctx: a
     ctx: {
       ...ctx,
       // Ensure the session is passed to the next handler
-      session: ctx.session,
+      session: ctx && 'session' in ctx ? ctx.session : null,
     },
   });
 });

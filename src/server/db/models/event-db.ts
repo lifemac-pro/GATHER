@@ -1,19 +1,22 @@
 import mongoose, { Schema } from 'mongoose';
 import { EventDocument, EventModel } from './types';
+import { isValid } from 'date-fns';
 
+// Define the event schema
 const eventSchema = new Schema({
   id: { type: String, required: true, unique: true },
-  status: { type: String, required: true },
+  status: { type: String, required: true, default: 'published' },
   name: { type: String, required: true },
-  description: String,
-  location: String,
+  description: { type: String, default: '' },
+  location: { type: String, default: '' },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  maxAttendees: [String],
-  category: { type: String, required: true },
+  maxAttendees: { type: [String], default: [] },
+  category: { type: String, required: true, default: 'general' },
   featured: { type: Boolean, default: false },
   price: { type: Number, default: 0 },
-  createdById: { type: String, required: true },
+  image: { type: String, default: '' },
+  createdById: { type: String, required: true, default: 'user-id' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -58,10 +61,48 @@ eventSchema.statics.countAttendees = async function(eventId: string) {
   return 0;
 };
 
-// Update timestamps
+// Ensure dates are valid
 eventSchema.pre('save', function(next) {
+  console.log('Pre-save hook running for event:', this.id);
+  
+  // Set default dates if not valid
+  if (!this.startDate || !(this.startDate instanceof Date) || isNaN(this.startDate.getTime())) {
+    console.log('Setting default startDate');
+    this.startDate = new Date();
+  }
+
+  if (!this.endDate || !(this.endDate instanceof Date) || isNaN(this.endDate.getTime())) {
+    console.log('Setting default endDate');
+    // Set end date to 1 hour after start date
+    this.endDate = new Date(this.startDate.getTime() + 60 * 60 * 1000);
+  }
+
+  // Ensure status is set
+  if (!this.status) {
+    console.log('Setting default status');
+    this.status = 'published';
+  }
+  
+  // Ensure category is set
+  if (!this.category) {
+    console.log('Setting default category');
+    this.category = 'general';
+  }
+  
+  // Ensure createdById is set
+  if (!this.createdById) {
+    console.log('Setting default createdById');
+    this.createdById = 'user-id';
+  }
+
+  // Update timestamps
   this.updatedAt = new Date();
+  
+  console.log('Pre-save hook completed for event:', this.id);
   next();
 });
 
-export const Event = (mongoose.models.Event || mongoose.model<EventDocument, EventModel>("Event", eventSchema)) as EventModel;
+// Create the model
+const EventDB = mongoose.models.Event || mongoose.model<EventDocument, EventModel>('Event', eventSchema);
+
+export default EventDB;

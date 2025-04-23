@@ -8,6 +8,7 @@ import { sendEmail, getSurveyEmailTemplate } from "@/server/email";
 import { stringify } from "csv-stringify";
 import { env } from "@/env.mjs";
 import { connectToDatabase } from "@/server/db/mongo";
+import mongoose from "mongoose";
 
 const PAGE_SIZE = 10;
 
@@ -68,13 +69,13 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        return attendees.map(a => a.toObject());
+        return attendees ? (attendees as any[]).map(a => typeof a.toObject === 'function' ? a.toObject() : a) : [];
       } catch (error) {
         console.error("Error getting attendees:", error);
 
-        // Fallback to mock data
-        console.log("Returning mock attendees data");
-        return mockData.attendees.filter(a => a.eventId === input.eventId);
+        // Fallback to empty array
+        console.log("Returning empty attendees array");
+        return [];
       }
     }),
 
@@ -86,7 +87,7 @@ export const attendeeRouter = createTRPCRouter({
       await connectToDatabase();
 
       // Get user ID from session
-      const userId = ctx.session?.userId;
+      const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : undefined;
       if (!userId) {
         return null;
       }
@@ -103,7 +104,18 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        return registration ? registration.toObject() : null;
+        // Handle registration object safely
+        if (!registration) return null;
+
+        // Convert to plain object if possible
+        if (registration && typeof registration === 'object') {
+          if ('toObject' in registration && typeof registration.toObject === 'function') {
+            return registration.toObject();
+          }
+          return registration;
+        }
+
+        return null;
       } catch (error) {
         console.error("Error getting registration:", error);
 
@@ -123,7 +135,7 @@ export const attendeeRouter = createTRPCRouter({
       await connectToDatabase();
 
       // Get user ID from session
-      const userId = ctx.session?.userId;
+      const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : undefined;
       if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
@@ -165,11 +177,12 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        const maxAttendees = event.maxAttendees && event.maxAttendees.length > 0
-          ? parseInt(event.maxAttendees[0])
+        const eventObj = event as any;
+        const maxAttendees = eventObj && eventObj.maxAttendees && Array.isArray(eventObj.maxAttendees) && eventObj.maxAttendees.length > 0
+          ? parseInt(eventObj.maxAttendees[0])
           : 0;
 
-        if (maxAttendees > 0 && attendeeCount >= maxAttendees) {
+        if (maxAttendees > 0 && (attendeeCount as number) >= maxAttendees) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "This event is at capacity"
@@ -202,12 +215,24 @@ export const attendeeRouter = createTRPCRouter({
 
         // No need to add to mock data
 
-        return attendee.toObject();
+        // Handle attendee object safely
+        if (!attendee) return null;
+
+        // Convert to plain object if possible
+        if (attendee && typeof attendee === 'object') {
+          if ('toObject' in attendee && typeof attendee.toObject === 'function') {
+            return attendee.toObject();
+          }
+          return attendee;
+        }
+
+        return null;
       } catch (error) {
         console.error("Error registering for event:", error);
 
         // If it's a timeout error, return a specific error
-        if (error.message === 'MongoDB operation timed out') {
+        const err = error as any;
+        if (err && err.message === 'MongoDB operation timed out') {
           throw new TRPCError({
             code: "TIMEOUT",
             message: "Database operation timed out. Please try again."
@@ -234,7 +259,7 @@ export const attendeeRouter = createTRPCRouter({
       await connectToDatabase();
 
       // Get user ID from session
-      const userId = ctx.session?.userId;
+      const userId = ctx && ctx.session && typeof ctx.session === 'object' && 'userId' in ctx.session ? ctx.session.userId : undefined;
       if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
@@ -253,14 +278,14 @@ export const attendeeRouter = createTRPCRouter({
         }
 
         // Update status to checked-in
-        registration.status = "checked-in";
+        (registration as any).status = "checked-in";
         registration.checkedInAt = new Date();
         await registration.save();
 
         return {
           success: true,
           message: "Attendee checked in successfully",
-          attendee: registration.toObject()
+          attendee: typeof registration.toObject === 'function' ? registration.toObject() : registration
         };
       } catch (error) {
         console.error("Error checking in attendee:", error);
@@ -303,10 +328,22 @@ export const attendeeRouter = createTRPCRouter({
 
         // Try to get attendees with timeout
         const attendees = await Promise.race([
-          Attendee.find(filters)
-            .sort({ [input.sortBy || 'registeredAt']: input.sortOrder === 'asc' ? 1 : -1 })
-            .skip((input.page - 1) * input.pageSize)
-            .limit(input.pageSize),
+          (async () => {
+            // Create a query and ensure it's not executed yet
+            let query = Attendee.find(filters);
+
+            // Apply sorting - we need to access the query object directly
+            // This is a mongoose Query object, not a Promise
+            const sortField = input.sortBy || 'registeredAt';
+            const sortDirection = input.sortOrder === 'asc' ? 1 : -1;
+            const sortOptions = { [sortField]: sortDirection };
+
+            // Apply sort to the query
+            query = query.sort(sortOptions);
+            // Apply pagination
+            const paginatedQuery = query.skip((input.page - 1) * input.pageSize).limit(input.pageSize);
+            return await paginatedQuery;
+          })(),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('MongoDB operation timed out')), 8000)
           )
@@ -321,10 +358,10 @@ export const attendeeRouter = createTRPCRouter({
         ]);
 
         return {
-          items: attendees.map(a => a.toObject()),
+          items: attendees ? (attendees as any[]).map(a => typeof a.toObject === 'function' ? a.toObject() : a) : [],
           pagination: {
             total,
-            pageCount: Math.ceil(total / input.pageSize),
+            pageCount: Math.ceil((total as number) / input.pageSize),
             page: input.page,
             pageSize: input.pageSize,
           },
@@ -424,12 +461,12 @@ export const attendeeRouter = createTRPCRouter({
           )
         ]);
 
-        attendeesByStatus.registered = registeredCount;
-        attendeesByStatus['checked-in'] = checkedInCount;
-        attendeesByStatus.cancelled = cancelledCount;
-        attendeesByStatus.waitlisted = waitlistedCount;
+        attendeesByStatus.registered = registeredCount as number;
+        attendeesByStatus['checked-in'] = checkedInCount as number;
+        attendeesByStatus.cancelled = cancelledCount as number;
+        attendeesByStatus.waitlisted = waitlistedCount as number;
 
-        const checkInRate = totalAttendees > 0 ? checkedInCount / totalAttendees : 0;
+        const checkInRate = (totalAttendees as number) > 0 ? (checkedInCount as number) / (totalAttendees as number) : 0;
 
         // Get daily trends
         const dailyTrends = [];
@@ -493,7 +530,12 @@ export const attendeeRouter = createTRPCRouter({
 
       try {
         // Update all attendees with the given IDs
-        const result = await Attendee.updateMany(
+        // Use MongoDB directly for updateMany
+        const db = mongoose.connection.db;
+        if (!db) {
+          throw new Error('Database connection not established');
+        }
+        const result = await db.collection('attendees').updateMany(
           { id: { $in: input.ids } },
           { $set: { status: 'checked-in', checkedInAt: new Date() } }
         );
@@ -526,7 +568,12 @@ export const attendeeRouter = createTRPCRouter({
       try {
         // In a real implementation, you would send emails here
         // For now, we'll just mark the attendees as having feedback requested
-        const result = await Attendee.updateMany(
+        // Use MongoDB directly for updateMany
+        const db = mongoose.connection.db;
+        if (!db) {
+          throw new Error('Database connection not established');
+        }
+        const result = await db.collection('attendees').updateMany(
           { id: { $in: input.attendees.map(a => a.id) } },
           { $set: { feedbackRequested: true, feedbackRequestedAt: new Date() } }
         );

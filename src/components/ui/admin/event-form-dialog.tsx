@@ -37,16 +37,21 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
+// Define the form schema with all required fields
 const formSchema = z.object({
   name: z.string().min(1, "Event name is required"),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  startDate: z.date(),
-  endDate: z.date(),
+  description: z.string().default(""),
+  location: z.string().default(""),
+  startDate: z.date({
+    required_error: "Start date is required",
+  }),
+  endDate: z.date({
+    required_error: "End date is required",
+  }),
   maxAttendees: z.number().optional(),
   category: z.string().min(1, "Category is required"),
-  featured: z.boolean().optional(),
-  image: z.string().optional(),
+  featured: z.boolean().default(false),
+  image: z.string().default(""),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -65,16 +70,17 @@ export function EventFormDialog({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  // Define the form with explicit type casting to avoid resolver type errors
+  const form = useForm<FormData, any, FormData>({
+    resolver: zodResolver(formSchema) as any,
     defaultValues: event || {
       name: "",
       description: "",
       location: "",
       startDate: new Date(),
-      endDate: new Date(),
+      endDate: new Date(new Date().getTime() + 60 * 60 * 1000), // 1 hour later
       maxAttendees: undefined,
-      category: "",
+      category: "general", // Default category
       featured: false,
       image: "",
     },
@@ -86,34 +92,121 @@ export function EventFormDialog({
     onSuccess: () => {
       // Invalidate the events query to refetch the data
       utils.event.getAll.invalidate();
+      utils.event.getFeatured.invalidate();
+      utils.event.getUpcoming.invalidate();
       router.refresh();
       onOpenChange(false);
     },
+    onError: (error) => {
+      console.error('Create event mutation error:', error);
+      toast.error(`Failed to create event: ${error.message}`);
+    }
   });
 
   const updateEvent = api.event.update.useMutation({
     onSuccess: () => {
       // Invalidate the events query to refetch the data
       utils.event.getAll.invalidate();
+      utils.event.getFeatured.invalidate();
+      utils.event.getUpcoming.invalidate();
       router.refresh();
       onOpenChange(false);
     },
+    onError: (error) => {
+      console.error('Update event mutation error:', error);
+      toast.error(`Failed to update event: ${error.message}`);
+    }
   });
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
-      if (event?.id) {
-        await updateEvent.mutateAsync({ id: event.id, ...data });
-        toast.success("Event updated successfully");
-      } else {
-        const result = await createEvent.mutateAsync(data);
-        console.log("Created event:", result);
-        toast.success("Event created successfully");
+      // Ensure all required fields are present
+      const eventData = {
+        name: data.name || "New Event", // Ensure name is never empty
+        description: data.description || "",
+        location: data.location || "",
+        startDate: data.startDate || new Date(),
+        endDate: data.endDate || new Date(new Date().getTime() + 60 * 60 * 1000),
+        maxAttendees: data.maxAttendees,
+        category: data.category || "general", // Ensure category is never empty
+        featured: data.featured || false,
+        image: data.image || "",
+        price: 0, // Default price
+      };
+
+      console.log('Submitting event data:', {
+        ...eventData,
+        startDate: eventData.startDate.toISOString(),
+        endDate: eventData.endDate.toISOString(),
+        image: eventData.image ? 'Image data present (truncated)' : 'No image data'
+      });
+
+      // Try TRPC mutation first
+      try {
+        if (event?.id) {
+          await updateEvent.mutateAsync({ id: event.id, ...eventData });
+          toast.success("Event updated successfully");
+        } else {
+          const result = await createEvent.mutateAsync(eventData);
+          console.log("Created event via TRPC:", result);
+          toast.success("Event created successfully");
+        }
+      } catch (mutationError) {
+        console.error("TRPC mutation error:", mutationError);
+
+        // If TRPC mutation fails, try direct API call as fallback
+        if (!event?.id) { // Only for create, not update
+          console.log("Trying direct API call as fallback");
+          try {
+            const response = await fetch('/api/events/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(eventData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+              console.log("Created event via direct API:", result.data);
+              toast.success("Event created successfully via alternative method");
+
+              // Invalidate queries manually
+              utils.event.getAll.invalidate();
+              utils.event.getFeatured.invalidate();
+              utils.event.getUpcoming.invalidate();
+              router.refresh();
+              onOpenChange(false);
+              return; // Exit early on success
+            } else {
+              console.error("Direct API call failed:", result);
+              throw new Error(result.error || 'Failed to create event');
+            }
+          } catch (apiError) {
+            console.error("Direct API error:", apiError);
+            throw apiError; // Re-throw to be caught by the outer catch
+          }
+        } else {
+          // For update, just throw the original error
+          throw mutationError;
+        }
       }
     } catch (error) {
       console.error("Failed to save event:", error);
-      toast.error("Failed to save event. Please try again.");
+
+      // Extract error message from TRPC error
+      let errorMessage = "Failed to save event. Please try again.";
+      const err = error as any;
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = err.message;
+        if (err.shape?.message) {
+          errorMessage = err.shape.message;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -128,9 +221,9 @@ export function EventFormDialog({
         description: "",
         location: "",
         startDate: new Date(),
-        endDate: new Date(),
+        endDate: new Date(new Date().getTime() + 60 * 60 * 1000), // 1 hour later
         maxAttendees: undefined,
-        category: "",
+        category: "general", // Default category
         featured: false,
         image: "",
       });
@@ -326,21 +419,45 @@ export function EventFormDialog({
 
               <FormField
                 control={form.control}
-                name="image"
+                name="featured"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Image</FormLabel>
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
-                      <ImageUpload
-                        value={field.value || ""}
+                      <input
+                        type="checkbox"
+                        checked={field.value}
                         onChange={field.onChange}
+                        className="h-4 w-4 mt-1"
                       />
                     </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Featured Event</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Featured events appear on the homepage
+                      </p>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Image</FormLabel>
+                  <FormControl>
+                    <ImageUpload
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button
