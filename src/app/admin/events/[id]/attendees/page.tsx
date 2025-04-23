@@ -13,13 +13,13 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -31,23 +31,30 @@ import {
   MoreHorizontal,
   Search,
   Send,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 
-export default function EventAttendeesPage({ params }: { params: { id: string } }) {
+export default function EventAttendeesPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get event details
-  const { data: event, isLoading: isEventLoading } = api.event.getById.useQuery({
-    id: params.id
-  });
+  const { data: event, isLoading: isEventLoading } = api.event.getById.useQuery(
+    {
+      id: params.id,
+    },
+  );
 
   // Get attendees for this event
-  const { data: attendees, isLoading: isAttendeesLoading } = api.attendee.getByEvent.useQuery({
-    eventId: params.id
-  });
+  const { data: attendees, isLoading: isAttendeesLoading } =
+    api.attendee.getByEvent.useQuery({
+      eventId: params.id,
+    });
 
   // Check-in mutation
   const checkIn = api.attendee.checkIn.useMutation({
@@ -58,13 +65,13 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
     },
     onError: (error) => {
       toast.error(error.message || "Failed to check in attendee");
-    }
+    },
   });
 
   const utils = api.useUtils();
 
   // Filter attendees based on search query
-  const filteredAttendees = attendees?.filter(attendee => {
+  const filteredAttendees = attendees?.filter((attendee) => {
     if (!searchQuery) return true;
 
     const query = searchQuery.toLowerCase();
@@ -82,21 +89,26 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
 
   if (isEventLoading) {
     return (
-      <div className="container px-4 sm:px-6 py-8">
-        <LoadingSpinner size="lg" text="Loading event details..." className="min-h-[50vh]" />
+      <div className="container px-4 py-8 sm:px-6">
+        <LoadingSpinner
+          size="lg"
+          text="Loading event details..."
+          className="min-h-[50vh]"
+        />
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="container px-4 sm:px-6 py-8">
+      <div className="container px-4 py-8 sm:px-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold">Event not found</h2>
               <p className="mt-2 text-muted-foreground">
-                The event you are looking for does not exist or has been removed.
+                The event you are looking for does not exist or has been
+                removed.
               </p>
               <Button
                 className="mt-4"
@@ -112,9 +124,12 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
   }
 
   return (
-    <div className="container px-4 sm:px-6 py-8">
+    <div className="container px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <Link href="/admin/events" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          href="/admin/events"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to Events
         </Link>
@@ -124,11 +139,12 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
         <div>
           <h1 className="text-2xl font-bold">{event.name} - Attendees</h1>
           <p className="text-muted-foreground">
-            {format(new Date(event.startDate), "PPP")} at {format(new Date(event.startDate), "p")}
+            {format(new Date(event.startDate), "PPP")} at{" "}
+            {format(new Date(event.startDate), "p")}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-2 w-full sm:w-auto">
+        <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:gap-2">
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -166,16 +182,20 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <CardTitle>Registered Attendees</CardTitle>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
+            <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-0 sm:gap-4">
               <div className="flex items-center gap-1">
                 <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                <span className="text-sm text-muted-foreground">Checked In</span>
+                <span className="text-sm text-muted-foreground">
+                  Checked In
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-muted-foreground">Registered</span>
+                <span className="text-sm text-muted-foreground">
+                  Registered
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -190,7 +210,7 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
               <LoadingSpinner size="md" text="Loading attendees..." />
             </div>
           ) : filteredAttendees && filteredAttendees.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="-mx-4 overflow-x-auto sm:mx-0">
               <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
@@ -205,7 +225,9 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
                 <TableBody>
                   {filteredAttendees.map((attendee) => (
                     <TableRow key={attendee.id}>
-                      <TableCell className="font-medium">{attendee.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {attendee.name}
+                      </TableCell>
                       <TableCell>{attendee.email}</TableCell>
                       <TableCell>
                         <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm">
@@ -218,15 +240,15 @@ export default function EventAttendeesPage({ params }: { params: { id: string } 
                             attendee.status === "checked-in"
                               ? "bg-green-100 text-green-800"
                               : attendee.status === "registered"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-red-100 text-red-800"
                           }
                         >
                           {attendee.status === "checked-in"
                             ? "Checked In"
                             : attendee.status === "registered"
-                            ? "Registered"
-                            : "Cancelled"}
+                              ? "Registered"
+                              : "Cancelled"}
                         </Badge>
                       </TableCell>
                       <TableCell>

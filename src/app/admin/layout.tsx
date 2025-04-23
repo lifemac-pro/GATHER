@@ -14,9 +14,6 @@
 //   );
 // }
 
-
-
-
 "use client";
 
 import { Sidebar } from "@/components/ui/sidebar";
@@ -29,10 +26,9 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex flex-1 flex-col bg-gray-50 p-8 overflow-auto md:ml-64">
+      <main className="flex flex-1 flex-col overflow-auto bg-gray-50 p-8 md:ml-64">
         {children}
       </main>
     </div>
   );
 }
-

@@ -1,12 +1,12 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface SignOutButtonProps extends Omit<ButtonProps, 'onClick'> {
+interface SignOutButtonProps extends Omit<ButtonProps, "onClick"> {
   showIcon?: boolean;
   text?: string;
 }

@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -34,19 +39,23 @@ export function EventCard({
   attendeeCount,
 }: EventCardProps) {
   return (
-    <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border hover:border-primary/20">
+    <Card className="h-full overflow-hidden border-border transition-all hover:border-primary/20 hover:shadow-md">
       <div className="relative">
         <EventImage src={image} alt={name} />
-        <Badge variant="secondary" className="absolute right-2 top-2">{category}</Badge>
+        <Badge variant="secondary" className="absolute right-2 top-2">
+          {category}
+        </Badge>
       </div>
 
       <CardHeader className="pb-2">
         <div className="space-y-1">
-          <h3 className="line-clamp-1 text-xl font-bold text-foreground">{name}</h3>
+          <h3 className="line-clamp-1 text-xl font-bold text-foreground">
+            {name}
+          </h3>
           <div className="flex items-center text-sm text-muted-foreground">
             <CalendarIcon className="mr-1 h-4 w-4" />
             <span>
-              {typeof startDate === 'string'
+              {typeof startDate === "string"
                 ? format(new Date(startDate), "PPP")
                 : format(startDate, "PPP")}
             </span>
@@ -60,10 +69,11 @@ export function EventCard({
           <div className="flex items-center text-sm text-muted-foreground">
             <Clock className="mr-1 h-4 w-4" />
             <span>
-              {typeof startDate === 'string'
+              {typeof startDate === "string"
                 ? format(new Date(startDate), "p")
-                : format(startDate, "p")} -
-              {typeof endDate === 'string'
+                : format(startDate, "p")}{" "}
+              -
+              {typeof endDate === "string"
                 ? format(new Date(endDate), "p")
                 : format(endDate, "p")}
             </span>
@@ -73,14 +83,18 @@ export function EventCard({
 
       <CardContent>
         {description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {description}
+          </p>
         )}
       </CardContent>
 
       <CardFooter className="flex justify-between">
         <div>
           {price !== undefined && price > 0 ? (
-            <span className="font-semibold text-primary">${price.toFixed(2)}</span>
+            <span className="font-semibold text-primary">
+              ${price.toFixed(2)}
+            </span>
           ) : (
             <span className="text-sm text-muted-foreground">Free</span>
           )}

@@ -1,11 +1,17 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api-client';
-import { UserResponse } from '@/types/api-responses';
-import { LoginRequest, SignupRequest } from '@/types/api-requests';
-import { AppError, ErrorCode } from '@/utils/error-handling';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
+import { type UserResponse } from "@/types/api-responses";
+import { type LoginRequest, type SignupRequest } from "@/types/api-requests";
+import { AppError, ErrorCode } from "@/utils/error-handling";
 
 /**
  * Auth context state
@@ -48,13 +54,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
   // Check if user is authenticated
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.user.getProfile<UserResponse>();
-      
+
       if (response.success && response.data) {
         setUser(response.data);
       } else {
@@ -66,83 +72,87 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
     }
   }, []);
-  
+
   // Check auth on mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-  
+
   // Login function
   const login = async (data: LoginRequest) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await api.auth.login<{ user: UserResponse }>(data);
-      
+
       if (response.success && response.data) {
         setUser(response.data.user);
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
         throw new AppError(
           ErrorCode.INVALID_CREDENTIALS,
-          'Invalid credentials',
-          401
+          "Invalid credentials",
+          401,
         );
       }
     } catch (error) {
-      setError(error instanceof AppError ? error.message : 'An error occurred during login');
+      setError(
+        error instanceof AppError
+          ? error.message
+          : "An error occurred during login",
+      );
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Signup function
   const signup = async (data: SignupRequest) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await api.auth.signup<{ user: UserResponse }>(data);
-      
+
       if (response.success && response.data) {
         setUser(response.data.user);
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
-        throw new AppError(
-          ErrorCode.INVALID_INPUT,
-          'Signup failed',
-          400
-        );
+        throw new AppError(ErrorCode.INVALID_INPUT, "Signup failed", 400);
       }
     } catch (error) {
-      setError(error instanceof AppError ? error.message : 'An error occurred during signup');
+      setError(
+        error instanceof AppError
+          ? error.message
+          : "An error occurred during signup",
+      );
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Logout function
   const logout = async () => {
     try {
       setIsLoading(true);
       await api.auth.logout();
       setUser(null);
-      router.push('/login');
+      router.push("/login");
     } catch (error) {
-      setError('An error occurred during logout');
+      setError("An error occurred during logout");
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Clear error
   const clearError = () => {
     setError(null);
   };
-  
+
   // Context value
   const value: AuthContextState = {
     user,
@@ -154,12 +164,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     clearError,
   };
-  
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 /**
@@ -167,10 +173,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
  */
 export function useAuth() {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  
+
   return context;
 }

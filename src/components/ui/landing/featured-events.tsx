@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar } from "lucide-react";
 import { format } from "date-fns";
@@ -75,7 +80,7 @@ export function FeaturedEvents() {
           {events.map((event) => (
             <Card
               key={event.id}
-              className="overflow-hidden bg-card border-primary/20 transition-all duration-200 hover:border-primary/40"
+              className="overflow-hidden border-primary/20 bg-card transition-all duration-200 hover:border-primary/40"
             >
               <EventImage src={event.image} alt={event.name} />
               <CardHeader>

@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useApi, useMutation } from '@/hooks/use-api';
-import { AppError, ErrorCode } from '@/utils/error-handling';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useApi, useMutation } from "@/hooks/use-api";
+import { AppError, ErrorCode } from "@/utils/error-handling";
 
-describe('useApi', () => {
+describe("useApi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should fetch data successfully', async () => {
-    const mockData = { id: '123', name: 'Test' };
+  it("should fetch data successfully", async () => {
+    const mockData = { id: "123", name: "Test" };
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
       data: mockData,
@@ -25,7 +25,7 @@ describe('useApi', () => {
 
     // Wait for the API call to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     // After successful API call
@@ -37,25 +37,29 @@ describe('useApi', () => {
     // Test refetch
     mockApiCall.mockResolvedValue({
       success: true,
-      data: { ...mockData, name: 'Updated' },
+      data: { ...mockData, name: "Updated" },
     });
 
     await act(async () => {
       await result.current.refetch();
     });
 
-    expect(result.current.data).toEqual({ ...mockData, name: 'Updated' });
+    expect(result.current.data).toEqual({ ...mockData, name: "Updated" });
   });
 
-  it('should handle API errors', async () => {
-    const mockError = new AppError(ErrorCode.NOT_FOUND, 'Resource not found', 404);
+  it("should handle API errors", async () => {
+    const mockError = new AppError(
+      ErrorCode.NOT_FOUND,
+      "Resource not found",
+      404,
+    );
     const mockApiCall = vi.fn().mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useApi(mockApiCall));
 
     // Wait for the API call to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     // After failed API call
@@ -65,15 +69,15 @@ describe('useApi', () => {
     expect(result.current.error).toBe(mockError);
   });
 
-  it('should handle non-AppError errors', async () => {
-    const mockError = new Error('Network error');
+  it("should handle non-AppError errors", async () => {
+    const mockError = new Error("Network error");
     const mockApiCall = vi.fn().mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useApi(mockApiCall));
 
     // Wait for the API call to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     // After failed API call
@@ -81,11 +85,11 @@ describe('useApi', () => {
     expect(result.current.data).toBeNull();
     expect(result.current.isError).toBe(true);
     expect(result.current.error).toBeInstanceOf(AppError);
-    expect(result.current.error?.message).toBe('Network error');
+    expect(result.current.error?.message).toBe("Network error");
   });
 
-  it('should call onSuccess callback when API call succeeds', async () => {
-    const mockData = { id: '123', name: 'Test' };
+  it("should call onSuccess callback when API call succeeds", async () => {
+    const mockData = { id: "123", name: "Test" };
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
       data: mockData,
@@ -96,14 +100,18 @@ describe('useApi', () => {
 
     // Wait for the API call to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(onSuccess).toHaveBeenCalledWith(mockData);
   });
 
-  it('should call onError callback when API call fails', async () => {
-    const mockError = new AppError(ErrorCode.NOT_FOUND, 'Resource not found', 404);
+  it("should call onError callback when API call fails", async () => {
+    const mockError = new AppError(
+      ErrorCode.NOT_FOUND,
+      "Resource not found",
+      404,
+    );
     const mockApiCall = vi.fn().mockRejectedValue(mockError);
     const onError = vi.fn();
 
@@ -111,19 +119,21 @@ describe('useApi', () => {
 
     // Wait for the API call to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(onError).toHaveBeenCalledWith(mockError);
   });
 
-  it('should not fetch on mount if fetchOnMount is false', async () => {
+  it("should not fetch on mount if fetchOnMount is false", async () => {
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
-      data: { id: '123' },
+      data: { id: "123" },
     });
 
-    const { result } = renderHook(() => useApi(mockApiCall, { fetchOnMount: false }));
+    const { result } = renderHook(() =>
+      useApi(mockApiCall, { fetchOnMount: false }),
+    );
 
     // Initial state
     expect(result.current.isLoading).toBe(false);
@@ -138,13 +148,13 @@ describe('useApi', () => {
   });
 });
 
-describe('useMutation', () => {
+describe("useMutation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should mutate data successfully', async () => {
-    const mockData = { id: '123', name: 'Test' };
+  it("should mutate data successfully", async () => {
+    const mockData = { id: "123", name: "Test" };
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
       data: mockData,
@@ -161,7 +171,7 @@ describe('useMutation', () => {
     // Perform mutation
     let returnedData;
     await act(async () => {
-      returnedData = await result.current.mutate({ name: 'Test' });
+      returnedData = await result.current.mutate({ name: "Test" });
     });
 
     // After successful mutation
@@ -170,11 +180,15 @@ describe('useMutation', () => {
     expect(result.current.isError).toBe(false);
     expect(result.current.error).toBeNull();
     expect(returnedData).toEqual(mockData);
-    expect(mockApiCall).toHaveBeenCalledWith({ name: 'Test' });
+    expect(mockApiCall).toHaveBeenCalledWith({ name: "Test" });
   });
 
-  it('should handle mutation errors', async () => {
-    const mockError = new AppError(ErrorCode.INVALID_INPUT, 'Invalid input', 400);
+  it("should handle mutation errors", async () => {
+    const mockError = new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Invalid input",
+      400,
+    );
     const mockApiCall = vi.fn().mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useMutation(mockApiCall));
@@ -182,7 +196,7 @@ describe('useMutation', () => {
     // Perform mutation
     await act(async () => {
       try {
-        await result.current.mutate({ name: 'Test' });
+        await result.current.mutate({ name: "Test" });
       } catch (error) {
         // Expected to throw
       }
@@ -195,26 +209,32 @@ describe('useMutation', () => {
     expect(result.current.error).toBe(mockError);
   });
 
-  it('should call onSuccess callback when mutation succeeds', async () => {
-    const mockData = { id: '123', name: 'Test' };
+  it("should call onSuccess callback when mutation succeeds", async () => {
+    const mockData = { id: "123", name: "Test" };
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
       data: mockData,
     });
     const onSuccess = vi.fn();
 
-    const { result } = renderHook(() => useMutation(mockApiCall, { onSuccess }));
+    const { result } = renderHook(() =>
+      useMutation(mockApiCall, { onSuccess }),
+    );
 
     // Perform mutation
     await act(async () => {
-      await result.current.mutate({ name: 'Test' });
+      await result.current.mutate({ name: "Test" });
     });
 
     expect(onSuccess).toHaveBeenCalledWith(mockData);
   });
 
-  it('should call onError callback when mutation fails', async () => {
-    const mockError = new AppError(ErrorCode.INVALID_INPUT, 'Invalid input', 400);
+  it("should call onError callback when mutation fails", async () => {
+    const mockError = new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Invalid input",
+      400,
+    );
     const mockApiCall = vi.fn().mockRejectedValue(mockError);
     const onError = vi.fn();
 
@@ -223,7 +243,7 @@ describe('useMutation', () => {
     // Perform mutation
     await act(async () => {
       try {
-        await result.current.mutate({ name: 'Test' });
+        await result.current.mutate({ name: "Test" });
       } catch (error) {
         // Expected to throw
       }
@@ -232,8 +252,8 @@ describe('useMutation', () => {
     expect(onError).toHaveBeenCalledWith(mockError);
   });
 
-  it('should reset state', async () => {
-    const mockData = { id: '123', name: 'Test' };
+  it("should reset state", async () => {
+    const mockData = { id: "123", name: "Test" };
     const mockApiCall = vi.fn().mockResolvedValue({
       success: true,
       data: mockData,
@@ -243,7 +263,7 @@ describe('useMutation', () => {
 
     // Perform mutation
     await act(async () => {
-      await result.current.mutate({ name: 'Test' });
+      await result.current.mutate({ name: "Test" });
     });
 
     expect(result.current.data).toEqual(mockData);

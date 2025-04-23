@@ -8,7 +8,7 @@ export const reportsRouter = createTRPCRouter({
     .input(
       z.object({
         eventId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       // Get event details
@@ -61,7 +61,7 @@ export const reportsRouter = createTRPCRouter({
           },
         },
         {
-          $sort: { "_id": 1 },
+          $sort: { _id: 1 },
         },
       ]);
 
@@ -102,7 +102,7 @@ export const reportsRouter = createTRPCRouter({
           },
         },
         {
-          $sort: { "_id": 1 },
+          $sort: { _id: 1 },
         },
       ]);
 
@@ -113,7 +113,9 @@ export const reportsRouter = createTRPCRouter({
           checkedIn: attendanceStats[0]?.checkedIn || 0,
           revenue: attendanceStats[0]?.revenue || 0,
           checkInRate: attendanceStats[0]
-            ? (attendanceStats[0].checkedIn / attendanceStats[0].totalRegistered) * 100
+            ? (attendanceStats[0].checkedIn /
+                attendanceStats[0].totalRegistered) *
+              100
             : 0,
         },
         demographics: demographics.map((d) => ({
@@ -137,7 +139,7 @@ export const reportsRouter = createTRPCRouter({
                   acc[rating] = (acc[rating] || 0) + 1;
                   return acc;
                 },
-                {}
+                {},
               ),
             }
           : null,
@@ -148,7 +150,7 @@ export const reportsRouter = createTRPCRouter({
     .input(
       z.object({
         days: z.number().min(1).max(365).default(30),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const startDate = startOfDay(subDays(new Date(), input.days));
@@ -210,7 +212,7 @@ export const reportsRouter = createTRPCRouter({
           },
         },
         {
-          $sort: { "_id": 1 },
+          $sort: { _id: 1 },
         },
       ]);
 

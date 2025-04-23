@@ -17,7 +17,13 @@ import {
   Cell,
 } from "recharts";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfMonth, subMonths } from "date-fns";
 
@@ -50,7 +56,9 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Analytics Dashboard
+        </h1>
         <div className="flex items-center gap-4">
           <DateRangePicker
             from={dateRange.from}
@@ -96,7 +104,11 @@ export default function AnalyticsPage() {
             {stats?.checkedInRate.toFixed(1)}%
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            {Math.round((stats?.totalAttendees || 0) * (stats?.checkedInRate || 0) / 100)} total check-ins
+            {Math.round(
+              ((stats?.totalAttendees || 0) * (stats?.checkedInRate || 0)) /
+                100,
+            )}{" "}
+            total check-ins
           </p>
         </Card>
         <Card className="p-6">
@@ -114,7 +126,13 @@ export default function AnalyticsPage() {
         <Card className="p-6">
           <h3 className="mb-4 text-lg font-medium">Trend Analysis</h3>
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={[{ name: 'Jan', value: 30 }, { name: 'Feb', value: 45 }, { name: 'Mar', value: 60 }]}>
+            <LineChart
+              data={[
+                { name: "Jan", value: 30 },
+                { name: "Feb", value: 45 },
+                { name: "Mar", value: 60 },
+              ]}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
@@ -135,7 +153,12 @@ export default function AnalyticsPage() {
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
-                data={[{ name: 'Tech', value: 40 }, { name: 'Business', value: 30 }, { name: 'Social', value: 20 }, { name: 'Other', value: 10 }]}
+                data={[
+                  { name: "Tech", value: 40 },
+                  { name: "Business", value: 30 },
+                  { name: "Social", value: 20 },
+                  { name: "Other", value: 10 },
+                ]}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
@@ -143,7 +166,12 @@ export default function AnalyticsPage() {
                 outerRadius={150}
                 label
               >
-                {[{ name: 'Tech', value: 40 }, { name: 'Business', value: 30 }, { name: 'Social', value: 20 }, { name: 'Other', value: 10 }].map((item, index) => (
+                {[
+                  { name: "Tech", value: 40 },
+                  { name: "Business", value: 30 },
+                  { name: "Social", value: 20 },
+                  { name: "Other", value: 10 },
+                ].map((item, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}

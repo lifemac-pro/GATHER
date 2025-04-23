@@ -1,15 +1,19 @@
-import { useCallback } from 'react';
-import { useApi, useMutation } from './use-api';
-import { api } from '@/lib/api-client';
-import { AttendeeResponse, AttendeeListResponse } from '@/types/api-responses';
-import { RegisterForEventRequest, CheckInAttendeeRequest, CancelRegistrationRequest } from '@/types/api-requests';
+import { useCallback } from "react";
+import { useApi, useMutation } from "./use-api";
+import { api } from "@/lib/api-client";
+import { type AttendeeResponse, type AttendeeListResponse } from "@/types/api-responses";
+import {
+  type RegisterForEventRequest,
+  type CheckInAttendeeRequest,
+  type CancelRegistrationRequest,
+} from "@/types/api-requests";
 
 /**
  * Hook for fetching attendees
  */
 export function useAttendees(params?: {
   eventId?: string;
-  status?: 'registered' | 'attended' | 'cancelled' | 'waitlisted';
+  status?: "registered" | "attended" | "cancelled" | "waitlisted";
   page?: number;
   limit?: number;
 }) {
@@ -17,7 +21,7 @@ export function useAttendees(params?: {
     () => api.attendees.getAll<AttendeeListResponse>(params),
     {
       deps: [params?.eventId, params?.status, params?.page, params?.limit],
-    }
+    },
   );
 }
 
@@ -25,8 +29,8 @@ export function useAttendees(params?: {
  * Hook for registering for an event
  */
 export function useRegisterForEvent() {
-  return useMutation<AttendeeResponse, RegisterForEventRequest>(
-    (data) => api.attendees.register<AttendeeResponse>(data)
+  return useMutation<AttendeeResponse, RegisterForEventRequest>((data) =>
+    api.attendees.register<AttendeeResponse>(data),
   );
 }
 
@@ -34,8 +38,8 @@ export function useRegisterForEvent() {
  * Hook for checking in an attendee
  */
 export function useCheckInAttendee() {
-  return useMutation<AttendeeResponse, CheckInAttendeeRequest>(
-    (data) => api.attendees.checkIn<AttendeeResponse>(data.attendeeId)
+  return useMutation<AttendeeResponse, CheckInAttendeeRequest>((data) =>
+    api.attendees.checkIn<AttendeeResponse>(data.attendeeId),
   );
 }
 
@@ -43,8 +47,8 @@ export function useCheckInAttendee() {
  * Hook for cancelling a registration
  */
 export function useCancelRegistration() {
-  return useMutation<AttendeeResponse, CancelRegistrationRequest>(
-    (data) => api.attendees.cancel<AttendeeResponse>(data.attendeeId)
+  return useMutation<AttendeeResponse, CancelRegistrationRequest>((data) =>
+    api.attendees.cancel<AttendeeResponse>(data.attendeeId),
   );
 }
 
@@ -52,8 +56,8 @@ export function useCancelRegistration() {
  * Hook for exporting attendees to CSV
  */
 export function useExportAttendees() {
-  return useMutation<string, { eventId?: string; status?: string }>(
-    (params) => api.attendees.exportToCSV<string>(params)
+  return useMutation<string, { eventId?: string; status?: string }>((params) =>
+    api.attendees.exportToCSV<string>(params),
   );
 }
 
@@ -61,38 +65,51 @@ export function useExportAttendees() {
  * Hook for managing attendees
  */
 export function useAttendeeManager(eventId?: string) {
-  const { 
-    data: attendees, 
-    isLoading: isLoadingAttendees, 
-    refetch: refetchAttendees, 
-    ...attendeesRest 
+  const {
+    data: attendees,
+    isLoading: isLoadingAttendees,
+    refetch: refetchAttendees,
+    ...attendeesRest
   } = useAttendees({ eventId });
-  
+
   const registerMutation = useRegisterForEvent();
   const checkInMutation = useCheckInAttendee();
   const cancelMutation = useCancelRegistration();
-  
-  const handleRegister = useCallback(async (data: RegisterForEventRequest) => {
-    const result = await registerMutation.mutate(data);
-    await refetchAttendees();
-    return result;
-  }, [registerMutation, refetchAttendees]);
-  
-  const handleCheckIn = useCallback(async (attendeeId: string) => {
-    const result = await checkInMutation.mutate({ attendeeId });
-    await refetchAttendees();
-    return result;
-  }, [checkInMutation, refetchAttendees]);
-  
-  const handleCancel = useCallback(async (attendeeId: string, reason?: string) => {
-    const result = await cancelMutation.mutate({ attendeeId, reason });
-    await refetchAttendees();
-    return result;
-  }, [cancelMutation, refetchAttendees]);
-  
+
+  const handleRegister = useCallback(
+    async (data: RegisterForEventRequest) => {
+      const result = await registerMutation.mutate(data);
+      await refetchAttendees();
+      return result;
+    },
+    [registerMutation, refetchAttendees],
+  );
+
+  const handleCheckIn = useCallback(
+    async (attendeeId: string) => {
+      const result = await checkInMutation.mutate({ attendeeId });
+      await refetchAttendees();
+      return result;
+    },
+    [checkInMutation, refetchAttendees],
+  );
+
+  const handleCancel = useCallback(
+    async (attendeeId: string, reason?: string) => {
+      const result = await cancelMutation.mutate({ attendeeId, reason });
+      await refetchAttendees();
+      return result;
+    },
+    [cancelMutation, refetchAttendees],
+  );
+
   return {
     attendees: attendees?.items || [],
-    isLoading: isLoadingAttendees || registerMutation.isLoading || checkInMutation.isLoading || cancelMutation.isLoading,
+    isLoading:
+      isLoadingAttendees ||
+      registerMutation.isLoading ||
+      checkInMutation.isLoading ||
+      cancelMutation.isLoading,
     register: handleRegister,
     checkIn: handleCheckIn,
     cancel: handleCancel,

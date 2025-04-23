@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import { useApi, useMutation } from './use-api';
-import { api } from '@/lib/api-client';
-import { EventResponse, EventListResponse } from '@/types/api-responses';
-import { CreateEventRequest, UpdateEventRequest } from '@/types/api-requests';
+import { useCallback } from "react";
+import { useApi, useMutation } from "./use-api";
+import { api } from "@/lib/api-client";
+import { type EventResponse, type EventListResponse } from "@/types/api-responses";
+import { type CreateEventRequest, type UpdateEventRequest } from "@/types/api-requests";
 
 /**
  * Hook for fetching events
@@ -17,8 +17,14 @@ export function useEvents(params?: {
   return useApi<EventListResponse>(
     () => api.events.getAll<EventListResponse>(params),
     {
-      deps: [params?.page, params?.limit, params?.category, params?.featured, params?.upcoming],
-    }
+      deps: [
+        params?.page,
+        params?.limit,
+        params?.category,
+        params?.featured,
+        params?.upcoming,
+      ],
+    },
   );
 }
 
@@ -26,20 +32,17 @@ export function useEvents(params?: {
  * Hook for fetching a single event
  */
 export function useEvent(id: string) {
-  return useApi<EventResponse>(
-    () => api.events.getById<EventResponse>(id),
-    {
-      deps: [id],
-    }
-  );
+  return useApi<EventResponse>(() => api.events.getById<EventResponse>(id), {
+    deps: [id],
+  });
 }
 
 /**
  * Hook for creating an event
  */
 export function useCreateEvent() {
-  return useMutation<EventResponse, CreateEventRequest>(
-    (data) => api.events.create<EventResponse>(data)
+  return useMutation<EventResponse, CreateEventRequest>((data) =>
+    api.events.create<EventResponse>(data),
   );
 }
 
@@ -51,7 +54,7 @@ export function useUpdateEvent() {
     (data) => {
       const { id, ...updateData } = data;
       return api.events.update<EventResponse>(id, updateData);
-    }
+    },
   );
 }
 
@@ -59,8 +62,8 @@ export function useUpdateEvent() {
  * Hook for deleting an event
  */
 export function useDeleteEvent() {
-  return useMutation<{ success: boolean }, string>(
-    (id) => api.events.delete<{ success: boolean }>(id)
+  return useMutation<{ success: boolean }, string>((id) =>
+    api.events.delete<{ success: boolean }>(id),
   );
 }
 
@@ -68,32 +71,50 @@ export function useDeleteEvent() {
  * Hook for managing events (CRUD operations)
  */
 export function useEventManager() {
-  const { data: events, isLoading: isLoadingEvents, refetch: refetchEvents, ...eventsRest } = useEvents();
+  const {
+    data: events,
+    isLoading: isLoadingEvents,
+    refetch: refetchEvents,
+    ...eventsRest
+  } = useEvents();
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
-  
-  const handleCreate = useCallback(async (data: CreateEventRequest) => {
-    const result = await createEvent.mutate(data);
-    await refetchEvents();
-    return result;
-  }, [createEvent, refetchEvents]);
-  
-  const handleUpdate = useCallback(async (id: string, data: UpdateEventRequest) => {
-    const result = await updateEvent.mutate({ id, ...data });
-    await refetchEvents();
-    return result;
-  }, [updateEvent, refetchEvents]);
-  
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteEvent.mutate(id);
-    await refetchEvents();
-    return result;
-  }, [deleteEvent, refetchEvents]);
-  
+
+  const handleCreate = useCallback(
+    async (data: CreateEventRequest) => {
+      const result = await createEvent.mutate(data);
+      await refetchEvents();
+      return result;
+    },
+    [createEvent, refetchEvents],
+  );
+
+  const handleUpdate = useCallback(
+    async (id: string, data: UpdateEventRequest) => {
+      const result = await updateEvent.mutate({ id, ...data });
+      await refetchEvents();
+      return result;
+    },
+    [updateEvent, refetchEvents],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await deleteEvent.mutate(id);
+      await refetchEvents();
+      return result;
+    },
+    [deleteEvent, refetchEvents],
+  );
+
   return {
     events: events?.items || [],
-    isLoading: isLoadingEvents || createEvent.isLoading || updateEvent.isLoading || deleteEvent.isLoading,
+    isLoading:
+      isLoadingEvents ||
+      createEvent.isLoading ||
+      updateEvent.isLoading ||
+      deleteEvent.isLoading,
     create: handleCreate,
     update: handleUpdate,
     delete: handleDelete,

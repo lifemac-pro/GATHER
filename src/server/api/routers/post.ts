@@ -21,7 +21,7 @@ export const postRouter = createTRPCRouter({
 
   getLatest: publicProcedure.query(async () => {
     // Mock implementation to avoid Mongoose type errors
-    const post = { name: 'Sample Post', createdAt: new Date() };
+    const post = { name: "Sample Post", createdAt: new Date() };
     return post ?? null;
   }),
 });

@@ -6,7 +6,9 @@ export function Footer() {
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="text-center md:text-left">
-            <h3 className="text-xl font-bold text-primary-foreground">GatherEase</h3>
+            <h3 className="text-xl font-bold text-primary-foreground">
+              GatherEase
+            </h3>
             <p className="mt-2 text-sm">Simplifying event management</p>
           </div>
 

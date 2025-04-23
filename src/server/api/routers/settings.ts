@@ -45,7 +45,7 @@ export const settingsRouter = createTRPCRouter({
           generalSettingsSchema,
           notificationSettingsSchema,
         ]),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       // Validate settings based on type
@@ -70,7 +70,7 @@ export const settingsRouter = createTRPCRouter({
             value: JSON.stringify(input.settings),
           },
         },
-        { upsert: true }
+        { upsert: true },
       ).exec();
 
       return { success: true };

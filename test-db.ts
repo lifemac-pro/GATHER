@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import { MongoClient } from "mongodb";
 
 console.log("MONGODB_URI:", process.env.MONGODB_URI); // Debug
@@ -10,7 +10,7 @@ if (!uri) {
 }
 
 async function testMongoConnection() {
-  const client = new MongoClient(uri || '');
+  const client = new MongoClient(uri || "");
   try {
     await client.connect();
     console.log("✅ Connected to MongoDB Atlas!");

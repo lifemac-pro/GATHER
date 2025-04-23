@@ -5,18 +5,18 @@ import { format } from "date-fns";
 
 export async function GET(
   request: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: { eventId: string } },
 ) {
   try {
     // Mock event data instead of using the database
     // This avoids TypeScript errors with the database client
     const eventData = {
       id: params.eventId,
-      name: 'Sample Event',
-      description: 'Sample description',
+      name: "Sample Event",
+      description: "Sample description",
       startDate: new Date(),
       endDate: new Date(Date.now() + 3600000),
-      location: 'Sample Location'
+      location: "Sample Location",
     };
 
     if (!eventData) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
 
@@ -16,13 +16,13 @@ interface State {
 
 /**
  * Error Boundary component to catch and handle React errors
- * 
+ *
  * This component catches JavaScript errors anywhere in the child component tree,
  * logs those errors, and displays a fallback UI instead of crashing the whole app.
  */
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
     logger.error("Uncaught error in component:", {
       error: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack
+      componentStack: errorInfo.componentStack,
     });
   }
 

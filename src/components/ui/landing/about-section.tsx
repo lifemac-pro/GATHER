@@ -32,7 +32,8 @@ export function AboutSection() {
 const features = [
   {
     title: "Effortless Event Creation",
-    description: "Organizers can set up events in minutes with our intuitive interface.",
+    description:
+      "Organizers can set up events in minutes with our intuitive interface.",
     icon: CalendarDays,
   },
   {

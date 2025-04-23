@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ZodSchema, ZodError } from 'zod';
-import { AppError, ErrorCode, apiErrorHandler } from './error-handling';
+import { type NextRequest, NextResponse } from "next/server";
+import { type ZodSchema, ZodError } from "zod";
+import { AppError, ErrorCode, apiErrorHandler } from "./error-handling";
 
 /**
  * Type for API route handler options
@@ -10,26 +10,26 @@ export interface ApiRouteHandlerOptions<T> {
    * Validation schema for request body
    */
   bodySchema?: ZodSchema<T>;
-  
+
   /**
    * Validation schema for query parameters
    */
   querySchema?: ZodSchema<any>;
-  
+
   /**
    * Validation schema for path parameters
    */
   paramsSchema?: ZodSchema<any>;
-  
+
   /**
    * Whether to require authentication
    */
   requireAuth?: boolean;
-  
+
   /**
    * Required roles for authorization
    */
-  requiredRoles?: ('admin' | 'super_admin')[];
+  requiredRoles?: ("admin" | "super_admin")[];
 }
 
 /**
@@ -48,9 +48,12 @@ export type ApiRouteHandlerFn<T = any> = (options: {
  */
 export function createApiRouteHandler<T = any>(
   handler: ApiRouteHandlerFn<T>,
-  options: ApiRouteHandlerOptions<T> = {}
+  options: ApiRouteHandlerOptions<T> = {},
 ) {
-  return async (req: NextRequest, { params = {} }: { params?: Record<string, string> } = {}) => {
+  return async (
+    req: NextRequest,
+    { params = {} }: { params?: Record<string, string> } = {},
+  ) => {
     return apiErrorHandler(async () => {
       // Parse query parameters
       const url = new URL(req.url);
@@ -58,7 +61,7 @@ export function createApiRouteHandler<T = any>(
       url.searchParams.forEach((value, key) => {
         query[key] = value;
       });
-      
+
       // Validate query parameters
       if (options.querySchema) {
         try {
@@ -67,15 +70,15 @@ export function createApiRouteHandler<T = any>(
           if (error instanceof ZodError) {
             throw new AppError(
               ErrorCode.INVALID_INPUT,
-              'Invalid query parameters',
+              "Invalid query parameters",
               400,
-              { validationErrors: error.errors }
+              { validationErrors: error.errors },
             );
           }
           throw error;
         }
       }
-      
+
       // Validate path parameters
       if (options.paramsSchema) {
         try {
@@ -84,29 +87,29 @@ export function createApiRouteHandler<T = any>(
           if (error instanceof ZodError) {
             throw new AppError(
               ErrorCode.INVALID_INPUT,
-              'Invalid path parameters',
+              "Invalid path parameters",
               400,
-              { validationErrors: error.errors }
+              { validationErrors: error.errors },
             );
           }
           throw error;
         }
       }
-      
+
       // Parse and validate request body
       let body: T | undefined = undefined;
-      
-      if (req.method !== 'GET' && req.method !== 'HEAD') {
+
+      if (req.method !== "GET" && req.method !== "HEAD") {
         try {
-          const contentType = req.headers.get('content-type') || '';
-          
-          if (contentType.includes('application/json')) {
+          const contentType = req.headers.get("content-type") || "";
+
+          if (contentType.includes("application/json")) {
             body = await req.json();
-          } else if (contentType.includes('multipart/form-data')) {
+          } else if (contentType.includes("multipart/form-data")) {
             const formData = await req.formData();
             body = Object.fromEntries(formData) as unknown as T;
           }
-          
+
           // Validate body if schema is provided
           if (options.bodySchema && body) {
             body = options.bodySchema.parse(body);
@@ -115,57 +118,57 @@ export function createApiRouteHandler<T = any>(
           if (error instanceof ZodError) {
             throw new AppError(
               ErrorCode.INVALID_INPUT,
-              'Invalid request body',
+              "Invalid request body",
               400,
-              { validationErrors: error.errors }
+              { validationErrors: error.errors },
             );
           }
-          
+
           if (error instanceof SyntaxError) {
             throw new AppError(
               ErrorCode.INVALID_INPUT,
-              'Invalid JSON in request body',
-              400
+              "Invalid JSON in request body",
+              400,
             );
           }
-          
+
           throw error;
         }
       }
-      
+
       // Check authentication if required
       let session = null;
-      
+
       if (options.requireAuth) {
         // This would typically use your auth system to get the session
         // For now, we'll just check for an authorization header
-        const authHeader = req.headers.get('authorization');
-        
+        const authHeader = req.headers.get("authorization");
+
         if (!authHeader) {
           throw new AppError(
             ErrorCode.UNAUTHORIZED,
-            'Authentication required',
-            401
+            "Authentication required",
+            401,
           );
         }
-        
+
         // In a real app, you would validate the token and get the user session
-        session = { userId: 'user-id' };
-        
+        session = { userId: "user-id" };
+
         // Check roles if required
         if (options.requiredRoles && options.requiredRoles.length > 0) {
-          const userRole = 'admin'; // This would come from the session
-          
+          const userRole = "admin"; // This would come from the session
+
           if (!options.requiredRoles.includes(userRole as any)) {
             throw new AppError(
               ErrorCode.FORBIDDEN,
-              'Insufficient permissions',
-              403
+              "Insufficient permissions",
+              403,
             );
           }
         }
       }
-      
+
       // Call the handler
       const response = await handler({
         req,
@@ -174,7 +177,7 @@ export function createApiRouteHandler<T = any>(
         params,
         session,
       });
-      
+
       return response;
     });
   };
@@ -184,10 +187,7 @@ export function createApiRouteHandler<T = any>(
  * Create a success response
  */
 export function createSuccessResponse<T>(data: T, status = 200) {
-  return NextResponse.json(
-    { success: true, data },
-    { status }
-  );
+  return NextResponse.json({ success: true, data }, { status });
 }
 
 /**
@@ -195,10 +195,10 @@ export function createSuccessResponse<T>(data: T, status = 200) {
  */
 export function createErrorResponse(error: AppError) {
   return NextResponse.json(
-    { 
-      success: false, 
-      error: error.toApiError() 
+    {
+      success: false,
+      error: error.toApiError(),
     },
-    { status: error.statusCode }
+    { status: error.statusCode },
   );
 }

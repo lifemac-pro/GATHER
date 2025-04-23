@@ -136,7 +136,8 @@ export function SurveyFormDialog({
                         <p className="text-center text-sm text-[#072446]">
                           {
                             ratingLabels[
-                              (hoveredRating || field.value) as keyof typeof ratingLabels
+                              (hoveredRating ||
+                                field.value) as keyof typeof ratingLabels
                             ]
                           }
                         </p>

@@ -12,7 +12,9 @@ interface QRScannerProps {
 
 export function QRScanner({ onScan }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
-  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(
+    null,
+  );
 
   const startScanning = async () => {
     try {
@@ -40,7 +42,7 @@ export function QRScanner({ onScan }: QRScannerProps) {
               toast.error("Invalid QR code");
             }
           }
-        }
+        },
       );
     } catch (error) {
       console.error(error);

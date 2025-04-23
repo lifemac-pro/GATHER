@@ -1,7 +1,15 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  publicProcedure,
+  protectedProcedure,
+} from "@/server/api/trpc";
 import { AppError, ErrorCode } from "@/utils/error-handling";
-import { ApiResponse, EventListResponse, EventResponse } from "@/types/api-responses";
+import {
+  type ApiResponse,
+  type EventListResponse,
+  type EventResponse,
+} from "@/types/api-responses";
 import { Event } from "@/server/db/models";
 
 // Input validation schemas
@@ -24,47 +32,46 @@ export const exampleRouter = createTRPCRouter({
   /**
    * Get a list of events with proper typing
    */
-  getEvents: publicProcedure
-    .query(async (): Promise<EventListResponse> => {
-      try {
-        // Get events from database
-        const events = await Event.findFeatured();
+  getEvents: publicProcedure.query(async (): Promise<EventListResponse> => {
+    try {
+      // Get events from database
+      const events = await Event.findFeatured();
 
-        // Map to response format
-        const items = events.map(event => ({
-          id: event.id,
-          name: event.name,
-          description: event.description,
-          location: event.location,
-          startDate: event.startDate,
-          endDate: event.endDate,
-          category: event.category,
-          price: event.price,
-          maxAttendees: event.maxAttendees,
-          createdById: event.createdById,
-          image: event.image,
-          featured: event.featured,
-          createdAt: event.createdAt,
-          updatedAt: event.updatedAt,
-        }));
+      // Map to response format
+      const items = events.map((event) => ({
+        id: event.id,
+        name: event.name,
+        description: event.description,
+        location: event.location,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        category: event.category,
+        price: event.price,
+        maxAttendees: event.maxAttendees,
+        createdById: event.createdById,
+        image: event.image,
+        featured: event.featured,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+      }));
 
-        return {
-          items,
-          meta: {
-            nextCursor: undefined,
-            prevCursor: undefined,
-            hasMore: false,
-          }
-        };
-      } catch (error) {
-        // This will be caught by our error handling middleware
-        throw new AppError(
-          ErrorCode.DATABASE_ERROR,
-          "Failed to fetch events",
-          500
-        );
-      }
-    }),
+      return {
+        items,
+        meta: {
+          nextCursor: undefined,
+          prevCursor: undefined,
+          hasMore: false,
+        },
+      };
+    } catch (error) {
+      // This will be caught by our error handling middleware
+      throw new AppError(
+        ErrorCode.DATABASE_ERROR,
+        "Failed to fetch events",
+        500,
+      );
+    }
+  }),
 
   /**
    * Get a single event by ID with proper typing
@@ -79,7 +86,7 @@ export const exampleRouter = createTRPCRouter({
           throw new AppError(
             ErrorCode.NOT_FOUND,
             `Event with ID ${input.id} not found`,
-            404
+            404,
           );
         }
 
@@ -100,7 +107,7 @@ export const exampleRouter = createTRPCRouter({
             featured: event.featured,
             createdAt: event.createdAt,
             updatedAt: event.updatedAt,
-          }
+          },
         };
       } catch (error) {
         if (error instanceof AppError) {
@@ -110,7 +117,7 @@ export const exampleRouter = createTRPCRouter({
         throw new AppError(
           ErrorCode.DATABASE_ERROR,
           "Failed to fetch event",
-          500
+          500,
         );
       }
     }),
@@ -127,7 +134,7 @@ export const exampleRouter = createTRPCRouter({
           throw new AppError(
             ErrorCode.INVALID_INPUT,
             "End date cannot be before start date",
-            400
+            400,
           );
         }
 
@@ -140,7 +147,9 @@ export const exampleRouter = createTRPCRouter({
           endDate: input.endDate,
           category: input.category,
           price: input.price,
-          maxAttendees: input.maxAttendees ? [input.maxAttendees.toString()] : undefined,
+          maxAttendees: input.maxAttendees
+            ? [input.maxAttendees.toString()]
+            : undefined,
           createdById: (ctx as any).session?.userId || "unknown",
           featured: false,
           status: "published",
@@ -163,7 +172,7 @@ export const exampleRouter = createTRPCRouter({
             featured: event.featured,
             createdAt: event.createdAt,
             updatedAt: event.updatedAt,
-          }
+          },
         };
       } catch (error) {
         if (error instanceof AppError) {
@@ -174,7 +183,7 @@ export const exampleRouter = createTRPCRouter({
           ErrorCode.DATABASE_ERROR,
           "Failed to create event",
           500,
-          { originalError: (error as Error).message }
+          { originalError: (error as Error).message },
         );
       }
     }),

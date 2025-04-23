@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
-import { ChatDocument } from "./types";
+import { type ChatDocument } from "./types";
 
 const chatSchema = new mongoose.Schema({
   id: {
@@ -33,4 +33,8 @@ const chatSchema = new mongoose.Schema({
   },
 });
 
-export const Chat = (mongoose.models.Chat || mongoose.model<ChatDocument>("Chat", chatSchema)) as mongoose.Model<ChatDocument>;
+export const Chat = (mongoose.models.Chat ||
+  mongoose.model<ChatDocument>(
+    "Chat",
+    chatSchema,
+  )) as mongoose.Model<ChatDocument>;

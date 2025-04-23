@@ -40,7 +40,9 @@ const COLORS = ["#072446", "#E1A913", "#00b0a6", "#B0B8C5"];
 
 export default function SurveysPage() {
   const [selectedEventId, setSelectedEventId] = useState<string>();
-  const { data: surveys } = api.survey.getAll.useQuery({ eventId: selectedEventId });
+  const { data: surveys } = api.survey.getAll.useQuery({
+    eventId: selectedEventId,
+  });
   const { data: stats } = api.survey.getStats.useQuery();
 
   if (!stats) {
@@ -55,10 +57,12 @@ export default function SurveysPage() {
   ];
 
   // Prepare data for rating distribution
-  const ratingData = Object.entries(stats.ratingDistribution).map(([rating, count]) => ({
-    rating: Number(rating),
-    count,
-  }));
+  const ratingData = Object.entries(stats.ratingDistribution).map(
+    ([rating, count]) => ({
+      rating: Number(rating),
+      count,
+    }),
+  );
 
   return (
     <div className="space-y-6">
@@ -103,7 +107,9 @@ export default function SurveysPage() {
         {/* Sentiment Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[#072446]">Sentiment Distribution</CardTitle>
+            <CardTitle className="text-[#072446]">
+              Sentiment Distribution
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -136,7 +142,9 @@ export default function SurveysPage() {
         {/* Rating Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[#072446]">Rating Distribution</CardTitle>
+            <CardTitle className="text-[#072446]">
+              Rating Distribution
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -174,10 +182,7 @@ export default function SurveysPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Star
-                      className="h-4 w-4 text-[#E1A913]"
-                      fill="#E1A913"
-                    />
+                    <Star className="h-4 w-4 text-[#E1A913]" fill="#E1A913" />
                     <span className="font-medium">{event.avgRating}</span>
                   </div>
                 </div>
@@ -192,10 +197,7 @@ export default function SurveysPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-[#072446]">Survey Responses</CardTitle>
-            <Select
-              value={selectedEventId}
-              onValueChange={setSelectedEventId}
-            >
+            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Filter by event" />
               </SelectTrigger>
@@ -227,10 +229,7 @@ export default function SurveysPage() {
                   <TableCell>{survey.user.name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Star
-                        className="h-4 w-4 text-[#E1A913]"
-                        fill="#E1A913"
-                      />
+                      <Star className="h-4 w-4 text-[#E1A913]" fill="#E1A913" />
                       <span>{survey.rating}</span>
                     </div>
                   </TableCell>

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
   lastName: String,
   role: {
     type: String,
-    enum: ['admin', 'super_admin'],
-    default: 'admin',
+    enum: ["admin", "super_admin"],
+    default: "admin",
   },
   createdAt: {
     type: Date,
@@ -27,4 +27,4 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-export const User = mongoose.models.User || mongoose.model('User', userSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema);

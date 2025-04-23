@@ -102,10 +102,19 @@ export const adminDashboardRouter = createTRPCRouter({
       ]);
 
       monthlyTrends.unshift({
-        month: monthStart.toLocaleString('default', { month: 'short' }),
-        events: Array.isArray(monthStats) && monthStats.length > 0 ? monthStats[0] : 0,
-        attendees: Array.isArray(monthStats) && monthStats.length > 1 ? monthStats[1] : 0,
-        surveys: Array.isArray(monthStats) && monthStats.length > 2 ? monthStats[2] : 0,
+        month: monthStart.toLocaleString("default", { month: "short" }),
+        events:
+          Array.isArray(monthStats) && monthStats.length > 0
+            ? monthStats[0]
+            : 0,
+        attendees:
+          Array.isArray(monthStats) && monthStats.length > 1
+            ? monthStats[1]
+            : 0,
+        surveys:
+          Array.isArray(monthStats) && monthStats.length > 2
+            ? monthStats[2]
+            : 0,
       });
     }
 
@@ -114,14 +123,15 @@ export const adminDashboardRouter = createTRPCRouter({
         total: totalEvents,
         currentMonth: currentMonthEvents,
         lastMonth: lastMonthEvents,
-        growth: lastMonthEvents > 0
-          ? ((currentMonthEvents - lastMonthEvents) / lastMonthEvents) * 100
-          : 0,
-        byStatus: eventsByStatus.map(item => ({
+        growth:
+          lastMonthEvents > 0
+            ? ((currentMonthEvents - lastMonthEvents) / lastMonthEvents) * 100
+            : 0,
+        byStatus: eventsByStatus.map((item) => ({
           status: item._id,
           count: item.count,
         })),
-        byCategory: eventsByCategory.map(item => ({
+        byCategory: eventsByCategory.map((item) => ({
           category: item._id,
           count: item.count,
         })),
@@ -130,10 +140,13 @@ export const adminDashboardRouter = createTRPCRouter({
         total: totalAttendees,
         currentMonth: currentMonthAttendees,
         lastMonth: lastMonthAttendees,
-        growth: lastMonthAttendees > 0
-          ? ((currentMonthAttendees - lastMonthAttendees) / lastMonthAttendees) * 100
-          : 0,
-        byStatus: attendeesByStatus.map(item => ({
+        growth:
+          lastMonthAttendees > 0
+            ? ((currentMonthAttendees - lastMonthAttendees) /
+                lastMonthAttendees) *
+              100
+            : 0,
+        byStatus: attendeesByStatus.map((item) => ({
           status: item._id,
           count: item.count,
         })),

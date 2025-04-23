@@ -3,142 +3,105 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./button";
-import { useAuth } from "@clerk/nextjs";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { UserButton, useAuth, useUser } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { Calendar, Home, LogIn } from "lucide-react";
+import { MobileNav } from "./mobile-nav";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
   const { userId } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isSignedIn, user } = useUser();
+  const [mounted, setMounted] = useState(false);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isActive = (path: string) => pathname === path;
 
+  if (!mounted) {
+    // Return a placeholder with the same height to prevent layout shift
+    return (
+      <div className="h-16 border-b border-border bg-background shadow-sm"></div>
+    );
+  }
+
   return (
-    <nav className="bg-background border-b border-border shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-primary">
-                GatherEase
-              </Link>
-            </div>
-            {/* Desktop navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background shadow-sm">
+      <div className="container flex h-16 items-center">
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MobileNav />
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold">
+                Gather<span className="text-primary">Ease</span>
+              </span>
+            </Link>
+          </div>
+
+          {/* Desktop navigation */}
+          <nav className="hidden items-center gap-6 md:flex">
+            <Link
+              href="/"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-foreground",
+                isActive("/") ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              <div className="flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/events"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-foreground",
+                isActive("/events") || pathname?.startsWith("/events/")
+                  ? "text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>Events</span>
+              </div>
+            </Link>
+
+            {isSignedIn && (
               <Link
                 href="/admin/dashboard"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  isActive("/admin/dashboard")
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-                }`}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-foreground",
+                  pathname?.startsWith("/admin")
+                    ? "text-foreground"
+                    : "text-muted-foreground",
+                )}
               >
                 Dashboard
               </Link>
-              {/* {userId && (
-                <Link
-                  href="/events"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    isActive("/events")
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-                  }`}
-                >
-                  Events
-                </Link>
-              )} */}
-            </div>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="-mr-2 flex items-center md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-              aria-expanded="false"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
-            </button>
-          </div>
-
-          {/* Desktop auth buttons */}
-          <div className="hidden md:flex md:items-center">
-            {!userId && (
-              <Link
-                href="/sign-in"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-              >
-                Sign in
-              </Link>
             )}
-            {userId && (
-              <Link
-                href="/sign-out"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-              >
-                Sign out
+          </nav>
+
+          {/* Auth buttons */}
+          <div className="flex items-center gap-2">
+            {!isSignedIn ? (
+              <Link href="/sign-in">
+                <Button size="sm" className="hidden md:flex">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign in
+                </Button>
               </Link>
+            ) : (
+              <UserButton afterSignOutUrl="/" />
             )}
           </div>
         </div>
       </div>
-
-      {/* Mobile menu, show/hide based on menu state */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-background">
-          <div className="pt-2 pb-3 space-y-1">
-            <Link
-              href="/admin/dashboard"
-              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                isActive("/admin/dashboard")
-                  ? "border-primary text-primary bg-accent"
-                  : "border-transparent text-muted-foreground hover:bg-accent hover:border-border hover:text-foreground"
-              }`}
-            >
-              Dashboard
-            </Link>
-            {userId && (
-              <Link
-                href="/events"
-                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive("/events")
-                    ? "border-primary text-primary bg-accent"
-                    : "border-transparent text-muted-foreground hover:bg-accent hover:border-border hover:text-foreground"
-                }`}
-              >
-                Events
-              </Link>
-            )}
-          </div>
-          <div className="pt-4 pb-3 border-t border-border">
-            <div className="mt-3 space-y-1">
-              {!userId && (
-                <Link
-                  href="/sign-in"
-                  className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-                >
-                  Sign in
-                </Link>
-              )}
-              {userId && (
-                <Link
-                  href="/sign-out"
-                  className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-                >
-                  Sign out
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </nav>
+    </header>
   );
 }

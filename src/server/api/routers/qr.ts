@@ -21,16 +21,15 @@ export const qrRouter = createTRPCRouter({
       const checkInCode = nanoid(10);
 
       // Update event with check-in code
-      await Event.updateOne(
-        { id: input.eventId },
-        { $set: { checkInCode } }
-      );
+      await Event.updateOne({ id: input.eventId }, { $set: { checkInCode } });
 
       // Generate QR code
-      const qrData = await QRCode.toDataURL(JSON.stringify({
-        eventId: input.eventId,
-        code: checkInCode,
-      }));
+      const qrData = await QRCode.toDataURL(
+        JSON.stringify({
+          eventId: input.eventId,
+          code: checkInCode,
+        }),
+      );
 
       return { qrCode: qrData, checkInCode };
     }),
@@ -41,7 +40,7 @@ export const qrRouter = createTRPCRouter({
         eventId: z.string(),
         code: z.string(),
         attendeeId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       const event = await Event.findOne({
@@ -68,7 +67,7 @@ export const qrRouter = createTRPCRouter({
             checkInMethod: "qr",
           },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!attendee) {
@@ -86,7 +85,7 @@ export const qrRouter = createTRPCRouter({
       z.object({
         eventId: z.string(),
         ticketCode: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const attendee = await Attendee.findOne({
@@ -99,7 +98,7 @@ export const qrRouter = createTRPCRouter({
       if (attendee && event) {
         (attendee as any).event = {
           name: event.name,
-          startDate: event.startDate
+          startDate: event.startDate,
         };
       }
 

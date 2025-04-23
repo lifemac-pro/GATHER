@@ -10,7 +10,7 @@ export const chatRouter = createTRPCRouter({
         eventId: z.string(),
         message: z.string(),
         type: z.enum(["text", "announcement", "system"]).default("text"),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       // Check if event exists
@@ -38,7 +38,7 @@ export const chatRouter = createTRPCRouter({
           type: "chat",
           eventId: event.id,
           actionUrl: `/events/${event.id}/chat`,
-        }))
+        })),
       );
 
       return chat;
@@ -50,7 +50,7 @@ export const chatRouter = createTRPCRouter({
         eventId: z.string(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const query = Chat.find({ eventId: input.eventId })
@@ -67,7 +67,10 @@ export const chatRouter = createTRPCRouter({
 
       return {
         messages: messages.slice(0, input.limit),
-        nextCursor: hasMore && messages.length > 0 ? messages[Math.min(messages.length - 1, input.limit - 1)]?._id : undefined,
+        nextCursor:
+          hasMore && messages.length > 0
+            ? messages[Math.min(messages.length - 1, input.limit - 1)]?._id
+            : undefined,
       };
     }),
 
@@ -82,7 +85,8 @@ export const chatRouter = createTRPCRouter({
       if (!message) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Message not found or you don't have permission to delete it",
+          message:
+            "Message not found or you don't have permission to delete it",
         });
       }
 

@@ -1,29 +1,83 @@
-# Create T3 App
+# GatherEase - Event Management Platform
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+GatherEase is a modern event management platform built with Next.js, MongoDB, and Clerk authentication. It allows users to create, manage, and attend events with a clean, intuitive interface.
 
-## What's next? How do I make an app with this?
+## Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- **Event Management**: Create, edit, and delete events
+- **User Authentication**: Secure authentication with Clerk
+- **Admin Dashboard**: Manage events and attendees
+- **Responsive Design**: Works on desktop and mobile devices
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Tech Stack
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- [Next.js](https://nextjs.org) - React framework for server-rendered applications
+- [MongoDB](https://mongodb.com) - NoSQL database for storing event and user data
+- [Clerk](https://clerk.dev) - Authentication and user management
+- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
+- [tRPC](https://trpc.io) - End-to-end typesafe APIs
+- [shadcn/ui](https://ui.shadcn.com/) - Reusable UI components
 
-## Learn More
+## Getting Started
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### Prerequisites
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+- Node.js 18.x or later
+- pnpm package manager
+- MongoDB database (local or Atlas)
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+### Installation
 
-## How do I deploy this?
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/gatherease.git
+   cd gatherease
+   ```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+2. Install dependencies
+   ```bash
+   pnpm install
+   ```
+
+3. Set up environment variables
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Start the development server
+   ```bash
+   pnpm dev
+   ```
+
+## Deployment
+
+For detailed deployment instructions, see [deployment.md](deployment.md).
+
+### Quick Deployment Options
+
+#### Vercel
+
+Deploy directly to Vercel with a few clicks:
+
+```bash
+pnpm build
+vercel --prod
+```
+
+#### Docker
+
+Build and run using Docker:
+
+```bash
+# Using Docker Compose
+docker-compose up -d
+
+# Or build and run manually
+docker build -t gatherease .
+docker run -p 3000:3000 --env-file .env gatherease
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

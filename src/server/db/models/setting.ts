@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
-import { SettingDocument } from "./types";
+import { type SettingDocument } from "./types";
 
 const settingSchema = new mongoose.Schema({
   id: {
@@ -33,9 +33,13 @@ const settingSchema = new mongoose.Schema({
 settingSchema.index({ type: 1 }, { unique: true });
 
 // Update updatedAt timestamp
-settingSchema.pre('save', function(next) {
+settingSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-export const Setting = (mongoose.models.Setting || mongoose.model<SettingDocument>("Setting", settingSchema)) as mongoose.Model<SettingDocument>;
+export const Setting = (mongoose.models.Setting ||
+  mongoose.model<SettingDocument>(
+    "Setting",
+    settingSchema,
+  )) as mongoose.Model<SettingDocument>;

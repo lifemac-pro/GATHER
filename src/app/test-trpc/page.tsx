@@ -14,22 +14,22 @@ export default async function TestPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">TRPC Test Page</h1>
+      <h1 className="mb-6 text-2xl font-bold">TRPC Test Page</h1>
 
       {error ? (
-        <div className="p-4 bg-red-100 border border-red-400 rounded mb-4">
+        <div className="mb-4 rounded border border-red-400 bg-red-100 p-4">
           <h2 className="font-bold text-red-800">Error:</h2>
           <pre className="mt-2 text-red-700">{error}</pre>
         </div>
       ) : (
-        <div className="p-4 bg-green-100 border border-green-400 rounded mb-4">
+        <div className="mb-4 rounded border border-green-400 bg-green-100 p-4">
           <h2 className="font-bold text-green-800">Success:</h2>
           <pre className="mt-2">{result}</pre>
         </div>
       )}
 
       <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Debugging Information</h2>
+        <h2 className="mb-4 text-xl font-bold">Debugging Information</h2>
         <ul className="list-disc pl-5">
           <li>Using server-side TRPC client</li>
           <li>Testing the post.hello procedure</li>

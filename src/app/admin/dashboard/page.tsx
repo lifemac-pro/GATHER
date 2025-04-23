@@ -5,50 +5,55 @@ import { AttendanceChart } from "@/components/analytics/attendance-chart";
 import { DemographicsChart } from "@/components/analytics/demographics-chart";
 import { api } from "@/trpc/react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import {
-  Users,
-  CalendarDays,
-  TrendingUp,
-  Percent,
-} from "lucide-react";
+import { Users, CalendarDays, TrendingUp, Percent } from "lucide-react";
 
 export default function AdminDashboardPage() {
-  const { data: rawStats, isLoading: isStatsLoading } = api.analytics.getStats.useQuery();
+  const { data: rawStats, isLoading: isStatsLoading } =
+    api.analytics.getStats.useQuery();
 
   // Add missing trend properties to stats
-  const stats = rawStats ? {
-    ...rawStats,
-    attendeeTrend: { value: 5, positive: true },
-    registrationTrend: { value: 10, positive: true },
-    attendanceTrend: { value: 8, positive: true }
-  } : undefined;
-  const { data: attendanceData, isLoading: isAttendanceLoading } = api.analytics.getAttendanceData.useQuery();
-  const { data: demographicsData, isLoading: isDemographicsLoading } = api.analytics.getDemographicsData.useQuery();
+  const stats = rawStats
+    ? {
+        ...rawStats,
+        attendeeTrend: { value: 5, positive: true },
+        registrationTrend: { value: 10, positive: true },
+        attendanceTrend: { value: 8, positive: true },
+      }
+    : undefined;
+  const { data: attendanceData, isLoading: isAttendanceLoading } =
+    api.analytics.getAttendanceData.useQuery();
+  const { data: demographicsData, isLoading: isDemographicsLoading } =
+    api.analytics.getDemographicsData.useQuery();
 
   // Transform data to match the expected types
-  const formattedAttendanceData = attendanceData ? attendanceData.map(item => ({
-    name: item.status,
-    total: item.count,
-    attended: item.status === 'attended' ? item.count : 0
-  })) : [];
+  const formattedAttendanceData = attendanceData
+    ? attendanceData.map((item) => ({
+        name: item.status,
+        total: item.count,
+        attended: item.status === "attended" ? item.count : 0,
+      }))
+    : [];
 
-  const formattedDemographicsData = demographicsData ? demographicsData.map(item => ({
-    name: item.category,
-    value: item.count
-  })) : [];
+  const formattedDemographicsData = demographicsData
+    ? demographicsData.map((item) => ({
+        name: item.category,
+        value: item.count,
+      }))
+    : [];
 
-  const isLoading = isStatsLoading || isAttendanceLoading || isDemographicsLoading;
+  const isLoading =
+    isStatsLoading || isAttendanceLoading || isDemographicsLoading;
 
   if (isLoading) {
     return (
-      <div className="container flex justify-center items-center min-h-[50vh]">
+      <div className="container flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner size="lg" text="Loading dashboard data..." />
       </div>
     );
   }
 
   return (
-    <div className="container space-y-8 py-8 bg-background">
+    <div className="container space-y-8 bg-background py-8">
       <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

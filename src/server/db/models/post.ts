@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
   id: {
@@ -15,4 +15,4 @@ const postSchema = new mongoose.Schema({
   },
 });
 
-export const Post = mongoose.models.Post || mongoose.model('Post', postSchema);
+export const Post = mongoose.models.Post || mongoose.model("Post", postSchema);

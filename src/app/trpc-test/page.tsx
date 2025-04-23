@@ -23,36 +23,42 @@ export default async function TRPCTestPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">TRPC Test Page</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-8 text-3xl font-bold">TRPC Test Page</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="border rounded-lg p-6 bg-white shadow">
-          <h2 className="text-xl font-bold mb-4">post.hello Procedure</h2>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="rounded-lg border bg-white p-6 shadow">
+          <h2 className="mb-4 text-xl font-bold">post.hello Procedure</h2>
 
           {postError ? (
-            <div className="p-4 bg-red-100 border border-red-400 rounded mb-4">
+            <div className="mb-4 rounded border border-red-400 bg-red-100 p-4">
               <h3 className="font-bold text-red-800">Error:</h3>
-              <pre className="mt-2 text-red-700 whitespace-pre-wrap">{postError}</pre>
+              <pre className="mt-2 whitespace-pre-wrap text-red-700">
+                {postError}
+              </pre>
             </div>
           ) : (
-            <div className="p-4 bg-green-100 border border-green-400 rounded mb-4">
+            <div className="mb-4 rounded border border-green-400 bg-green-100 p-4">
               <h3 className="font-bold text-green-800">Success:</h3>
               <pre className="mt-2 whitespace-pre-wrap">{postResult}</pre>
             </div>
           )}
         </div>
 
-        <div className="border rounded-lg p-6 bg-white shadow">
-          <h2 className="text-xl font-bold mb-4">event.getFeatured Procedure</h2>
+        <div className="rounded-lg border bg-white p-6 shadow">
+          <h2 className="mb-4 text-xl font-bold">
+            event.getFeatured Procedure
+          </h2>
 
           {eventError ? (
-            <div className="p-4 bg-red-100 border border-red-400 rounded mb-4">
+            <div className="mb-4 rounded border border-red-400 bg-red-100 p-4">
               <h3 className="font-bold text-red-800">Error:</h3>
-              <pre className="mt-2 text-red-700 whitespace-pre-wrap">{eventError}</pre>
+              <pre className="mt-2 whitespace-pre-wrap text-red-700">
+                {eventError}
+              </pre>
             </div>
           ) : (
-            <div className="p-4 bg-green-100 border border-green-400 rounded mb-4">
+            <div className="mb-4 rounded border border-green-400 bg-green-100 p-4">
               <h3 className="font-bold text-green-800">Success:</h3>
               <pre className="mt-2 whitespace-pre-wrap">{eventResult}</pre>
             </div>
@@ -60,12 +66,14 @@ export default async function TRPCTestPage() {
         </div>
       </div>
 
-      <div className="mt-8 p-6 border rounded-lg bg-gray-50">
-        <h2 className="text-xl font-bold mb-4">Debugging Tips</h2>
-        <ul className="list-disc pl-5 space-y-2">
+      <div className="mt-8 rounded-lg border bg-gray-50 p-6">
+        <h2 className="mb-4 text-xl font-bold">Debugging Tips</h2>
+        <ul className="list-disc space-y-2 pl-5">
           <li>Check if MongoDB is properly connected</li>
           <li>Verify that the Event model is correctly defined</li>
-          <li>Ensure TRPC routers are properly registered in the root router</li>
+          <li>
+            Ensure TRPC routers are properly registered in the root router
+          </li>
           <li>Check for authentication issues with Clerk</li>
         </ul>
       </div>

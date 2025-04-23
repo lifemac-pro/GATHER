@@ -6,7 +6,7 @@ class Cache {
   constructor() {
     this.cache = new Map();
     this.DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-    
+
     // Clean up expired cache entries every minute
     setInterval(() => this.cleanupExpiredEntries(), 60 * 1000);
   }
@@ -21,7 +21,7 @@ class Cache {
   set(key, value, options = {}) {
     const ttl = options.ttl || this.DEFAULT_TTL;
     const expiresAt = Date.now() + ttl;
-    
+
     this.cache.set(key, { value, expiresAt });
   }
 
@@ -32,17 +32,17 @@ class Cache {
    */
   get(key) {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return undefined;
     }
-    
+
     // Check if the entry has expired
     if (entry.expiresAt < Date.now()) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     return entry.value;
   }
 
@@ -71,11 +71,11 @@ class Cache {
    */
   async getOrSet(key, fn, options = {}) {
     const cachedValue = this.get(key);
-    
+
     if (cachedValue !== undefined) {
       return cachedValue;
     }
-    
+
     const value = await fn();
     this.set(key, value, options);
     return value;
@@ -86,7 +86,7 @@ class Cache {
    */
   cleanupExpiredEntries() {
     const now = Date.now();
-    
+
     for (const [key, entry] of this.cache.entries()) {
       if (entry.expiresAt < now) {
         this.cache.delete(key);

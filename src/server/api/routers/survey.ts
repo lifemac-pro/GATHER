@@ -1,50 +1,213 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { Survey, Event, User } from "@/server/db/models";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
+import {
+  Survey,
+  Event,
+  User,
+  SurveyTemplate,
+  Attendee,
+} from "@/server/db/models";
 import { startOfMonth, addMonths, subMonths } from "date-fns";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
+import { connectToDatabase } from "@/server/db/mongo";
+
+const responseSchema = z.object({
+  questionId: z.string(),
+  questionText: z.string(),
+  answer: z.union([z.string(), z.number(), z.array(z.string())]),
+});
 
 export const surveyRouter = createTRPCRouter({
+  // Submit a survey response
+  submit: publicProcedure
+    .input(
+      z.object({
+        templateId: z.string(),
+        token: z.string(),
+        responses: z.array(responseSchema),
+        rating: z.number().min(1).max(5).optional(),
+        feedback: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Validate the token
+      let tokenData;
+      try {
+        const decoded = Buffer.from(input.token, "base64").toString("utf-8");
+        tokenData = JSON.parse(decoded);
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid survey token",
+        });
+      }
+
+      // Check if token is valid
+      if (
+        !tokenData.attendeeId ||
+        !tokenData.templateId ||
+        tokenData.templateId !== input.templateId
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid survey token",
+        });
+      }
+
+      // Check if the template exists
+      const template = await SurveyTemplate.findOne({ id: input.templateId });
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Survey template not found",
+        });
+      }
+
+      // Check if the attendee exists
+      const attendee = await Attendee.findOne({ id: tokenData.attendeeId });
+      if (!attendee) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Attendee not found",
+        });
+      }
+
+      // Check if a survey has already been submitted
+      const existingSurvey = await Survey.findOne({
+        templateId: input.templateId,
+        userId: attendee.userId,
+      });
+
+      if (existingSurvey) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You have already submitted a response to this survey",
+        });
+      }
+
+      // Create the survey response
+      const survey = await Survey.create({
+        id: nanoid(),
+        templateId: input.templateId,
+        eventId: template.eventId,
+        userId: attendee.userId,
+        responses: input.responses,
+        rating: input.rating,
+        feedback: input.feedback,
+        submittedAt: new Date(),
+      });
+
+      return { success: true, surveyId: survey.id };
+    }),
+
+  // Legacy create method for backward compatibility
   create: protectedProcedure
     .input(
       z.object({
         eventId: z.string(),
         rating: z.number().min(1).max(5),
         feedback: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
       const survey = await Survey.create({
         id: nanoid(),
         ...input,
-        userId: "user-id", // Would need to get from session
+        userId,
+        templateId: "legacy",
+        responses: [],
         submittedAt: new Date(),
       });
 
       return survey;
     }),
 
+  // Get survey responses for admin
   getAll: protectedProcedure
     .input(
       z.object({
         eventId: z.string().optional(),
-      })
+        templateId: z.string().optional(),
+      }),
     )
-    .query(async ({ input }) => {
-      let query = Survey.find()
-        .populate("event", "name")
-        .populate("user", "name email")
-        .sort({ submittedAt: -1 });
+    .query(async ({ input, ctx }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      let query = Survey.find().sort({ submittedAt: -1 });
 
       if (input.eventId) {
         query = query.where("eventId", input.eventId);
       }
 
-      return await query.exec();
+      if (input.templateId) {
+        query = query.where("templateId", input.templateId);
+      }
+
+      const surveys = await query.exec();
+
+      // Fetch related data
+      const eventIds = [...new Set(surveys.map((s) => s.eventId))];
+      const userIds = [...new Set(surveys.map((s) => s.userId))];
+
+      const events = await Event.find({ id: { $in: eventIds } });
+      const users = await User.find({ id: { $in: userIds } });
+
+      // Enrich survey data
+      const enrichedSurveys = surveys.map((survey) => {
+        const event = events.find((e) => e.id === survey.eventId);
+        const user = users.find((u) => u.id === survey.userId);
+
+        return {
+          ...survey.toObject(),
+          event: event ? { id: event.id, name: event.name } : null,
+          user: user
+            ? {
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`.trim(),
+                email: user.email,
+              }
+            : null,
+        };
+      });
+
+      return enrichedSurveys;
     }),
 
-  getStats: protectedProcedure.query(async () => {
+  // Get survey statistics
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    // Ensure MongoDB is connected
+    await connectToDatabase();
+
+    // Get user ID from session
+    const userId = ctx.session?.userId;
+    if (!userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
     // Get monthly trends (last 6 months)
     const monthlyTrends = [];
     for (let i = 0; i < 6; i++) {
@@ -70,7 +233,7 @@ export const surveyRouter = createTRPCRouter({
       ]).exec();
 
       monthlyTrends.unshift({
-        month: monthStart.toLocaleString('default', { month: 'short' }),
+        month: monthStart.toLocaleString("default", { month: "short" }),
         avgRating: monthStats?.avgRating?.toFixed(1) || 0,
         count: monthStats?.count || 0,
       });

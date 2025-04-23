@@ -20,14 +20,18 @@ export const resetPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "New password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Confirm password is required"),
-}).refine(data => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string().min(8, "Confirm password is required"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type SignupRequest = z.infer<typeof signupSchema>;
@@ -50,7 +54,10 @@ export const createEventSchema = z.object({
 });
 
 export const updateEventSchema = z.object({
-  name: z.string().min(3, "Event name must be at least 3 characters").optional(),
+  name: z
+    .string()
+    .min(3, "Event name must be at least 3 characters")
+    .optional(),
   description: z.string().optional(),
   location: z.string().optional(),
   startDate: z.string().or(z.date()).optional(),
@@ -64,11 +71,23 @@ export const updateEventSchema = z.object({
 });
 
 export const listEventsQuerySchema = z.object({
-  page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 10),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 10)),
   category: z.string().optional(),
-  featured: z.string().optional().transform(val => val === 'true'),
-  upcoming: z.string().optional().transform(val => val === 'true'),
+  featured: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
+  upcoming: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
 });
 
 export type CreateEventRequest = z.infer<typeof createEventSchema>;
@@ -94,14 +113,24 @@ export const cancelRegistrationSchema = z.object({
 
 export const listAttendeesQuerySchema = z.object({
   eventId: z.string().optional(),
-  status: z.enum(["registered", "attended", "cancelled", "waitlisted"]).optional(),
-  page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 10),
+  status: z
+    .enum(["registered", "attended", "cancelled", "waitlisted"])
+    .optional(),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 10)),
 });
 
 export type RegisterForEventRequest = z.infer<typeof registerForEventSchema>;
 export type CheckInAttendeeRequest = z.infer<typeof checkInAttendeeSchema>;
-export type CancelRegistrationRequest = z.infer<typeof cancelRegistrationSchema>;
+export type CancelRegistrationRequest = z.infer<
+  typeof cancelRegistrationSchema
+>;
 export type ListAttendeesQuery = z.infer<typeof listAttendeesQuerySchema>;
 
 /**
@@ -111,12 +140,14 @@ export const submitSurveySchema = z.object({
   eventId: z.string().min(1, "Event ID is required"),
   rating: z.number().min(1).max(5),
   feedback: z.string().optional(),
-  responses: z.array(
-    z.object({
-      question: z.string(),
-      answer: z.string(),
-    })
-  ).optional(),
+  responses: z
+    .array(
+      z.object({
+        question: z.string(),
+        answer: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 export type SubmitSurveyRequest = z.infer<typeof submitSurveySchema>;
@@ -147,7 +178,10 @@ export const sendChatMessageSchema = z.object({
 
 export const listChatMessagesQuerySchema = z.object({
   eventId: z.string().min(1, "Event ID is required"),
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 20),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 20)),
   cursor: z.string().optional(),
 });
 
@@ -162,13 +196,20 @@ export const markNotificationsAsReadSchema = z.object({
 });
 
 export const listNotificationsQuerySchema = z.object({
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 20),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 20)),
   cursor: z.string().optional(),
   type: z.enum(["event", "system", "chat", "reminder"]).optional(),
 });
 
-export type MarkNotificationsAsReadRequest = z.infer<typeof markNotificationsAsReadSchema>;
-export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
+export type MarkNotificationsAsReadRequest = z.infer<
+  typeof markNotificationsAsReadSchema
+>;
+export type ListNotificationsQuery = z.infer<
+  typeof listNotificationsQuerySchema
+>;
 
 /**
  * User profile request types

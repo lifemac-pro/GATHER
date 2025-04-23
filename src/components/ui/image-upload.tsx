@@ -13,16 +13,20 @@ interface ImageUploadProps {
   label?: string;
 }
 
-export function ImageUpload({ value, onChange, label = "Event Image" }: ImageUploadProps) {
+export function ImageUpload({
+  value,
+  onChange,
+  label = "Event Image",
+}: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>(value || '');
+  const [previewUrl, setPreviewUrl] = useState<string>(value || "");
   const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update preview URL when value prop changes
   useEffect(() => {
     if (value !== previewUrl) {
-      setPreviewUrl(value || '');
+      setPreviewUrl(value || "");
     }
   }, [value, previewUrl]);
 
@@ -95,7 +99,9 @@ export function ImageUpload({ value, onChange, label = "Event Image" }: ImageUpl
           >
             <ImageIcon className="mb-2 h-10 w-10" />
             <p className="text-sm">Click to upload an image</p>
-            <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (max 5MB)</p>
+            <p className="text-xs text-muted-foreground">
+              PNG, JPG or WEBP (max 5MB)
+            </p>
           </div>
         )}
 

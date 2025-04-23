@@ -12,7 +12,7 @@ import {
   FileText,
   Settings,
   LogOut,
-  Menu
+  Menu,
 } from "lucide-react"; // <-- import Menu icon for mobile toggle
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
@@ -57,7 +57,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Hamburger */}
-      <div className="md:hidden p-4">
+      <div className="p-4 md:hidden">
         <Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
           <Menu className="h-6 w-6" />
         </Button>
@@ -68,12 +68,14 @@ export function Sidebar() {
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-primary text-primary-foreground/70 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "md:translate-x-0  md:h-screen"
+          "md:h-screen  md:translate-x-0",
         )}
       >
         {/* Logo */}
         <div className="flex h-16 items-center px-6">
-          <h1 className="text-xl font-bold text-primary-foreground">GatherEase</h1>
+          <h1 className="text-xl font-bold text-primary-foreground">
+            GatherEase
+          </h1>
         </div>
 
         {/* Navigation */}
@@ -88,13 +90,15 @@ export function Sidebar() {
                   "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary-foreground/10 text-primary-foreground"
-                    : "hover:bg-primary-foreground/5 hover:text-primary-foreground"
+                    : "hover:bg-primary-foreground/5 hover:text-primary-foreground",
                 )}
               >
                 <item.icon
                   className={cn(
                     "mr-3 h-5 w-5",
-                    isActive ? "text-primary-foreground" : "text-primary-foreground/80"
+                    isActive
+                      ? "text-primary-foreground"
+                      : "text-primary-foreground/80",
                   )}
                 />
                 {item.name}

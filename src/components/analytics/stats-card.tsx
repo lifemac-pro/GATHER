@@ -24,9 +24,16 @@ export function StatsCard({
   trend,
 }: StatsCardProps) {
   return (
-    <Card className={cn("border-border hover:border-primary/20 transition-all", className)}>
+    <Card
+      className={cn(
+        "border-border transition-all hover:border-primary/20",
+        className,
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">
+          {title}
+        </CardTitle>
         {icon && <div className="text-primary">{icon}</div>}
       </CardHeader>
       <CardContent>
@@ -36,7 +43,7 @@ export function StatsCard({
             <span
               className={cn(
                 "text-xs",
-                trend.positive ? "text-primary" : "text-destructive"
+                trend.positive ? "text-primary" : "text-destructive",
               )}
             >
               {trend.positive ? "+" : "-"}

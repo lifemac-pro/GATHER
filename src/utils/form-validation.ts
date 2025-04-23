@@ -1,5 +1,5 @@
-import { z, ZodSchema, ZodError } from 'zod';
-import { useState, useCallback } from 'react';
+import { z, type ZodSchema, ZodError } from "zod";
+import { useState, useCallback } from "react";
 
 /**
  * Form validation error type
@@ -21,7 +21,10 @@ export interface ValidationResult<T> {
 /**
  * Validate data against a Zod schema
  */
-export function validateWithZod<T>(schema: ZodSchema<T>, data: unknown): ValidationResult<T> {
+export function validateWithZod<T>(
+  schema: ZodSchema<T>,
+  data: unknown,
+): ValidationResult<T> {
   try {
     const validData = schema.parse(data);
     return {
@@ -34,7 +37,7 @@ export function validateWithZod<T>(schema: ZodSchema<T>, data: unknown): Validat
       const errors: Record<string, string> = {};
 
       error.errors.forEach((err) => {
-        const path = err.path.join('.');
+        const path = err.path.join(".");
         errors[path] = err.message;
       });
 
@@ -48,7 +51,7 @@ export function validateWithZod<T>(schema: ZodSchema<T>, data: unknown): Validat
     return {
       success: false,
       errors: {
-        _form: 'An unexpected error occurred',
+        _form: "An unexpected error occurred",
       },
     };
   }
@@ -57,70 +60,73 @@ export function validateWithZod<T>(schema: ZodSchema<T>, data: unknown): Validat
 /**
  * Hook for form validation with Zod
  */
-export function useZodForm<T>(schema: ZodSchema<T>, initialValues: Partial<T> = {}) {
+export function useZodForm<T>(
+  schema: ZodSchema<T>,
+  initialValues: Partial<T> = {},
+) {
   const [data, setData] = useState<Partial<T>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const setValue = useCallback(<K extends keyof T>(
-    key: K,
-    value: T[K]
-  ) => {
-    setData(prev => ({
-      ...prev,
-      [key]: value,
-    }));
+  const setValue = useCallback(
+    <K extends keyof T>(key: K, value: T[K]) => {
+      setData((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
 
-    // Clear error for this field when it's updated
-    if (errors[key as string]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[key as string];
-        return newErrors;
-      });
-    }
-  }, [errors]);
+      // Clear error for this field when it's updated
+      if (errors[key as string]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[key as string];
+          return newErrors;
+        });
+      }
+    },
+    [errors],
+  );
 
-  const validateField = useCallback(<K extends keyof T>(
-    key: K,
-    value: T[K]
-  ) => {
-    try {
-      // Create a partial schema for just this field
-      // Use a safer approach with type assertion
-      const partialSchema = z.object({
-        [key]: z.any()
-      }) as unknown as ZodSchema<Pick<T, K>>;
-      partialSchema.parse({ [key]: value });
+  const validateField = useCallback(
+    <K extends keyof T>(key: K, value: T[K]) => {
+      try {
+        // Create a partial schema for just this field
+        // Use a safer approach with type assertion
+        const partialSchema = z.object({
+          [key]: z.any(),
+        }) as unknown as ZodSchema<Pick<T, K>>;
+        partialSchema.parse({ [key]: value });
 
-      // Clear error for this field if validation passes
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[key as string];
-        return newErrors;
-      });
-
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const fieldErrors: Record<string, string> = {};
-
-        error.errors.forEach((err) => {
-          const path = err.path.join('.');
-          fieldErrors[path] = err.message;
+        // Clear error for this field if validation passes
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[key as string];
+          return newErrors;
         });
 
-        setErrors(prev => ({
-          ...prev,
-          ...fieldErrors,
-        }));
+        return true;
+      } catch (error) {
+        if (error instanceof ZodError) {
+          const fieldErrors: Record<string, string> = {};
 
-        return false;
+          error.errors.forEach((err) => {
+            const path = err.path.join(".");
+            fieldErrors[path] = err.message;
+          });
+
+          setErrors((prev) => ({
+            ...prev,
+            ...fieldErrors,
+          }));
+
+          return false;
+        }
+
+        return true;
       }
-
-      return true;
-    }
-  }, [schema]);
+    },
+    [schema],
+  );
 
   const validate = useCallback(() => {
     try {
@@ -135,7 +141,7 @@ export function useZodForm<T>(schema: ZodSchema<T>, initialValues: Partial<T> = 
         const newErrors: Record<string, string> = {};
 
         error.errors.forEach((err) => {
-          const path = err.path.join('.');
+          const path = err.path.join(".");
           newErrors[path] = err.message;
         });
 
@@ -149,7 +155,7 @@ export function useZodForm<T>(schema: ZodSchema<T>, initialValues: Partial<T> = 
 
       // For non-Zod errors, return a generic error
       const genericError = {
-        _form: 'An unexpected error occurred',
+        _form: "An unexpected error occurred",
       };
 
       setErrors(genericError);
@@ -162,26 +168,30 @@ export function useZodForm<T>(schema: ZodSchema<T>, initialValues: Partial<T> = 
   }, [data, schema]);
 
   const handleSubmit = useCallback(
-    (onSubmit: (data: T) => Promise<void> | void) => async (e: React.FormEvent) => {
-      e.preventDefault();
+    (onSubmit: (data: T) => Promise<void> | void) =>
+      async (e: React.FormEvent) => {
+        e.preventDefault();
 
-      setIsSubmitting(true);
+        setIsSubmitting(true);
 
-      const result = validate();
+        const result = validate();
 
-      if (result.success && result.data) {
-        try {
-          await onSubmit(result.data);
-        } catch (error) {
-          setErrors({
-            _form: error instanceof Error ? error.message : 'An unexpected error occurred',
-          });
+        if (result.success && result.data) {
+          try {
+            await onSubmit(result.data);
+          } catch (error) {
+            setErrors({
+              _form:
+                error instanceof Error
+                  ? error.message
+                  : "An unexpected error occurred",
+            });
+          }
         }
-      }
 
-      setIsSubmitting(false);
-    },
-    [validate]
+        setIsSubmitting(false);
+      },
+    [validate],
   );
 
   const reset = useCallback(() => {
@@ -209,7 +219,7 @@ export function useFormSubmit<T, R = any>(
   options: {
     onSuccess?: (data: R) => void;
     onError?: (error: Error) => void;
-  } = {}
+  } = {},
 ) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -228,7 +238,8 @@ export function useFormSubmit<T, R = any>(
 
         return result;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+        const errorMessage =
+          err instanceof Error ? err.message : "An unexpected error occurred";
         setError(errorMessage);
 
         if (options.onError) {
@@ -240,7 +251,7 @@ export function useFormSubmit<T, R = any>(
         setIsSubmitting(false);
       }
     },
-    [apiCall, options]
+    [apiCall, options],
   );
 
   return {

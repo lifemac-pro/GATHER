@@ -78,24 +78,27 @@ export default function AttendeesPage() {
 
   const { toast } = useToast();
 
-  const { data: attendeesData, isLoading: attendeesLoading } = api.attendee.getAll.useQuery({
-    search: searchQuery,
-    eventId: selectedEventId,
-    status: selectedStatus === 'all' ? undefined : selectedStatus,
-    sortBy: sortConfig.field,
-    sortOrder: sortConfig.order,
-    page,
-    pageSize,
-  });
+  const { data: attendeesData, isLoading: attendeesLoading } =
+    api.attendee.getAll.useQuery({
+      search: searchQuery,
+      eventId: selectedEventId,
+      status: selectedStatus === "all" ? undefined : selectedStatus,
+      sortBy: sortConfig.field,
+      sortOrder: sortConfig.order,
+      page,
+      pageSize,
+    });
 
-  const { data: stats, isLoading: statsLoading } = api.attendee.getStats.useQuery({
-    startDate: analyticsDateRange.start,
-    endDate: analyticsDateRange.end,
-    eventId: selectedEventId,
-  });
+  const { data: stats, isLoading: statsLoading } =
+    api.attendee.getStats.useQuery({
+      startDate: analyticsDateRange.start,
+      endDate: analyticsDateRange.end,
+      eventId: selectedEventId,
+    });
 
   // Fetch events from the API
-  const { data: events, isLoading: eventsLoading } = api.event.getAll.useQuery();
+  const { data: events, isLoading: eventsLoading } =
+    api.event.getAll.useQuery();
 
   const checkIn = api.attendee.checkIn.useMutation({
     onSuccess: () => {
@@ -115,7 +118,7 @@ export default function AttendeesPage() {
       });
       return { success: true };
     },
-    isLoading: false
+    isLoading: false,
   };
 
   const requestFeedback = api.attendee.requestFeedback.useMutation({
@@ -130,7 +133,9 @@ export default function AttendeesPage() {
   const exportToCSV = api.attendee.exportToCSV.useMutation({
     onSuccess: (csv) => {
       // Convert CSV string to Blob
-      const blob = new Blob([csv as unknown as BlobPart], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csv as unknown as BlobPart], {
+        type: "text/csv;charset=utf-8;",
+      });
       const link = document.createElement("a");
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
@@ -201,7 +206,9 @@ export default function AttendeesPage() {
   };
 
   const handleBulkRequestFeedback = async () => {
-    const selectedAttendees = attendeesData?.items?.filter((a: any) => selectedIds.includes(a.id)) || [];
+    const selectedAttendees =
+      attendeesData?.items?.filter((a: any) => selectedIds.includes(a.id)) ||
+      [];
     if (!selectedAttendees) return;
 
     await bulkRequestFeedback.mutateAsync({
@@ -221,18 +228,20 @@ export default function AttendeesPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? (attendeesData?.items?.map((a: any) => a.id) ?? []) : []);
+    setSelectedIds(
+      checked ? (attendeesData?.items?.map((a: any) => a.id) ?? []) : [],
+    );
   };
 
   const handleSelectAttendee = (id: string, checked: boolean) => {
     setSelectedIds((prev) =>
-      checked ? [...prev, id] : prev.filter((i) => i !== id)
+      checked ? [...prev, id] : prev.filter((i) => i !== id),
     );
   };
 
   if (!attendeesData || !stats || !events) {
     return (
-      <div className="container flex justify-center items-center min-h-[50vh]">
+      <div className="container flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner size="lg" text="Loading attendee data..." />
       </div>
     );
@@ -267,24 +276,37 @@ export default function AttendeesPage() {
 
       {/* Analytics */}
       <AttendeeAnalytics
-        dailyTrends={stats.dailyTrends.map(trend => {
-          // Ensure date is always a string and never undefined
-          const dateStr = trend.date ? new Date(trend.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-          const count = typeof trend.count === 'number' ? trend.count : 0;
-          return {
-            date: dateStr, // Explicitly typed as string
-            registrations: count,
-            checkIns: Math.floor(count * 0.8),
-            cancellations: Math.floor(count * 0.1)
-          };
-        }) as Array<{ date: string; registrations: number; checkIns: number; cancellations: number; }>}
-        statusDistribution={Object.entries(stats.attendeesByStatus).map(([status, count]) => ({
-          status,
-          count,
-        }))}
+        dailyTrends={
+          stats.dailyTrends.map((trend) => {
+            // Ensure date is always a string and never undefined
+            const dateStr = trend.date
+              ? new Date(trend.date).toISOString().split("T")[0]
+              : new Date().toISOString().split("T")[0];
+            const count = typeof trend.count === "number" ? trend.count : 0;
+            return {
+              date: dateStr, // Explicitly typed as string
+              registrations: count,
+              checkIns: Math.floor(count * 0.8),
+              cancellations: Math.floor(count * 0.1),
+            };
+          }) as Array<{
+            date: string;
+            registrations: number;
+            checkIns: number;
+            cancellations: number;
+          }>
+        }
+        statusDistribution={Object.entries(stats.attendeesByStatus).map(
+          ([status, count]) => ({
+            status,
+            count,
+          }),
+        )}
         startDate={analyticsDateRange.start}
         endDate={analyticsDateRange.end}
-        onDateRangeChange={(start, end) => setAnalyticsDateRange({ start, end })}
+        onDateRangeChange={(start, end) =>
+          setAnalyticsDateRange({ start, end })
+        }
       />
 
       {/* Filters */}
@@ -298,10 +320,7 @@ export default function AttendeesPage() {
             className="pl-10"
           />
         </div>
-        <Select
-          value={selectedEventId}
-          onValueChange={setSelectedEventId}
-        >
+        <Select value={selectedEventId} onValueChange={setSelectedEventId}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Filter by event" />
           </SelectTrigger>
@@ -314,10 +333,7 @@ export default function AttendeesPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={selectedStatus}
-          onValueChange={setSelectedStatus}
-        >
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -345,37 +361,55 @@ export default function AttendeesPage() {
                     className="h-4 w-4"
                   />
                 </TableHead>
-                <TableHead onClick={() => handleSort("name")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("name")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Name
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort("email")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("email")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Email
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort("event")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("event")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Event
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort("status")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("status")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Status
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort("registeredAt")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("registeredAt")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Registered
                     <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort("checkedInAt")} className="cursor-pointer">
+                <TableHead
+                  onClick={() => handleSort("checkedInAt")}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Checked In
                     <ArrowUpDown className="ml-1 h-4 w-4" />
@@ -391,7 +425,9 @@ export default function AttendeesPage() {
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(attendee.id)}
-                      onChange={(e) => handleSelectAttendee(attendee.id, e.target.checked)}
+                      onChange={(e) =>
+                        handleSelectAttendee(attendee.id, e.target.checked)
+                      }
                       className="h-4 w-4"
                     />
                   </TableCell>
@@ -401,7 +437,9 @@ export default function AttendeesPage() {
                   <TableCell>
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        statusClasses[attendee.status as keyof typeof statusClasses]
+                        statusClasses[
+                          attendee.status as keyof typeof statusClasses
+                        ]
                       }`}
                     >
                       {attendee.status.charAt(0).toUpperCase() +
@@ -419,10 +457,7 @@ export default function AttendeesPage() {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                        >
+                        <Button variant="ghost" className="h-8 w-8 p-0">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

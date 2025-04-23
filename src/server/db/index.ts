@@ -1,7 +1,7 @@
-import { connectToDatabase } from './mongo';
-import mongoose from 'mongoose';
+import { connectToDatabase } from "./mongo";
+import mongoose from "mongoose";
 
-export * from './models';
+export * from "./models";
 
 // Initialize database connection
 void connectToDatabase();

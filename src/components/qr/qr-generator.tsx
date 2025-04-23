@@ -10,7 +10,11 @@ interface QRGeneratorProps {
   eventName: string;
 }
 
-export function QRGenerator({ eventId, attendeeId, eventName }: QRGeneratorProps) {
+export function QRGenerator({
+  eventId,
+  attendeeId,
+  eventName,
+}: QRGeneratorProps) {
   const qrData = JSON.stringify({ eventId, attendeeId });
 
   const handleDownload = () => {
@@ -27,7 +31,7 @@ export function QRGenerator({ eventId, attendeeId, eventName }: QRGeneratorProps
       canvas.height = img.height;
       ctx?.drawImage(img, 0, 0);
       const pngFile = canvas.toDataURL("image/png");
-      
+
       const downloadLink = document.createElement("a");
       downloadLink.download = `${eventName}-ticket.png`;
       downloadLink.href = pngFile;

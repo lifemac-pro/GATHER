@@ -16,22 +16,22 @@ export function TestTRPC() {
       const data = await mutateAsync({ text: "world" });
       setResult(JSON.stringify(data, null, 2));
     } catch (error) {
-      setResult(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      setResult(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   };
 
   return (
-    <div className="p-4 border rounded">
-      <h2 className="text-xl font-bold mb-4">TRPC Test</h2>
+    <div className="rounded border p-4">
+      <h2 className="mb-4 text-xl font-bold">TRPC Test</h2>
       <button
         onClick={handleClick}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
+        className="rounded bg-blue-500 px-4 py-2 text-white"
       >
         Test TRPC
       </button>
-      <pre className="mt-4 p-2 bg-gray-100 rounded">
-        {result}
-      </pre>
+      <pre className="mt-4 rounded bg-gray-100 p-2">{result}</pre>
     </div>
   );
 }

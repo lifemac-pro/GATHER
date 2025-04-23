@@ -1,4 +1,4 @@
-import { Document, Model, Types } from 'mongoose';
+import { type Document, Model, type Types } from "mongoose";
 
 /**
  * Base interface for all documents
@@ -19,7 +19,11 @@ export interface BaseModel<T extends Document> {
   find(conditions?: any): Promise<T[]>;
   create(data: any): Promise<T>;
   updateOne(conditions: any, update: any): Promise<any>;
-  findOneAndUpdate(conditions: any, update: any, options?: any): Promise<T | null>;
+  findOneAndUpdate(
+    conditions: any,
+    update: any,
+    options?: any,
+  ): Promise<T | null>;
   findOneAndDelete(conditions: any): Promise<T | null>;
   deleteOne(conditions: any): Promise<any>;
   deleteMany(conditions: any): Promise<any>;
@@ -33,7 +37,7 @@ export interface BaseModel<T extends Document> {
 export interface UserInput {
   email: string;
   password?: string;
-  role?: 'admin' | 'super_admin' | 'user';
+  role?: "admin" | "super_admin" | "user";
   firstName?: string | null;
   lastName?: string | null;
   profileImage?: string | null;
@@ -49,10 +53,32 @@ export interface UserModel extends BaseModel<UserDocument> {
 /**
  * Event model interfaces
  */
+export interface RecurrenceRule {
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  interval?: number; // e.g., every 2 weeks
+  daysOfWeek?: number[]; // 0-6, where 0 is Sunday
+  daysOfMonth?: number[]; // 1-31
+  monthsOfYear?: number[]; // 0-11, where 0 is January
+  endDate?: Date;
+  count?: number; // number of occurrences
+  exceptions?: Date[]; // dates to exclude
+}
+
+export interface VirtualMeetingInfo {
+  provider: "zoom" | "google_meet" | "microsoft_teams" | "other";
+  meetingUrl: string;
+  meetingId?: string;
+  password?: string;
+  hostUrl?: string; // URL for the host with additional privileges
+  additionalInfo?: string;
+}
+
 export interface EventInput {
   name: string;
   description?: string;
   location?: string;
+  isVirtual?: boolean;
+  virtualMeetingInfo?: VirtualMeetingInfo;
   startDate: Date;
   endDate: Date;
   category: string;
@@ -61,10 +87,20 @@ export interface EventInput {
   createdById?: string;
   image?: string;
   featured?: boolean;
-  status?: 'draft' | 'published' | 'cancelled' | 'completed';
+  status?: "draft" | "published" | "cancelled" | "completed";
+  isRecurring?: boolean;
+  recurrenceRule?: RecurrenceRule;
+  parentEventId?: string; // For recurring event instances
+  originalStartDate?: Date; // For modified instances of recurring events
 }
 
 export interface EventDocument extends BaseDocument, EventInput {}
+
+export interface Event extends EventInput {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface EventModel extends BaseModel<EventDocument> {
   findByIdWithAttendees(id: string): Promise<EventDocument | null>;
@@ -73,6 +109,39 @@ export interface EventModel extends BaseModel<EventDocument> {
   findByCategory(category: string): Promise<EventDocument[]>;
   findByCreator(userId: string): Promise<EventDocument[]>;
   countAttendees(eventId: string): Promise<number>;
+  findRecurringInstances(parentEventId: string): Promise<EventDocument[]>;
+  findInDateRange(startDate: Date, endDate: Date): Promise<EventDocument[]>;
+  generateRecurringInstances(
+    parentEventId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<any[]>;
+}
+
+/**
+ * Demographic information interface
+ */
+export interface DemographicInfo {
+  age?: number;
+  dateOfBirth?: Date;
+  gender?: "male" | "female" | "non-binary" | "prefer-not-to-say" | "other";
+  genderOther?: string;
+  country?: string;
+  city?: string;
+  occupation?: string;
+  industry?: string;
+  interests?: string[];
+  dietaryRestrictions?: string[];
+  accessibilityNeeds?: string[];
+  howHeard?: string;
+  languages?: string[];
+  educationLevel?:
+    | "high-school"
+    | "bachelors"
+    | "masters"
+    | "doctorate"
+    | "other"
+    | "prefer-not-to-say";
 }
 
 /**
@@ -81,22 +150,32 @@ export interface EventModel extends BaseModel<EventDocument> {
 export interface AttendeeInput {
   eventId: string;
   userId: string;
-  status: 'registered' | 'attended' | 'cancelled' | 'waitlisted';
-  paymentStatus: 'pending' | 'completed' | 'failed' | 'free';
+  name: string;
+  email: string;
+  phone?: string;
+  status: "registered" | "attended" | "cancelled" | "waitlisted";
+  paymentStatus: "pending" | "completed" | "failed" | "free";
   registeredAt: Date;
   checkedInAt?: Date;
   paymentIntentId?: string;
+  ticketCode?: string;
+  checkedInBy?: string;
+  checkInNotes?: string;
+  demographics?: DemographicInfo;
 }
 
 export interface AttendeeDocument extends BaseDocument, AttendeeInput {}
 
 export interface AttendeeModel extends BaseModel<AttendeeDocument> {
-  findByEventAndUser(eventId: string, userId: string): Promise<AttendeeDocument | null>;
+  findByEventAndUser(
+    eventId: string,
+    userId: string,
+  ): Promise<AttendeeDocument | null>;
   findByEvent(eventId: string, options?: any): Promise<AttendeeDocument[]>;
   findByUser(userId: string): Promise<AttendeeDocument[]>;
   checkIn(id: string): Promise<AttendeeDocument | null>;
   cancel(id: string): Promise<AttendeeDocument | null>;
-  getEventStats(eventId: string): Promise<{ total: number, checkedIn: number }>;
+  getEventStats(eventId: string): Promise<{ total: number; checkedIn: number }>;
 }
 
 /**
@@ -108,13 +187,17 @@ export interface ChatInput {
   message: string;
   userName?: string;
   userImage?: string;
-  type?: 'text' | 'announcement' | 'system';
+  type?: "text" | "announcement" | "system";
 }
 
 export interface ChatDocument extends BaseDocument, ChatInput {}
 
 export interface ChatModel extends BaseModel<ChatDocument> {
-  findByEvent(eventId: string, limit?: number, cursor?: string): Promise<ChatDocument[]>;
+  findByEvent(
+    eventId: string,
+    limit?: number,
+    cursor?: string,
+  ): Promise<ChatDocument[]>;
 }
 
 /**
@@ -124,7 +207,7 @@ export interface NotificationInput {
   userId: string;
   title: string;
   message: string;
-  type: 'event' | 'system' | 'chat' | 'reminder';
+  type: "event" | "system" | "chat" | "reminder";
   read: boolean;
   eventId?: string | null;
   actionUrl?: string | null;
@@ -133,25 +216,69 @@ export interface NotificationInput {
 export interface NotificationDocument extends BaseDocument, NotificationInput {}
 
 export interface NotificationModel extends BaseModel<NotificationDocument> {
-  findByUser(userId: string, limit?: number, cursor?: string): Promise<NotificationDocument[]>;
+  findByUser(
+    userId: string,
+    limit?: number,
+    cursor?: string,
+  ): Promise<NotificationDocument[]>;
   markAsRead(id: string): Promise<NotificationDocument | null>;
   markAllAsRead(userId: string): Promise<void>;
   countUnread(userId: string): Promise<number>;
 }
 
 /**
+ * Survey Question Types
+ */
+export interface SurveyQuestion {
+  id: string;
+  text: string;
+  type: "text" | "rating" | "multiple_choice" | "checkbox" | "dropdown";
+  required: boolean;
+  options?: string[];
+  order: number;
+}
+
+/**
+ * Survey Template interfaces
+ */
+export interface SurveyTemplateInput {
+  eventId: string;
+  name: string;
+  description?: string;
+  questions: SurveyQuestion[];
+  isActive: boolean;
+  sendTiming: "after_event" | "during_event" | "custom";
+  sendDelay?: number;
+  sendTime?: Date;
+  reminderEnabled: boolean;
+  reminderDelay?: number;
+  createdById: string;
+}
+
+export interface SurveyTemplateDocument
+  extends BaseDocument,
+    SurveyTemplateInput {}
+
+export interface SurveyTemplateModel extends BaseModel<SurveyTemplateDocument> {
+  findByEvent(eventId: string): Promise<SurveyTemplateDocument[]>;
+  findActive(eventId: string): Promise<SurveyTemplateDocument | null>;
+}
+
+/**
  * Survey model interfaces
  */
 export interface SurveyResponse {
-  question: string;
-  answer: string;
+  questionId: string;
+  questionText: string;
+  answer: string | number | string[];
 }
 
 export interface SurveyInput {
   eventId: string;
+  templateId: string;
   userId: string;
   responses: SurveyResponse[];
-  rating: number;
+  rating?: number;
   feedback?: string;
   submittedAt?: Date;
 }
@@ -161,6 +288,7 @@ export interface SurveyDocument extends BaseDocument, SurveyInput {}
 export interface SurveyModel extends BaseModel<SurveyDocument> {
   findByEvent(eventId: string): Promise<SurveyDocument[]>;
   findByUser(userId: string): Promise<SurveyDocument[]>;
+  findByTemplate(templateId: string): Promise<SurveyDocument[]>;
   getEventRating(eventId: string): Promise<number>;
 }
 
@@ -171,7 +299,7 @@ export interface WaitlistInput {
   eventId: string;
   userId: string;
   position: number;
-  status: 'waiting' | 'invited' | 'expired';
+  status: "waiting" | "invited" | "expired";
   invitationSentAt?: Date;
   invitationExpiresAt?: Date;
 }
@@ -179,11 +307,17 @@ export interface WaitlistInput {
 export interface WaitlistDocument extends BaseDocument, WaitlistInput {}
 
 export interface WaitlistModel extends BaseModel<WaitlistDocument> {
-  findByEventAndUser(eventId: string, userId: string): Promise<WaitlistDocument | null>;
+  findByEventAndUser(
+    eventId: string,
+    userId: string,
+  ): Promise<WaitlistDocument | null>;
   findByEvent(eventId: string): Promise<WaitlistDocument[]>;
   findByUser(userId: string): Promise<WaitlistDocument[]>;
   getPosition(id: string): Promise<number>;
-  processInvitations(eventId: string, count: number): Promise<WaitlistDocument[]>;
+  processInvitations(
+    eventId: string,
+    count: number,
+  ): Promise<WaitlistDocument[]>;
 }
 
 /**
@@ -210,4 +344,4 @@ export interface PostInput {
 
 export interface PostDocument extends BaseDocument, PostInput {}
 
-export interface PostModel extends BaseModel<PostDocument> {}
+export type PostModel = BaseModel<PostDocument>

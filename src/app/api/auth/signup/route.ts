@@ -3,8 +3,11 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { User } from "@/server/db/models/user";
 import { AppError, ErrorCode } from "@/utils/error-handling";
-import { createApiRouteHandler, createSuccessResponse } from "@/utils/api-route-handler";
-import { ApiResponse, UserResponse } from "@/types/api-responses";
+import {
+  createApiRouteHandler,
+  createSuccessResponse,
+} from "@/utils/api-route-handler";
+import { type ApiResponse, type UserResponse } from "@/types/api-responses";
 
 // Define the request schema using Zod
 const signupSchema = z.object({
@@ -24,7 +27,7 @@ export const POST = createApiRouteHandler<SignupRequest>(
       throw new AppError(
         ErrorCode.INVALID_INPUT,
         "Request body is required",
-        400
+        400,
       );
     }
 
@@ -35,7 +38,7 @@ export const POST = createApiRouteHandler<SignupRequest>(
       throw new AppError(
         ErrorCode.ALREADY_EXISTS,
         "User with this email already exists",
-        409
+        409,
       );
     }
 
@@ -68,5 +71,5 @@ export const POST = createApiRouteHandler<SignupRequest>(
   },
   {
     bodySchema: signupSchema,
-  }
+  },
 );

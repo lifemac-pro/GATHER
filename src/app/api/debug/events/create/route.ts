@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/server/db/mongo';
-import { Event } from '@/server/db/models';
-import { nanoid } from 'nanoid';
-import { isValid } from 'date-fns';
+import { type NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/server/db/mongo";
+import { Event } from "@/server/db/models";
+import { nanoid } from "nanoid";
+import { isValid } from "date-fns";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Debug API: Creating event directly in MongoDB');
+    console.log("Debug API: Creating event directly in MongoDB");
 
     // Parse the request body
     const body = await request.json();
-    console.log('Debug API: Event data received:', {
+    console.log("Debug API: Event data received:", {
       ...body,
-      image: body.image ? 'Image data present (truncated)' : 'No image data'
+      image: body.image ? "Image data present (truncated)" : "No image data",
     });
 
     // Connect to the database with retry logic
@@ -22,31 +22,40 @@ export async function POST(request: NextRequest) {
 
     while (!connected && retries < maxRetries) {
       try {
-        console.log(`Debug API: Connecting to MongoDB (attempt ${retries + 1}/${maxRetries})`);
+        console.log(
+          `Debug API: Connecting to MongoDB (attempt ${retries + 1}/${maxRetries})`,
+        );
         const mongoose = await connectToDatabase();
         connected = mongoose.connection.readyState === 1;
 
         if (connected) {
-          console.log('Debug API: Successfully connected to MongoDB');
+          console.log("Debug API: Successfully connected to MongoDB");
         } else {
-          console.log(`Debug API: MongoDB connection state: ${mongoose.connection.readyState}`);
+          console.log(
+            `Debug API: MongoDB connection state: ${mongoose.connection.readyState}`,
+          );
           // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
-        console.error(`Debug API: MongoDB connection error (attempt ${retries + 1}/${maxRetries}):`, error);
+        console.error(
+          `Debug API: MongoDB connection error (attempt ${retries + 1}/${maxRetries}):`,
+          error,
+        );
         // Wait a bit before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       retries++;
     }
 
     if (!connected) {
-      throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts`);
+      throw new Error(
+        `Failed to connect to MongoDB after ${maxRetries} attempts`,
+      );
     }
 
-    console.log('Debug API: Connected to MongoDB');
+    console.log("Debug API: Connected to MongoDB");
 
     // Helper function to ensure dates are valid
     const ensureValidDate = (date: any) => {
@@ -66,23 +75,23 @@ export async function POST(request: NextRequest) {
       ...body,
       startDate: ensureValidDate(body.startDate),
       endDate: ensureValidDate(body.endDate),
-      createdById: body.createdById || 'debug-user',
+      createdById: body.createdById || "debug-user",
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: body.status || 'published',
+      status: body.status || "published",
     };
 
-    console.log('Debug API: Processed event data:', {
+    console.log("Debug API: Processed event data:", {
       id: newEvent.id,
       name: newEvent.name,
       startDate: newEvent.startDate,
       endDate: newEvent.endDate,
-      status: newEvent.status
+      status: newEvent.status,
     });
 
     // Save to MongoDB
     const event = await Event.create(newEvent);
-    console.log('Debug API: Event created in MongoDB:', event.id);
+    console.log("Debug API: Event created in MongoDB:", event.id);
 
     // Return success response with validated dates
     return NextResponse.json({
@@ -95,16 +104,19 @@ export async function POST(request: NextRequest) {
         endDate: ensureValidDate(event.endDate),
         location: event.location,
         category: event.category,
-        status: event.status || 'published',
+        status: event.status || "published",
         hasImage: !!event.image,
-        image: event.image
-      }
+        image: event.image,
+      },
     });
   } catch (error) {
-    console.error('Debug API Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    console.error("Debug API Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
   }
 }

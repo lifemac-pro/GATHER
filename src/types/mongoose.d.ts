@@ -1,4 +1,4 @@
-import { Model, Document } from 'mongoose';
+import { type Model, type Document } from "mongoose";
 
 // Extend the global namespace to add our custom types
 declare global {

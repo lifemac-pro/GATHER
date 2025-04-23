@@ -20,7 +20,9 @@ export const waitlistRouter = createTRPCRouter({
       }
 
       // Convert maxAttendees to a number for comparison
-      const maxAttendeesCount = event.maxAttendees ? event.maxAttendees.length : 0;
+      const maxAttendeesCount = event.maxAttendees
+        ? event.maxAttendees.length
+        : 0;
       const attendeeCount = 0; // This would need to be calculated
 
       if (attendeeCount < maxAttendeesCount) {
@@ -42,7 +44,7 @@ export const waitlistRouter = createTRPCRouter({
       const waitlistEntry = await Waitlist.create({
         eventId: input.eventId,
         // Use a mock user ID to avoid TypeScript errors
-        userId: 'mock-user-id',
+        userId: "mock-user-id",
         position,
       });
 
@@ -55,7 +57,7 @@ export const waitlistRouter = createTRPCRouter({
       const entry = await Waitlist.findOneAndDelete({
         eventId: input.eventId,
         // Use a mock user ID to avoid TypeScript errors
-        userId: 'mock-user-id',
+        userId: "mock-user-id",
       });
 
       if (!entry) {
@@ -71,7 +73,7 @@ export const waitlistRouter = createTRPCRouter({
           eventId: input.eventId,
           position: { $gt: entry.position },
         },
-        { $inc: { position: -1 } }
+        { $inc: { position: -1 } },
       ).exec();
 
       return { success: true };
@@ -83,7 +85,7 @@ export const waitlistRouter = createTRPCRouter({
       const entry = await Waitlist.findOne({
         eventId: input.eventId,
         // Use a mock user ID to avoid TypeScript errors
-        userId: 'mock-user-id',
+        userId: "mock-user-id",
       });
 
       return entry ? entry.position : null;
@@ -94,7 +96,7 @@ export const waitlistRouter = createTRPCRouter({
       z.object({
         eventId: z.string(),
         spots: z.number().min(1).default(1),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       // Remove .exec() to avoid TypeScript errors
@@ -134,7 +136,7 @@ export const waitlistRouter = createTRPCRouter({
                 invitationSentAt: now,
                 invitationExpiresAt: expiresAt,
               },
-            }
+            },
           ).exec();
 
           // Create notification
@@ -147,7 +149,7 @@ export const waitlistRouter = createTRPCRouter({
             eventId: event.id,
             actionUrl: `/events/${event.id}`,
           });
-        })
+        }),
       );
 
       return { invitedCount: waitlistEntries.length };
@@ -159,7 +161,7 @@ export const waitlistRouter = createTRPCRouter({
       const entry = await Waitlist.findOne({
         eventId: input.eventId,
         // Use a mock user ID to avoid TypeScript errors
-        userId: 'mock-user-id',
+        userId: "mock-user-id",
         status: "invited",
         invitationExpiresAt: { $gt: new Date() },
       });
@@ -185,14 +187,20 @@ export const waitlistRouter = createTRPCRouter({
         },
       ]).exec();
 
-      const totalCount = stats.reduce((acc: number, curr: { count: number }) => acc + curr.count, 0);
+      const totalCount = stats.reduce(
+        (acc: number, curr: { count: number }) => acc + curr.count,
+        0,
+      );
 
       return {
         totalCount,
         byStatus: {
-          waiting: stats.find((s: { _id: string }) => s._id === "waiting")?.count || 0,
-          invited: stats.find((s: { _id: string }) => s._id === "invited")?.count || 0,
-          expired: stats.find((s: { _id: string }) => s._id === "expired")?.count || 0,
+          waiting:
+            stats.find((s: { _id: string }) => s._id === "waiting")?.count || 0,
+          invited:
+            stats.find((s: { _id: string }) => s._id === "invited")?.count || 0,
+          expired:
+            stats.find((s: { _id: string }) => s._id === "expired")?.count || 0,
         },
       };
     }),

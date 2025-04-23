@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
@@ -20,7 +20,7 @@ export function StatsCard({
   trend,
 }: StatsCardProps) {
   return (
-    <Card className="hover:border-[#00b0a6]/20 transition-colors">
+    <Card className="transition-colors hover:border-[#00b0a6]/20">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>

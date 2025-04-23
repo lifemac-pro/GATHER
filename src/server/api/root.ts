@@ -9,8 +9,10 @@ import { qrRouter } from "@/server/api/routers/qr";
 import { chatRouter } from "@/server/api/routers/chat";
 import { notificationRouter } from "@/server/api/routers/notification";
 import { surveyRouter } from "@/server/api/routers/survey";
+import { surveyTemplateRouter } from "@/server/api/routers/survey-template";
 import { attendeeRouter } from "@/server/api/routers/attendee";
 import { waitlistRouter } from "@/server/api/routers/waitlist";
+import { eventTemplateRouter } from "@/server/api/routers/event-template";
 
 /**
  * This is the primary router for your server.
@@ -27,8 +29,10 @@ export const appRouter = createTRPCRouter({
   chat: chatRouter,
   notification: notificationRouter,
   survey: surveyRouter,
+  surveyTemplate: surveyTemplateRouter,
   attendee: attendeeRouter,
   waitlist: waitlistRouter,
+  eventTemplate: eventTemplateRouter,
 });
 
 // export type definition of API

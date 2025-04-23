@@ -1,4 +1,11 @@
-import { AttendeeDocument, EventDocument, SurveyDocument, NotificationDocument, ChatDocument, WaitlistDocument } from '@/server/db/models/types';
+import {
+  type AttendeeDocument,
+  EventDocument,
+  type SurveyDocument,
+  type NotificationDocument,
+  type ChatDocument,
+  type WaitlistDocument,
+} from "@/server/db/models/types";
 
 /**
  * Base API response interface
@@ -77,22 +84,22 @@ export interface EventResponse {
   isRegistered?: boolean;
 }
 
-export interface EventListResponse extends CursorPaginatedResponse<EventResponse> {}
+export type EventListResponse = CursorPaginatedResponse<EventResponse>
 
-export interface EventDetailResponse extends ApiResponse<EventResponse> {}
+export type EventDetailResponse = ApiResponse<EventResponse>
 
 /**
  * Attendee response interfaces
  */
-export interface AttendeeResponse extends Omit<AttendeeDocument, '_id'> {
+export interface AttendeeResponse extends Omit<AttendeeDocument, "_id"> {
   id: string;
   event?: EventResponse;
   user?: UserResponse;
 }
 
-export interface AttendeeListResponse extends PaginatedResponse<AttendeeResponse> {}
+export type AttendeeListResponse = PaginatedResponse<AttendeeResponse>
 
-export interface AttendeeDetailResponse extends ApiResponse<AttendeeResponse> {}
+export type AttendeeDetailResponse = ApiResponse<AttendeeResponse>
 
 export interface AttendeeStatsResponse {
   totalAttendees: number;
@@ -116,20 +123,20 @@ export interface UserResponse {
   role?: string;
 }
 
-export interface UserListResponse extends PaginatedResponse<UserResponse> {}
+export type UserListResponse = PaginatedResponse<UserResponse>
 
 /**
  * Survey response interfaces
  */
-export interface SurveyResponse extends Omit<SurveyDocument, '_id'> {
+export interface SurveyResponse extends Omit<SurveyDocument, "_id"> {
   id: string;
   event?: EventResponse;
   user?: UserResponse;
 }
 
-export interface SurveyListResponse extends PaginatedResponse<SurveyResponse> {}
+export type SurveyListResponse = PaginatedResponse<SurveyResponse>
 
-export interface SurveyDetailResponse extends ApiResponse<SurveyResponse> {}
+export type SurveyDetailResponse = ApiResponse<SurveyResponse>
 
 export interface SurveyStatsResponse {
   averageRating: number;
@@ -144,32 +151,33 @@ export interface SurveyStatsResponse {
 /**
  * Notification response interfaces
  */
-export interface NotificationResponse extends Omit<NotificationDocument, '_id'> {
+export interface NotificationResponse
+  extends Omit<NotificationDocument, "_id"> {
   id: string;
 }
 
-export interface NotificationListResponse extends CursorPaginatedResponse<NotificationResponse> {}
+export type NotificationListResponse = CursorPaginatedResponse<NotificationResponse>
 
 /**
  * Chat response interfaces
  */
-export interface ChatMessageResponse extends Omit<ChatDocument, '_id'> {
+export interface ChatMessageResponse extends Omit<ChatDocument, "_id"> {
   id: string;
   user?: UserResponse;
 }
 
-export interface ChatListResponse extends CursorPaginatedResponse<ChatMessageResponse> {}
+export type ChatListResponse = CursorPaginatedResponse<ChatMessageResponse>
 
 /**
  * Waitlist response interfaces
  */
-export interface WaitlistResponse extends Omit<WaitlistDocument, '_id'> {
+export interface WaitlistResponse extends Omit<WaitlistDocument, "_id"> {
   id: string;
   event?: EventResponse;
   user?: UserResponse;
 }
 
-export interface WaitlistListResponse extends PaginatedResponse<WaitlistResponse> {}
+export type WaitlistListResponse = PaginatedResponse<WaitlistResponse>
 
 /**
  * Analytics response interfaces

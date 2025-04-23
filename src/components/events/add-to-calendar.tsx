@@ -36,7 +36,7 @@ export function AddToCalendar({
       location,
       dates: `${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}/${format(
         endDate,
-        "yyyyMMdd'T'HHmmss'Z'"
+        "yyyyMMdd'T'HHmmss'Z'",
       )}`,
     });
     return `${baseUrl}?${params.toString()}`;

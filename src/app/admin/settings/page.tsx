@@ -40,7 +40,9 @@ export default function SettingsPage() {
   // Fetch settings on page load
   const { data: emailData } = api.settings.get.useQuery({ type: "email" });
   const { data: generalData } = api.settings.get.useQuery({ type: "general" });
-  const { data: notificationsData } = api.settings.get.useQuery({ type: "notifications" });
+  const { data: notificationsData } = api.settings.get.useQuery({
+    type: "notifications",
+  });
 
   useEffect(() => {
     if (emailData) {
@@ -170,7 +172,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="maxAttendees">Maximum Attendees per Event</Label>
+                <Label htmlFor="maxAttendees">
+                  Maximum Attendees per Event
+                </Label>
                 <Input
                   id="maxAttendees"
                   type="number"
@@ -337,7 +341,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="reminderHours">Reminder Hours Before Event</Label>
+                <Label htmlFor="reminderHours">
+                  Reminder Hours Before Event
+                </Label>
                 <Input
                   id="reminderHours"
                   type="number"

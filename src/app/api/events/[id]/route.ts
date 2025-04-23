@@ -3,8 +3,11 @@ import { z } from "zod";
 import { Event } from "@/server/db/models";
 import { Attendee } from "@/server/db/models/attendee";
 import { AppError, ErrorCode } from "@/utils/error-handling";
-import { createApiRouteHandler, createSuccessResponse } from "@/utils/api-route-handler";
-import { ApiResponse, EventResponse } from "@/types/api-responses";
+import {
+  createApiRouteHandler,
+  createSuccessResponse,
+} from "@/utils/api-route-handler";
+import { type ApiResponse, type EventResponse } from "@/types/api-responses";
 
 // Define the path parameter schema
 const eventParamsSchema = z.object({
@@ -13,11 +16,20 @@ const eventParamsSchema = z.object({
 
 // Define the update event schema
 const updateEventSchema = z.object({
-  name: z.string().min(3, "Event name must be at least 3 characters").optional(),
+  name: z
+    .string()
+    .min(3, "Event name must be at least 3 characters")
+    .optional(),
   description: z.string().optional(),
   location: z.string().optional(),
-  startDate: z.string().transform(str => new Date(str)).optional(),
-  endDate: z.string().transform(str => new Date(str)).optional(),
+  startDate: z
+    .string()
+    .transform((str) => new Date(str))
+    .optional(),
+  endDate: z
+    .string()
+    .transform((str) => new Date(str))
+    .optional(),
   category: z.string().optional(),
   price: z.number().min(0).optional(),
   maxAttendees: z.number().int().positive().optional(),
@@ -35,18 +47,20 @@ export const GET = createApiRouteHandler<void>(
     try {
       // Get event from database
       // Use a safer approach to find the event
-      const event = await Event.findById(params.id || '');
+      const event = await Event.findById(params.id || "");
 
       if (!event) {
         throw new AppError(
           ErrorCode.NOT_FOUND,
           `Event with ID ${params.id} not found`,
-          404
+          404,
         );
       }
 
       // Get attendee count
-      const attendeeCount = await Attendee.countDocuments({ eventId: params.id });
+      const attendeeCount = await Attendee.countDocuments({
+        eventId: params.id,
+      });
 
       // Create response
       const response: ApiResponse<EventResponse> = {
@@ -80,13 +94,13 @@ export const GET = createApiRouteHandler<void>(
         ErrorCode.DATABASE_ERROR,
         "Failed to fetch event",
         500,
-        { originalError: (error as Error).message }
+        { originalError: (error as Error).message },
       );
     }
   },
   {
     paramsSchema: eventParamsSchema,
-  }
+  },
 );
 
 // PUT handler for updating an event
@@ -96,20 +110,20 @@ export const PUT = createApiRouteHandler<UpdateEventRequest>(
       throw new AppError(
         ErrorCode.INVALID_INPUT,
         "Request body is required",
-        400
+        400,
       );
     }
 
     try {
       // Get event from database
       // Use a safer approach to find the event
-      const event = await Event.findById(params.id || '');
+      const event = await Event.findById(params.id || "");
 
       if (!event) {
         throw new AppError(
           ErrorCode.NOT_FOUND,
           `Event with ID ${params.id} not found`,
-          404
+          404,
         );
       }
 
@@ -118,29 +132,37 @@ export const PUT = createApiRouteHandler<UpdateEventRequest>(
         throw new AppError(
           ErrorCode.FORBIDDEN,
           "You don't have permission to update this event",
-          403
+          403,
         );
       }
 
       // Validate dates if both are provided
-      if (body.startDate && body.endDate && new Date(body.endDate) < new Date(body.startDate)) {
+      if (
+        body.startDate &&
+        body.endDate &&
+        new Date(body.endDate) < new Date(body.startDate)
+      ) {
         throw new AppError(
           ErrorCode.INVALID_INPUT,
           "End date cannot be before start date",
-          400
+          400,
         );
       }
 
       // Update event - use updateOne instead of findByIdAndUpdate
       const updateData = {
         ...(body.name && { name: body.name }),
-        ...(body.description !== undefined && { description: body.description }),
+        ...(body.description !== undefined && {
+          description: body.description,
+        }),
         ...(body.location !== undefined && { location: body.location }),
         ...(body.startDate && { startDate: body.startDate }),
         ...(body.endDate && { endDate: body.endDate }),
         ...(body.category && { category: body.category }),
         ...(body.price !== undefined && { price: body.price }),
-        ...(body.maxAttendees !== undefined && { maxAttendees: [body.maxAttendees.toString()] }),
+        ...(body.maxAttendees !== undefined && {
+          maxAttendees: [body.maxAttendees.toString()],
+        }),
         ...(body.image && { image: body.image }),
         ...(body.featured !== undefined && { featured: body.featured }),
         ...(body.status && { status: body.status }),
@@ -148,18 +170,20 @@ export const PUT = createApiRouteHandler<UpdateEventRequest>(
       };
 
       await Event.updateOne({ _id: params.id }, updateData);
-      const updatedEvent = await Event.findById(params.id || '');
+      const updatedEvent = await Event.findById(params.id || "");
 
       if (!updatedEvent) {
         throw new AppError(
           ErrorCode.NOT_FOUND,
           `Event with ID ${params.id} not found`,
-          404
+          404,
         );
       }
 
       // Get attendee count
-      const attendeeCount = await Attendee.countDocuments({ eventId: params.id });
+      const attendeeCount = await Attendee.countDocuments({
+        eventId: params.id,
+      });
 
       // Create response
       const response: ApiResponse<EventResponse> = {
@@ -193,7 +217,7 @@ export const PUT = createApiRouteHandler<UpdateEventRequest>(
         ErrorCode.DATABASE_ERROR,
         "Failed to update event",
         500,
-        { originalError: (error as Error).message }
+        { originalError: (error as Error).message },
       );
     }
   },
@@ -201,7 +225,7 @@ export const PUT = createApiRouteHandler<UpdateEventRequest>(
     paramsSchema: eventParamsSchema,
     bodySchema: updateEventSchema as any,
     requireAuth: true,
-  }
+  },
 );
 
 // DELETE handler for deleting an event
@@ -210,13 +234,13 @@ export const DELETE = createApiRouteHandler<void>(
     try {
       // Get event from database
       // Use a safer approach to find the event
-      const event = await Event.findById(params.id || '');
+      const event = await Event.findById(params.id || "");
 
       if (!event) {
         throw new AppError(
           ErrorCode.NOT_FOUND,
           `Event with ID ${params.id} not found`,
-          404
+          404,
         );
       }
 
@@ -225,12 +249,14 @@ export const DELETE = createApiRouteHandler<void>(
         throw new AppError(
           ErrorCode.FORBIDDEN,
           "You don't have permission to delete this event",
-          403
+          403,
         );
       }
 
       // Check if event has attendees
-      const attendeeCount = await Attendee.countDocuments({ eventId: params.id });
+      const attendeeCount = await Attendee.countDocuments({
+        eventId: params.id,
+      });
 
       if (attendeeCount > 0) {
         // Instead of deleting, mark as cancelled
@@ -240,7 +266,7 @@ export const DELETE = createApiRouteHandler<void>(
           {
             status: "cancelled",
             updatedAt: new Date(),
-          }
+          },
         );
 
         return createSuccessResponse({
@@ -266,12 +292,12 @@ export const DELETE = createApiRouteHandler<void>(
         ErrorCode.DATABASE_ERROR,
         "Failed to delete event",
         500,
-        { originalError: (error as Error).message }
+        { originalError: (error as Error).message },
       );
     }
   },
   {
     paramsSchema: eventParamsSchema,
     requireAuth: true,
-  }
+  },
 );

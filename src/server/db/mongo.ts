@@ -4,7 +4,7 @@ import { env } from "@/env";
 // No mock data - using real database only
 
 if (!env.DATABASE_URL) {
-  throw new Error('Please add your MongoDB connection string to .env');
+  throw new Error("Please add your MongoDB connection string to .env");
 }
 
 // Connection state tracking
@@ -35,35 +35,30 @@ const connectionOptions = {
 export async function connectToDatabase() {
   // If already connected, return the mongoose instance
   if (isConnected && mongoose.connection.readyState === 1) {
-    console.log("MongoDB already connected, reusing connection");
+    // Reuse existing connection
     return mongoose;
   }
 
   // If there's an existing connection in a different state, close it
-  if (mongoose.connection.readyState > 0 && mongoose.connection.readyState !== 1) {
-    console.log(`Closing existing MongoDB connection in state: ${mongoose.connection.readyState}`);
+  if (
+    mongoose.connection.readyState > 0 &&
+    mongoose.connection.readyState !== 1
+  ) {
     try {
       await mongoose.connection.close();
-      console.log("Existing MongoDB connection closed successfully");
     } catch (error) {
       console.error("Error closing existing MongoDB connection:", error);
     }
   }
 
   // Reset connection attempts if this is a fresh connection attempt
-  if (connectionAttempts === 0) {
-    console.log("Attempting to connect to MongoDB...");
-  }
 
   try {
-    console.log("Connecting to MongoDB with URL:", env.DATABASE_URL ? env.DATABASE_URL.substring(0, 20) + '...' : 'URL not defined');
-    console.log("MongoDB connection options:", connectionOptions);
-    console.log("Node.js version:", process.version);
-    console.log("Mongoose version:", mongoose.version);
+    // Connect to MongoDB
 
     // Connect to MongoDB using the connection string from environment variables
     if (!env.DATABASE_URL) {
-      throw new Error('DATABASE_URL is not defined in environment variables');
+      throw new Error("DATABASE_URL is not defined in environment variables");
     }
     // Create a clean connection options object without any problematic options
     const safeConnectionOptions = {
@@ -75,15 +70,15 @@ export async function connectToDatabase() {
       retryWrites: true,
       retryReads: true,
       autoIndex: true,
-      family: 4
+      family: 4,
     };
 
     await mongoose.connect(env.DATABASE_URL, safeConnectionOptions);
 
     // Set up connection event handlers
-    mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
-      console.error('Error details:', {
+    mongoose.connection.on("error", (err) => {
+      console.error("MongoDB connection error:", err);
+      console.error("Error details:", {
         name: err.name,
         message: err.message,
         stack: err.stack,
@@ -97,8 +92,8 @@ export async function connectToDatabase() {
       }
     });
 
-    mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected');
+    mongoose.connection.on("disconnected", () => {
+      console.warn("MongoDB disconnected");
       if (isConnected) {
         isConnected = false;
         // Try to reconnect
@@ -106,38 +101,45 @@ export async function connectToDatabase() {
       }
     });
 
-    mongoose.connection.on('connected', () => {
-      console.log('MongoDB connected event fired');
+    mongoose.connection.on("connected", () => {
+      console.log("MongoDB connected event fired");
       isConnected = true;
     });
 
     // Verify connection is actually established
     if (mongoose.connection.readyState !== 1) {
-      console.log(`MongoDB connection not fully established. Current state: ${mongoose.connection.readyState}`);
+      console.log(
+        `MongoDB connection not fully established. Current state: ${mongoose.connection.readyState}`,
+      );
       // Wait a bit for the connection to fully establish
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Check again
       // Check if not connected (1) or connecting (2)
       const readyState = mongoose.connection.readyState;
       // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
       if (readyState === 0 || readyState === 3) {
-        throw new Error(`MongoDB connection failed to establish. State: ${mongoose.connection.readyState}`);
+        throw new Error(
+          `MongoDB connection failed to establish. State: ${mongoose.connection.readyState}`,
+        );
       }
     }
 
     // Connection successful
     isConnected = true;
     connectionAttempts = 0;
-    console.log("MongoDB connected successfully. Connection state:", mongoose.connection.readyState);
-    console.log("Available MongoDB models:", Object.keys(mongoose.models));
     return mongoose;
   } catch (error) {
-    console.error(`MongoDB connection error (attempt ${connectionAttempts + 1}/${MAX_RETRY_ATTEMPTS}):`, error);
+    console.error(
+      `MongoDB connection error (attempt ${connectionAttempts + 1}/${MAX_RETRY_ATTEMPTS}):`,
+      error,
+    );
 
     // In development, we'll provide a fallback to allow the app to run without MongoDB
-    if (process.env.NODE_ENV === 'development') {
-      console.error("MongoDB connection failed in development mode. Please check your connection string and make sure MongoDB is running.");
+    if (process.env.NODE_ENV === "development") {
+      console.error(
+        "MongoDB connection failed in development mode. Please check your connection string and make sure MongoDB is running.",
+      );
       // Set connected flag to true to prevent further connection attempts
       isConnected = true;
       connectionAttempts = 0;
@@ -147,33 +149,32 @@ export async function connectToDatabase() {
     // Retry logic for production
     connectionAttempts++;
     if (connectionAttempts < MAX_RETRY_ATTEMPTS) {
-      console.log(`Retrying connection in ${RETRY_INTERVAL/1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+      console.log(`Retrying connection in ${RETRY_INTERVAL / 1000} seconds...`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL));
       return connectToDatabase();
     }
 
     // Max retries reached
-    console.error(`Failed to connect to MongoDB after ${MAX_RETRY_ATTEMPTS} attempts`);
+    console.error(
+      `Failed to connect to MongoDB after ${MAX_RETRY_ATTEMPTS} attempts`,
+    );
     throw error;
   }
 }
 
 // Connect on app startup
-connectToDatabase().then(() => {
-  console.log('MongoDB connected on startup');
-
-  // Import models to ensure they're registered
-  try {
-    // Use dynamic import to avoid issues with circular dependencies
-    import('./models/event-fixed').then(() => {
-      console.log('Event model imported successfully');
-      console.log('Models registered:', Object.keys(mongoose.models));
-    }).catch(importError => {
-      console.error('Error importing Event model:', importError);
-    });
-  } catch (error) {
-    console.error('Error importing models:', error);
-  }
-}).catch(error => {
-  console.error('Failed to connect to MongoDB on startup:', error);
-});
+connectToDatabase()
+  .then(() => {
+    // Import models to ensure they're registered
+    try {
+      // Use dynamic import to avoid issues with circular dependencies
+      import("./models/event-fixed").catch((importError) => {
+        console.error("Error importing Event model:", importError);
+      });
+    } catch (error) {
+      console.error("Error importing models:", error);
+    }
+  })
+  .catch((error) => {
+    console.error("Failed to connect to MongoDB on startup:", error);
+  });

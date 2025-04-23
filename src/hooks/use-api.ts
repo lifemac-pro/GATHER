@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { ApiResponse } from '@/types/api-responses';
-import { AppError, ErrorCode } from '@/utils/error-handling';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { type ApiResponse } from "@/types/api-responses";
+import { AppError, ErrorCode } from "@/utils/error-handling";
 
 /**
  * State for API hooks
@@ -47,7 +47,7 @@ export interface UseApiOptions<T> {
  */
 export function useApi<T>(
   apiCall: () => Promise<ApiResponse<T>>,
-  options: UseApiOptions<T> = {}
+  options: UseApiOptions<T> = {},
 ) {
   const {
     initialData = null,
@@ -75,7 +75,12 @@ export function useApi<T>(
 
   // Fetch data function
   const fetchData = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true, isError: false, error: null }));
+    setState((prev) => ({
+      ...prev,
+      isLoading: true,
+      isError: false,
+      error: null,
+    }));
 
     try {
       const response = await apiCall();
@@ -96,21 +101,22 @@ export function useApi<T>(
       } else {
         throw new AppError(
           ErrorCode.API_ERROR,
-          'API returned success: false',
+          "API returned success: false",
           400,
-          { response }
+          { response },
         );
       }
     } catch (error) {
       if (!isMounted.current) return;
 
-      const appError = error instanceof AppError
-        ? error
-        : new AppError(
-            ErrorCode.UNKNOWN_ERROR,
-            error instanceof Error ? error.message : 'Unknown error',
-            500
-          );
+      const appError =
+        error instanceof AppError
+          ? error
+          : new AppError(
+              ErrorCode.UNKNOWN_ERROR,
+              error instanceof Error ? error.message : "Unknown error",
+              500,
+            );
 
       setState({
         data: null,
@@ -146,7 +152,7 @@ export function useMutation<T, D = any>(
   options: {
     onSuccess?: (data: T) => void;
     onError?: (error: AppError) => void;
-  } = {}
+  } = {},
 ) {
   const { onSuccess, onError } = options;
 
@@ -174,7 +180,12 @@ export function useMutation<T, D = any>(
   // Mutation function
   const mutate = useCallback(
     async (data: D) => {
-      setState(prev => ({ ...prev, isLoading: true, isError: false, error: null }));
+      setState((prev) => ({
+        ...prev,
+        isLoading: true,
+        isError: false,
+        error: null,
+      }));
 
       try {
         const response = await apiCall(data);
@@ -197,21 +208,22 @@ export function useMutation<T, D = any>(
         } else {
           throw new AppError(
             ErrorCode.API_ERROR,
-            'API returned success: false',
+            "API returned success: false",
             400,
-            { response }
+            { response },
           );
         }
       } catch (error) {
         if (!isMounted.current) return;
 
-        const appError = error instanceof AppError
-          ? error
-          : new AppError(
-              ErrorCode.UNKNOWN_ERROR,
-              error instanceof Error ? error.message : 'Unknown error',
-              500
-            );
+        const appError =
+          error instanceof AppError
+            ? error
+            : new AppError(
+                ErrorCode.UNKNOWN_ERROR,
+                error instanceof Error ? error.message : "Unknown error",
+                500,
+              );
 
         setState({
           data: null,
@@ -227,7 +239,7 @@ export function useMutation<T, D = any>(
         throw appError;
       }
     },
-    [apiCall, onSuccess, onError]
+    [apiCall, onSuccess, onError],
   );
 
   return {

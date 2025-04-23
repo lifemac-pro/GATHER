@@ -13,12 +13,12 @@ interface CacheEntry<T> {
 
 class Cache {
   private static instance: Cache;
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache = new Map<string, CacheEntry<any>>();
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
   private constructor() {
     // Private constructor for singleton pattern
-    
+
     // Clean up expired cache entries every minute
     setInterval(() => this.cleanupExpiredEntries(), 60 * 1000);
   }
@@ -39,7 +39,7 @@ class Cache {
   public set<T>(key: string, value: T, options: CacheOptions = {}): void {
     const ttl = options.ttl || this.DEFAULT_TTL;
     const expiresAt = Date.now() + ttl;
-    
+
     this.cache.set(key, { value, expiresAt });
   }
 
@@ -50,17 +50,17 @@ class Cache {
    */
   public get<T>(key: string): T | undefined {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return undefined;
     }
-    
+
     // Check if the entry has expired
     if (entry.expiresAt < Date.now()) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     return entry.value as T;
   }
 
@@ -89,14 +89,14 @@ class Cache {
   public async getOrSet<T>(
     key: string,
     fn: () => Promise<T>,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<T> {
     const cachedValue = this.get<T>(key);
-    
+
     if (cachedValue !== undefined) {
       return cachedValue;
     }
-    
+
     const value = await fn();
     this.set(key, value, options);
     return value;
@@ -107,7 +107,7 @@ class Cache {
    */
   private cleanupExpiredEntries(): void {
     const now = Date.now();
-    
+
     for (const [key, entry] of this.cache.entries()) {
       if (entry.expiresAt < now) {
         this.cache.delete(key);

@@ -1,4 +1,4 @@
-import { Server as HTTPServer } from "http";
+import { type Server as HTTPServer } from "http";
 
 /**
  * Mock SocketIO server type
@@ -27,14 +27,14 @@ export function initializeWebSocket(httpServer: HTTPServer) {
       emit: (event, data) => {
         // Mock implementation
         console.log(`Emitting ${event} to ${room}`);
-      }
-    })
+      },
+    }),
   };
 
   // Authentication middleware - mocked
   io.use((socket: any, next: any) => {
     // Mock session
-    const session = { user: { id: 'user-id' } };
+    const session = { user: { id: "user-id" } };
     next();
   });
 

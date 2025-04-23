@@ -12,7 +12,12 @@ import { ZodError } from "zod";
 import { db } from "@/server/db";
 import { headers } from "next/headers";
 import { getAuth } from "@/server/auth";
-import { trpcErrorHandler, handleZodError, AppError, ErrorCode } from "@/utils/error-handling";
+import {
+  trpcErrorHandler,
+  handleZodError,
+  AppError,
+  ErrorCode,
+} from "@/utils/error-handling";
 import { connectToDatabase } from "@/server/db/mongo";
 
 /**
@@ -31,7 +36,9 @@ export interface Context {
   session: any | null;
 }
 
-export const createTRPCContext = async (opts: { headers: Headers }): Promise<Context> => {
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+}): Promise<Context> => {
   let session = null;
 
   try {
@@ -45,29 +52,32 @@ export const createTRPCContext = async (opts: { headers: Headers }): Promise<Con
       session = {
         userId: auth.userId,
         sessionId: auth.sessionId,
-        user: auth && 'user' in auth && auth.user ? {
-          id: auth.user.id,
-          firstName: auth.user.firstName || '',
-          lastName: auth.user.lastName || '',
-          email: auth.user.email || ''
-        } : undefined
+        user:
+          auth && "user" in auth && auth.user
+            ? {
+                id: auth.user.id,
+                firstName: auth.user.firstName || "",
+                lastName: auth.user.lastName || "",
+                email: auth.user.email || "",
+              }
+            : undefined,
       };
     }
   } catch (error) {
-    console.error('Error in TRPC context:', error);
+    console.error("Error in TRPC context:", error);
     // Continue without authentication
 
     // In development, provide a mock session
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       session = {
-        userId: 'dev-user-id',
-        sessionId: 'dev-session',
+        userId: "dev-user-id",
+        sessionId: "dev-session",
         user: {
-          id: 'dev-user-id',
-          firstName: 'Dev',
-          lastName: 'User',
-          email: 'dev@example.com'
-        }
+          id: "dev-user-id",
+          firstName: "Dev",
+          lastName: "User",
+          email: "dev@example.com",
+        },
       };
     }
   }
@@ -90,10 +100,12 @@ const t = initTRPC.create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
     // Format ZodErrors in a more user-friendly way
-    const zodError = error.cause instanceof ZodError ? error.cause.flatten() : null;
+    const zodError =
+      error.cause instanceof ZodError ? error.cause.flatten() : null;
 
     // Extract additional error details from AppError
-    const appError = error.cause instanceof AppError ? error.cause.toApiError() : null;
+    const appError =
+      error.cause instanceof AppError ? error.cause.toApiError() : null;
 
     return {
       ...shape,
@@ -153,10 +165,16 @@ export const publicProcedure = enhancedProcedure;
  */
 export const protectedProcedure = enhancedProcedure.use(({ ctx, next }) => {
   // Check if we have a session with a userId
-  if (!ctx || !('session' in ctx) || !ctx.session || typeof ctx.session !== 'object' || !('userId' in ctx.session)) {
+  if (
+    !ctx ||
+    !("session" in ctx) ||
+    !ctx.session ||
+    typeof ctx.session !== "object" ||
+    !("userId" in ctx.session)
+  ) {
     throw new TRPCError({
-      code: 'UNAUTHORIZED',
-      message: 'You must be logged in to access this resource',
+      code: "UNAUTHORIZED",
+      message: "You must be logged in to access this resource",
     });
   }
 
@@ -165,7 +183,7 @@ export const protectedProcedure = enhancedProcedure.use(({ ctx, next }) => {
     ctx: {
       ...ctx,
       // Ensure the session is passed to the next handler
-      session: ctx && 'session' in ctx ? ctx.session : null,
+      session: ctx && "session" in ctx ? ctx.session : null,
     },
   });
 });

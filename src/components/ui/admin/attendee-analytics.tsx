@@ -51,7 +51,9 @@ export function AttendeeAnalytics({
       {/* Daily Trends */}
       <Card className="col-span-2">
         <CardHeader>
-          <CardTitle className="text-[#072446]">Daily Attendance Trends</CardTitle>
+          <CardTitle className="text-[#072446]">
+            Daily Attendance Trends
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -110,7 +112,11 @@ export function AttendeeAnalytics({
                   {statusDistribution.map((entry, index) => (
                     <Cell
                       key={entry.status}
-                      fill={STATUS_COLORS[entry.status as keyof typeof STATUS_COLORS] || COLORS[index % COLORS.length]}
+                      fill={
+                        STATUS_COLORS[
+                          entry.status as keyof typeof STATUS_COLORS
+                        ] || COLORS[index % COLORS.length]
+                      }
                     />
                   ))}
                 </Pie>

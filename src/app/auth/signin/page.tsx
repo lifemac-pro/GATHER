@@ -38,15 +38,15 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="max-w-md w-full space-y-8 p-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md space-y-8 p-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -74,7 +74,7 @@ export default function SignInPage() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
+            <div className="text-center text-sm text-red-500">{error}</div>
           )}
 
           <div>
@@ -84,7 +84,7 @@ export default function SignInPage() {
           </div>
         </form>
 
-        <div className="text-sm text-center">
+        <div className="text-center text-sm">
           <span className="text-gray-500">Don&apos;t have an account? </span>
           <Link
             href="/auth/signup"

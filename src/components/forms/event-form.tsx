@@ -6,13 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useZodForm, useFormSubmit } from "@/utils/form-validation";
-import { createEventSchema, CreateEventRequest, updateEventSchema, UpdateEventRequest } from "@/types/api-requests";
-import { EventResponse } from "@/types/api-responses";
+import {
+  createEventSchema,
+  CreateEventRequest,
+  updateEventSchema,
+  UpdateEventRequest,
+} from "@/types/api-requests";
+import { type EventResponse } from "@/types/api-responses";
 import { api } from "@/trpc/react";
 import { ImageUpload } from "@/components/ui/image-upload";
 
@@ -36,7 +45,12 @@ export function EventForm({ event, mode }: EventFormProps) {
         endDate: event.endDate.toString(),
         category: event.category,
         price: event.price || 0,
-        maxAttendees: event.maxAttendees && Array.isArray(event.maxAttendees) && event.maxAttendees.length > 0 ? parseInt(event.maxAttendees[0] || "0", 10) : undefined,
+        maxAttendees:
+          event.maxAttendees &&
+          Array.isArray(event.maxAttendees) &&
+          event.maxAttendees.length > 0
+            ? parseInt(event.maxAttendees[0] || "0", 10)
+            : undefined,
         image: event.image || "",
       }
     : {
@@ -55,12 +69,10 @@ export function EventForm({ event, mode }: EventFormProps) {
   const schema = mode === "create" ? createEventSchema : updateEventSchema;
 
   // Initialize form with Zod validation
-  const {
-    data,
-    errors,
-    setValue,
-    handleSubmit,
-  } = useZodForm(schema as any, initialValues);
+  const { data, errors, setValue, handleSubmit } = useZodForm(
+    schema as any,
+    initialValues,
+  );
 
   // TRPC mutations
   const createEvent = api.event.create.useMutation();
@@ -93,7 +105,7 @@ export function EventForm({ event, mode }: EventFormProps) {
           category: typedData.category,
           price: typedData.price,
           maxAttendees: typedData.maxAttendees,
-          image: typedData.image
+          image: typedData.image,
         };
 
         const result = await createEvent.mutateAsync(processedData as any);
@@ -120,14 +132,18 @@ export function EventForm({ event, mode }: EventFormProps) {
           name: typedData.name,
           description: typedData.description,
           location: typedData.location,
-          startDate: typedData.startDate ? new Date(typedData.startDate.toString()) : undefined,
-          endDate: typedData.endDate ? new Date(typedData.endDate.toString()) : undefined,
+          startDate: typedData.startDate
+            ? new Date(typedData.startDate.toString())
+            : undefined,
+          endDate: typedData.endDate
+            ? new Date(typedData.endDate.toString())
+            : undefined,
           category: typedData.category,
           price: typedData.price,
           maxAttendees: typedData.maxAttendees,
           image: typedData.image,
           featured: typedData.featured,
-          status: typedData.status
+          status: typedData.status,
         };
 
         const result = await updateEventMutation.mutateAsync({
@@ -139,18 +155,24 @@ export function EventForm({ event, mode }: EventFormProps) {
     },
     {
       onSuccess: (data) => {
-        if (data && typeof data === 'object' && 'id' in data) {
+        if (data && typeof data === "object" && "id" in data) {
           router.push(`/events/${data.id}`);
         } else {
-          console.error('Invalid data returned from mutation:', data);
-          router.push('/events');
+          console.error("Invalid data returned from mutation:", data);
+          router.push("/events");
         }
       },
-    }
+    },
   );
 
   return (
-    <form onSubmit={handleSubmit(data => { void submit(data); return undefined; })} className="space-y-6">
+    <form
+      onSubmit={handleSubmit((data) => {
+        void submit(data);
+        return undefined;
+      })}
+      className="space-y-6"
+    >
       {error && (
         <div className="rounded-md bg-red-50 p-4">
           <div className="flex">
@@ -161,7 +183,10 @@ export function EventForm({ event, mode }: EventFormProps) {
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700"
+          >
             Event Name *
           </label>
           <Input
@@ -170,11 +195,16 @@ export function EventForm({ event, mode }: EventFormProps) {
             onChange={(e) => setValue("name", e.target.value)}
             className={cn(errors.name && "border-red-500")}
           />
-          {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+          )}
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-gray-700"
+          >
             Description
           </label>
           <Textarea
@@ -184,11 +214,16 @@ export function EventForm({ event, mode }: EventFormProps) {
             rows={4}
             className={cn(errors.description && "border-red-500")}
           />
-          {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+          )}
         </div>
 
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-700"
+          >
             Location
           </label>
           <Input
@@ -197,12 +232,17 @@ export function EventForm({ event, mode }: EventFormProps) {
             onChange={(e) => setValue("location", e.target.value)}
             className={cn(errors.location && "border-red-500")}
           />
-          {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
+          {errors.location && (
+            <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="startDate"
+              className="block text-sm font-medium text-gray-700"
+            >
               Start Date *
             </label>
             <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
@@ -212,7 +252,7 @@ export function EventForm({ event, mode }: EventFormProps) {
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !data.startDate && "text-muted-foreground",
-                    errors.startDate && "border-red-500"
+                    errors.startDate && "border-red-500",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -226,7 +266,9 @@ export function EventForm({ event, mode }: EventFormProps) {
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={data.startDate ? new Date(data.startDate) : undefined}
+                  selected={
+                    data.startDate ? new Date(data.startDate) : undefined
+                  }
                   onSelect={(date) => {
                     if (date) {
                       setValue("startDate", date.toISOString() as any);
@@ -237,11 +279,16 @@ export function EventForm({ event, mode }: EventFormProps) {
                 />
               </PopoverContent>
             </Popover>
-            {errors.startDate && <p className="mt-1 text-sm text-red-500">{errors.startDate}</p>}
+            {errors.startDate && (
+              <p className="mt-1 text-sm text-red-500">{errors.startDate}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="endDate"
+              className="block text-sm font-medium text-gray-700"
+            >
               End Date *
             </label>
             <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
@@ -251,7 +298,7 @@ export function EventForm({ event, mode }: EventFormProps) {
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !data.endDate && "text-muted-foreground",
-                    errors.endDate && "border-red-500"
+                    errors.endDate && "border-red-500",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -276,13 +323,18 @@ export function EventForm({ event, mode }: EventFormProps) {
                 />
               </PopoverContent>
             </Popover>
-            {errors.endDate && <p className="mt-1 text-sm text-red-500">{errors.endDate}</p>}
+            {errors.endDate && (
+              <p className="mt-1 text-sm text-red-500">{errors.endDate}</p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-gray-700"
+            >
               Category *
             </label>
             <Input
@@ -291,11 +343,16 @@ export function EventForm({ event, mode }: EventFormProps) {
               onChange={(e) => setValue("category", e.target.value)}
               className={cn(errors.category && "border-red-500")}
             />
-            {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+            {errors.category && (
+              <p className="mt-1 text-sm text-red-500">{errors.category}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="price"
+              className="block text-sm font-medium text-gray-700"
+            >
               Price
             </label>
             <Input
@@ -307,13 +364,18 @@ export function EventForm({ event, mode }: EventFormProps) {
               onChange={(e) => setValue("price", parseFloat(e.target.value))}
               className={cn(errors.price && "border-red-500")}
             />
-            {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-500">{errors.price}</p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="maxAttendees" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="maxAttendees"
+              className="block text-sm font-medium text-gray-700"
+            >
               Max Attendees
             </label>
             <Input
@@ -321,10 +383,14 @@ export function EventForm({ event, mode }: EventFormProps) {
               type="number"
               min="1"
               value={data.maxAttendees?.toString() || ""}
-              onChange={(e) => setValue("maxAttendees", parseInt(e.target.value, 10))}
+              onChange={(e) =>
+                setValue("maxAttendees", parseInt(e.target.value, 10))
+              }
               className={cn(errors.maxAttendees && "border-red-500")}
             />
-            {errors.maxAttendees && <p className="mt-1 text-sm text-red-500">{errors.maxAttendees}</p>}
+            {errors.maxAttendees && (
+              <p className="mt-1 text-sm text-red-500">{errors.maxAttendees}</p>
+            )}
           </div>
 
           <div>
@@ -333,7 +399,9 @@ export function EventForm({ event, mode }: EventFormProps) {
               onChange={(value) => setValue("image", value)}
               label="Event Image"
             />
-            {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
+            {errors.image && (
+              <p className="mt-1 text-sm text-red-500">{errors.image}</p>
+            )}
           </div>
         </div>
       </div>
@@ -348,7 +416,11 @@ export function EventForm({ event, mode }: EventFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : mode === "create" ? "Create Event" : "Update Event"}
+          {isSubmitting
+            ? "Saving..."
+            : mode === "create"
+              ? "Create Event"
+              : "Update Event"}
         </Button>
       </div>
     </form>
