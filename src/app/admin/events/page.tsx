@@ -78,6 +78,15 @@ export default function EventsPage() {
       // Invalidate the events query to refetch the data
       utils.event.getAll.invalidate();
     },
+    onError: (error) => {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error",
+        description: `Failed to delete event: ${error.message}`,
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+    }
   });
 
   const handleEdit = (event: any) => {
@@ -92,7 +101,21 @@ export default function EventsPage() {
 
   const confirmDelete = async () => {
     if (selectedEvent) {
-      await deleteEvent.mutateAsync({ id: selectedEvent.id });
+      try {
+        console.log('Attempting to delete event with ID:', selectedEvent.id);
+        await deleteEvent.mutateAsync({ id: selectedEvent.id });
+        console.log('Event deletion successful');
+      } catch (error) {
+        console.error('Error in confirmDelete:', error);
+        // Error is handled by the onError callback in the mutation
+      }
+    } else {
+      console.error('No event selected for deletion');
+      toast({
+        title: "Error",
+        description: "No event selected for deletion",
+        variant: "destructive",
+      });
     }
   };
 

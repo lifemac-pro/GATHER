@@ -9,7 +9,12 @@ export default function SignInPage() {
             Sign in to your account
           </h2>
         </div>
-        <SignIn redirectUrl="/admin" routing="path" path="/sign-in" />
+        <SignIn
+          routing="path"
+          path="/sign-in"
+          signUpUrl="/sign-up"
+          fallbackRedirectUrl="/admin/dashboard"
+        />
       </div>
     </div>
   );

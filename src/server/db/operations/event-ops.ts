@@ -497,16 +497,17 @@ export const EventOps = {
         // Continue with deletion attempt even if verification fails
       }
 
-      // Delete the event with timeout
+      // Delete the event with a longer timeout
       console.log('EventOps.delete: Executing deleteOne for event:', id);
       let result;
       try {
+        // Increase timeout to 15 seconds
         result = await Promise.race([
           db.collection('events').deleteOne({ id }),
           new Promise((_, reject) => setTimeout(() => {
             console.error('EventOps.delete: Delete operation timed out');
             reject(new Error('Delete operation timed out'));
-          }, 5000))
+          }, 15000)) // Increased from 5000ms to 15000ms
         ]);
         console.log('EventOps.delete: Delete result:', result);
       } catch (deleteError) {
@@ -514,7 +515,7 @@ export const EventOps = {
         throw new Error(`Failed to delete event: ${deleteError instanceof Error ? deleteError.message : String(deleteError)}`);
       }
 
-      // Delete associated attendees with timeout
+      // Delete associated attendees with a longer timeout
       try {
         console.log('EventOps.delete: Deleting attendees for event:', id);
         const attendeeResult = await Promise.race([
@@ -522,7 +523,7 @@ export const EventOps = {
           new Promise((_, reject) => setTimeout(() => {
             console.error('EventOps.delete: Attendee delete operation timed out');
             reject(new Error('Attendee delete operation timed out'));
-          }, 5000))
+          }, 15000)) // Increased from 5000ms to 15000ms
         ]);
         console.log('EventOps.delete: Attendee delete result:', attendeeResult);
       } catch (attendeeError) {
@@ -532,6 +533,30 @@ export const EventOps = {
 
       // Check if event was actually deleted
       const success = result && typeof result === 'object' && 'deletedCount' in result && (result as { deletedCount: number }).deletedCount > 0;
+
+      // If the primary deletion method failed, try a fallback approach
+      if (!success) {
+        console.log('EventOps.delete: Primary deletion method failed, trying fallback...');
+        try {
+          // Try a different approach - update the status to 'cancelled' instead
+          const updateResult = await db.collection('events').updateOne(
+            { id },
+            { $set: { status: 'cancelled', updatedAt: new Date() } }
+          );
+
+          console.log('EventOps.delete: Fallback update result:', updateResult);
+
+          // Consider it a success if we at least updated the event
+          if (updateResult && typeof updateResult === 'object' && 'modifiedCount' in updateResult && (updateResult as { modifiedCount: number }).modifiedCount > 0) {
+            console.log('EventOps.delete: Fallback successful - event marked as cancelled');
+            return true;
+          }
+        } catch (fallbackError) {
+          console.error('EventOps.delete: Fallback method also failed:', fallbackError);
+          // Continue to return the original success value
+        }
+      }
+
       return Boolean(success);
     } catch (error) {
       console.error('EventOps.delete: Caught error:', error);

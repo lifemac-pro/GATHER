@@ -285,21 +285,41 @@ export const eventRouter = createTRPCRouter({
           throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
-        // Delete the event with error handling
+        // Delete the event with improved error handling
         try {
           console.log('Attempting to delete event:', input.id);
-          const deleteResult = await EventOps.delete(input.id);
-          console.log('Event deletion result:', deleteResult);
+
+          // Try to delete the event with multiple attempts
+          let deleteResult = false;
+          let attempts = 0;
+          const maxAttempts = 3;
+
+          while (!deleteResult && attempts < maxAttempts) {
+            attempts++;
+            console.log(`Delete attempt ${attempts} of ${maxAttempts} for event:`, input.id);
+
+            try {
+              deleteResult = await EventOps.delete(input.id);
+              console.log(`Event deletion attempt ${attempts} result:`, deleteResult);
+            } catch (attemptError) {
+              console.error(`Error during delete attempt ${attempts}:`, attemptError);
+              // Wait a bit before retrying
+              if (attempts < maxAttempts) {
+                console.log(`Waiting before retry attempt ${attempts + 1}...`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+              }
+            }
+          }
 
           if (!deleteResult) {
-            console.log('Event deletion returned false');
-            throw new Error('Event deletion failed');
+            console.log('All event deletion attempts returned false');
+            throw new Error(`Event deletion failed after ${attempts} attempts`);
           }
         } catch (deleteError) {
           console.error('Error during event deletion:', deleteError);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to delete event from database"
+            message: `Failed to delete event from database: ${deleteError instanceof Error ? deleteError.message : String(deleteError)}`
           });
         }
 

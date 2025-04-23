@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react"; // <-- import useState
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton } from "@/components/ui/sign-out-button";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -105,15 +105,11 @@ export function Sidebar() {
 
         {/* User Section */}
         <div className="border-t border-primary-foreground/10 p-4">
-          <SignOutButton>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-            >
-              <LogOut className="mr-3 h-5 w-5 text-primary-foreground/80" />
-              Sign Out
-            </Button>
-          </SignOutButton>
+          <SignOutButton
+            variant="ghost"
+            className="w-full justify-start text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            showIcon={true}
+          />
         </div>
       </div>
     </>
