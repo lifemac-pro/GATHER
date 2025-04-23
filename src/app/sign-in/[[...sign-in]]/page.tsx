@@ -9,7 +9,7 @@ export default function SignInPage() {
             Sign in to your account
           </h2>
         </div>
-        <SignIn redirectUrl="/admin" />
+        <SignIn redirectUrl="/admin" routing="path" path="/sign-in" />
       </div>
     </div>
   );

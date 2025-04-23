@@ -9,7 +9,7 @@ export default function SignUpPage() {
             Create your account
           </h2>
         </div>
-        <SignUp redirectUrl="/admin" />
+        <SignUp redirectUrl="/admin" routing="path" path="/sign-up" />
       </div>
     </div>
   );

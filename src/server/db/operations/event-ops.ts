@@ -103,7 +103,7 @@ export const EventOps = {
 
         // Save the event with a longer timeout
         console.log('EventOps.create: Saving event document');
-        await eventDoc.save({ timeout: 60000 }); // 60 second timeout
+        await eventDoc.save({ wtimeout: 60000 }); // 60 second timeout
 
         console.log('EventOps.create: Event saved successfully');
       } catch (modelError) {
@@ -531,9 +531,8 @@ export const EventOps = {
       }
 
       // Check if event was actually deleted
-      const success = result && result.deletedCount > 0;
-      console.log('EventOps.delete: Delete operation success:', success);
-      return success;
+      const success = result && typeof result === 'object' && 'deletedCount' in result && (result as { deletedCount: number }).deletedCount > 0;
+      return Boolean(success);
     } catch (error) {
       console.error('EventOps.delete: Caught error:', error);
       // Return false instead of throwing to allow graceful handling

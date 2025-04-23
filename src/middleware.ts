@@ -1,9 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
 // Define public routes that don't require authentication
-const publicRoutes = (req: NextRequest) => createRouteMatcher([
+const publicRoutes = createRouteMatcher([
   '/',
   '/sign-in',
   '/sign-in/(.*)',
@@ -53,13 +53,11 @@ function addSecurityHeaders(response: NextResponse) {
   return response;
 }
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   try {
     // Check if the route is public
-    const matcher = publicRoutes(req);
-    // Convert pathname to string to avoid type error
-    const pathname = req.nextUrl.pathname.toString();
-    if (matcher(pathname)) {
+    // Check if the current request matches a public route
+    if (publicRoutes(req)) {
       return addSecurityHeaders(NextResponse.next());
     }
 
@@ -69,7 +67,7 @@ export default clerkMiddleware((auth, req) => {
 
     // If the user is trying to access admin routes and isn't signed in
     // Check if user is authenticated for admin routes
-    const userId = auth && typeof auth === 'object' && 'userId' in auth ? auth.userId : undefined;
+    const { userId } = await auth();
     if (isAdminRoute && !userId) {
       const signInUrl = new URL('/sign-in', req.url);
       signInUrl.searchParams.set('redirect_url', req.url);
