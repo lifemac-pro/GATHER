@@ -109,7 +109,8 @@ const Dashboard = () => {
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -121,19 +122,19 @@ const Dashboard = () => {
 
       {/* Mobile Sidebar */}
       <div
-        className={`fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm transition-opacity duration-300 ${
           mobileMenuOpen ? "visible opacity-100" : "invisible opacity-0"
         }`}
         onClick={() => setMobileMenuOpen(false)}
       >
         <aside
-          className={`fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300 ${
+          className={`fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="absolute right-4 top-4 text-white"
+            className="absolute right-4 top-4 text-white/80 transition hover:text-white"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close Menu"
           >
@@ -144,47 +145,46 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         {/* Welcome Message */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
-              Welcome, {user?.firstName || "Guest"}! 👋
-            </h1>
-            <p className="text-sm text-gray-600 md:text-base">
-              Manage your event registrations and feedback.
-            </p>
-          </div>
+        <div className="mb-8 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+          <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                Welcome, {user?.firstName || "Guest"}! 👋
+              </h1>
+              <p className="mt-1 text-white/80 md:text-base">
+                Manage your event registrations and feedback.
+              </p>
+            </div>
 
-          {/* Admin and Sign Out Buttons */}
-          <div className="flex space-x-2">
-            <Link
-              href="/admin"
-              className="rounded-md bg-[#072446] px-4 py-2 text-white transition hover:bg-[#0a3060]"
-            >
-              Admin Panel
-            </Link>
-            <SignOutButton
-              redirectUrl="/"
-              className="rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-            >
-              Sign Out
-            </SignOutButton>
+            {/* Sign Out Button */}
+            <div className="flex flex-wrap gap-2">
+              <SignOutButton
+                redirectUrl="/"
+                className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/10"
+              >
+                Sign Out
+              </SignOutButton>
+            </div>
           </div>
         </div>
 
         {/* Upcoming Events Section */}
-        <section className="mt-6">
-          <h2 className="text-xl font-semibold text-gray-800 md:text-2xl">
+        <section className="rounded-xl bg-white p-6 shadow-md">
+          <h2 className="text-xl font-bold text-[#082865] md:text-2xl">
             Events
           </h2>
+          <p className="mt-1 text-gray-500">
+            Browse and register for upcoming events
+          </p>
 
           {isLoading ? (
-            <div className="mt-4 rounded-lg bg-white p-8 text-center shadow-md">
-              <p className="text-gray-600">Loading events...</p>
+            <div className="mt-8 flex h-40 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
             </div>
           ) : events && events.length > 0 ? (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => {
                 // Type assertion for event object
                 const typedEvent = event as Event;
@@ -210,8 +210,8 @@ const Dashboard = () => {
               })}
             </div>
           ) : (
-            <div className="mt-4 rounded-lg bg-white p-8 text-center shadow-md">
-              <p className="text-gray-600">
+            <div className="mt-8 rounded-lg border border-gray-100 bg-gray-50 p-8 text-center">
+              <p className="text-gray-500">
                 No events available at the moment.
               </p>
             </div>

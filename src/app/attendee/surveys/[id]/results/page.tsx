@@ -101,7 +101,8 @@ export default function SurveyResultsPage({
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -114,16 +115,16 @@ export default function SurveyResultsPage({
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4">
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -136,35 +137,39 @@ export default function SurveyResultsPage({
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              {isLoading
-                ? "Loading Results..."
-                : `${typedSurvey?.title || "Survey"} Results`}
-            </h1>
-            <Button
-              onClick={() => router.push("/attendee/surveys")}
-              variant="outline"
-              className="flex items-center space-x-2 border-[#E1A913] bg-[#072446] text-[#E1A913]"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Surveys</span>
-            </Button>
+          <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                {isLoading
+                  ? "Loading Results..."
+                  : `${typedSurvey?.title || "Survey"} Results`}
+              </h1>
+              <Button
+                onClick={() => router.push("/attendee/surveys")}
+                className="rounded-lg bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                <span>Back to Surveys</span>
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
-              <p className="text-gray-400">Loading survey results...</p>
+            <div className="flex h-60 items-center justify-center rounded-xl bg-white p-8 shadow-md">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
             </div>
           ) : typedSurvey ? (
-            <div className="rounded-lg bg-[#072446] p-6 shadow-md">
+            <div className="rounded-xl bg-white p-8 shadow-md">
               {hasResponded ? (
                 <>
-                  <div className="mb-6 flex items-center space-x-2 rounded-lg bg-[#E1A913] p-4 font-medium text-[#072446]">
-                    <CheckCircle size={20} />
-                    <p>You have successfully completed this survey.</p>
+                  <div className="mb-6 flex items-center space-x-3 rounded-lg bg-green-50 p-4 text-green-700">
+                    <CheckCircle size={20} className="text-green-500" />
+                    <p>
+                      You have successfully completed this survey. Thank you for
+                      your feedback!
+                    </p>
                   </div>
 
                   <div className="mb-6">

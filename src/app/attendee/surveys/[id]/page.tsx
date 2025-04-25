@@ -136,7 +136,7 @@ export default function SurveyDetailPage({
       case "MULTIPLE_CHOICE":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#E1A913]">
+            <label className="mb-3 block text-lg font-medium text-[#082865]">
               {index + 1}. {question.text}
               {question.required && (
                 <span className="ml-1 text-red-500">*</span>
@@ -152,12 +152,12 @@ export default function SurveyDetailPage({
                     value={option}
                     checked={answers[questionId] === option}
                     onChange={() => handleAnswerChange(questionId, option)}
-                    className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
+                    className="h-4 w-4 text-[#0055FF] focus:ring-[#0055FF]"
                     required={question.required}
                   />
                   <label
                     htmlFor={`${questionId}-${i}`}
-                    className="ml-2 text-gray-400"
+                    className="ml-2 text-gray-600"
                   >
                     {option}
                   </label>
@@ -172,7 +172,7 @@ export default function SurveyDetailPage({
           <div className="mb-6">
             <label
               htmlFor={questionId}
-              className="mb-2 block font-medium text-[#E1A913]"
+              className="mb-3 block text-lg font-medium text-[#082865]"
             >
               {index + 1}. {question.text}
               {question.required && (
@@ -183,7 +183,7 @@ export default function SurveyDetailPage({
               id={questionId}
               value={answers[questionId] ?? ""}
               onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-              className="w-full rounded-md border border-gray-300 bg-[#072446] p-2 text-gray-300 focus:border-[#E1A913] focus:outline-none focus:ring-1 focus:ring-[#E1A913]"
+              className="w-full rounded-md border border-gray-300 bg-white p-3 text-gray-700 shadow-sm focus:border-[#0055FF] focus:outline-none focus:ring-1 focus:ring-[#0055FF]"
               rows={4}
               required={question.required}
             />
@@ -193,7 +193,7 @@ export default function SurveyDetailPage({
       case "RATING":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#E1A913]">
+            <label className="mb-3 block text-lg font-medium text-[#082865]">
               {index + 1}. {question.text}
               {question.required && (
                 <span className="ml-1 text-red-500">*</span>
@@ -207,13 +207,13 @@ export default function SurveyDetailPage({
                     onClick={() => handleAnswerChange(questionId, rating)}
                     className={`h-10 w-10 rounded-full ${
                       answers[questionId] === rating
-                        ? "bg-[#E1A913] text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-[#0055FF] text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     {rating}
                   </button>
-                  <span className="mt-1 text-xs text-gray-500">
+                  <span className="mt-1 text-xs font-medium text-gray-500">
                     {rating === 1 ? "Poor" : rating === 5 ? "Excellent" : ""}
                   </span>
                 </div>
@@ -225,7 +225,7 @@ export default function SurveyDetailPage({
       case "YES_NO":
         return (
           <div className="mb-6">
-            <label className="mb-2 block font-medium text-[#E1A913]">
+            <label className="mb-3 block text-lg font-medium text-[#082865]">
               {index + 1}. {question.text}
               {question.required && (
                 <span className="ml-1 text-red-500">*</span>
@@ -240,12 +240,12 @@ export default function SurveyDetailPage({
                   value="Yes"
                   checked={answers[questionId] === "Yes"}
                   onChange={() => handleAnswerChange(questionId, "Yes")}
-                  className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
+                  className="h-4 w-4 text-[#0055FF] focus:ring-[#0055FF]"
                   required={question.required}
                 />
                 <label
                   htmlFor={`${questionId}-yes`}
-                  className="ml-2 text-gray-400"
+                  className="ml-2 text-gray-600"
                 >
                   Yes
                 </label>
@@ -258,12 +258,12 @@ export default function SurveyDetailPage({
                   value="No"
                   checked={answers[questionId] === "No"}
                   onChange={() => handleAnswerChange(questionId, "No")}
-                  className="h-4 w-4 text-[#E1A913] focus:ring-[#E1A913]"
+                  className="h-4 w-4 text-[#0055FF] focus:ring-[#0055FF]"
                   required={question.required}
                 />
                 <label
                   htmlFor={`${questionId}-no`}
-                  className="ml-2 text-gray-400"
+                  className="ml-2 text-gray-600"
                 >
                   No
                 </label>
@@ -288,7 +288,8 @@ export default function SurveyDetailPage({
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -301,16 +302,16 @@ export default function SurveyDetailPage({
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4">
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -323,29 +324,32 @@ export default function SurveyDetailPage({
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              {isLoading ? "Loading Survey..." : (survey?.title ?? "Survey")}
-            </h1>
-            <Button
-              onClick={() => router.push("/attendee/surveys")}
-              variant="outline"
-              className="flex items-center space-x-2 border-[#E1A913] bg-[#072446] text-[#E1A913]"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Surveys</span>
-            </Button>
+          <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                {isLoading ? "Loading Survey..." : (survey?.title ?? "Survey")}
+              </h1>
+              <Button
+                onClick={() => router.push("/attendee/surveys")}
+                className="rounded-lg bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                <span>Back to Surveys</span>
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
-              <p className="text-gray-400">Loading survey questions...</p>
+            <div className="flex h-60 items-center justify-center rounded-xl bg-white p-8 shadow-md">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
             </div>
           ) : survey ? (
-            <div className="rounded-lg bg-[#072446] p-6 shadow-md">
-              <p className="mb-6 text-gray-400">{survey.description}</p>
+            <div className="rounded-xl bg-white p-8 shadow-md">
+              <p className="mb-8 leading-relaxed text-gray-600">
+                {survey.description}
+              </p>
 
               <form onSubmit={handleSubmit}>
                 {survey.questions.map((question, index) => (
@@ -355,7 +359,7 @@ export default function SurveyDetailPage({
                 <div className="mt-8 flex justify-end">
                   <Button
                     type="submit"
-                    className="bg-[#E1A913] text-white hover:bg-[#c6900f]"
+                    className="rounded-lg bg-[#0055FF] px-6 py-2 font-medium text-white shadow-sm transition-all hover:bg-[#004BD9] hover:shadow-md"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Survey"}
@@ -364,20 +368,22 @@ export default function SurveyDetailPage({
               </form>
             </div>
           ) : (
-            <div className="flex h-60 flex-col items-center justify-center space-y-4 rounded-lg bg-[#072446] p-6 shadow-md">
-              <AlertCircle size={32} className="text-red-500" />
+            <div className="flex h-60 flex-col items-center justify-center space-y-4 rounded-xl bg-white p-8 shadow-md">
+              <div className="rounded-full bg-red-50 p-3">
+                <AlertCircle size={32} className="text-red-500" />
+              </div>
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-[#E1A913]">
+                <h2 className="text-xl font-bold text-[#082865]">
                   Survey Not Found
                 </h2>
-                <p className="mt-2 text-gray-400">
+                <p className="mt-2 text-gray-600">
                   The survey you&apos;re looking for could not be found or has
                   been removed.
                 </p>
               </div>
               <Button
                 onClick={() => router.push("/attendee/surveys")}
-                className="mt-4 bg-[#E1A913] text-white hover:bg-[#c6900f]"
+                className="mt-4 bg-[#0055FF] text-white hover:bg-[#004BD9]"
               >
                 Return to Surveys
               </Button>

@@ -45,6 +45,30 @@ export default function NotificationDetailPage({
     },
   });
 
+  // Delete notification mutation
+  const deleteNotification = trpc.notification.delete.useMutation({
+    onSuccess: () => {
+      router.push("/attendee/notifications");
+    },
+    onError: (error) => {
+      console.error("Error deleting notification:", error);
+    },
+  });
+
+  // Handle mark as read
+  const handleMarkAsRead = () => {
+    if (!notification || notification.read || hasMarkedAsRead) return;
+
+    markAsRead.mutate({ id: notificationId });
+  };
+
+  // Handle delete
+  const handleDelete = () => {
+    if (!notification) return;
+
+    deleteNotification.mutate({ id: notificationId });
+  };
+
   // Check if the notification ID is valid
   const isValidObjectId = useMemo(() => {
     try {
@@ -207,7 +231,8 @@ export default function NotificationDetailPage({
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -220,16 +245,16 @@ export default function NotificationDetailPage({
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4">
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -242,46 +267,54 @@ export default function NotificationDetailPage({
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              Notification Details
-            </h1>
-            <Button
-              onClick={() => router.push("/attendee/notifications")}
-              variant="outline"
-              className="flex items-center space-x-2 border-[#072446] bg-white text-[#072446]"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Notifications</span>
-            </Button>
+          <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                Notification Details
+              </h1>
+              <Button
+                onClick={() => router.push("/attendee/notifications")}
+                className="rounded-lg bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                <span>Back to Notifications</span>
+              </Button>
+            </div>
           </div>
 
-          <div className="rounded-lg bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-[#072446]">
-                {notification.title}
-              </h2>
-              <span className="text-sm text-gray-500">
+          <div className="rounded-xl bg-white p-6 shadow-md">
+            <div className="mb-6 border-b border-gray-100 pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-2xl font-bold text-[#082865]">
+                  {notification.title}
+                </h2>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${notification.read ? "bg-gray-100 text-gray-600" : "bg-[#0055FF] text-white"}`}
+                >
+                  {notification.read ? "Read" : "Unread"}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
                 {formatDistanceToNow(new Date(notification.createdAt), {
                   addSuffix: true,
                 })}
-              </span>
+              </p>
             </div>
 
             {notification.type && (
               <div className="mb-4">
                 <span
-                  className={`rounded-full px-3 py-1 text-sm ${getNotificationTypeColor(notification.type)}`}
+                  className={`rounded-full px-3 py-1 text-sm font-medium ${getNotificationTypeColor(notification.type)}`}
                 >
                   {notification.type.replace(/_/g, " ")}
                 </span>
               </div>
             )}
 
-            <div className="mb-6 rounded-lg bg-gray-50 p-4">
-              <p className="whitespace-pre-wrap text-gray-700">
+            <div className="mb-6 rounded-lg bg-gray-50 p-6">
+              <p className="whitespace-pre-wrap leading-relaxed text-gray-600">
                 {notification.message}
               </p>
             </div>
@@ -292,7 +325,7 @@ export default function NotificationDetailPage({
                 <div className="mt-6">
                   <Button
                     onClick={() => router.push(notification.link)}
-                    className="bg-[#00b0a6] text-white hover:bg-[#009991]"
+                    className="bg-[#0055FF] text-white hover:bg-[#004BD9]"
                   >
                     View Related Content
                   </Button>
@@ -300,25 +333,43 @@ export default function NotificationDetailPage({
               )}
 
             {notification.eventId && (
-              <div className="mt-6 rounded-lg border border-gray-200 p-4">
-                <h3 className="mb-2 text-lg font-medium text-[#072446]">
+              <div className="mt-6 rounded-lg bg-gray-50 p-6 shadow-sm">
+                <h3 className="mb-3 text-lg font-bold text-[#082865]">
                   Related Event
                 </h3>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Calendar size={16} />
+                <div className="mb-4 flex items-center space-x-2 text-gray-600">
+                  <Calendar size={16} className="text-[#0055FF]" />
                   <span>Event ID: {notification.eventId}</span>
                 </div>
                 <Button
                   onClick={() =>
                     router.push(`/attendee/events/${notification.eventId}`)
                   }
-                  variant="outline"
-                  className="mt-3 border-[#00b0a6] text-[#00b0a6] hover:bg-[#00b0a6] hover:text-white"
+                  className="bg-[#0055FF] text-white hover:bg-[#004BD9]"
                 >
                   View Event
                 </Button>
               </div>
             )}
+
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-6">
+              <Button
+                variant="outline"
+                className="border-[#0055FF] bg-white text-[#0055FF] hover:bg-[#0055FF] hover:text-white"
+                onClick={handleMarkAsRead}
+                disabled={notification.read}
+              >
+                {notification.read ? "Already Read" : "Mark as Read"}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-gray-300 bg-white text-gray-600 hover:bg-gray-100"
+                onClick={handleDelete}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       </main>

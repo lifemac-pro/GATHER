@@ -37,7 +37,8 @@ const SurveysPage = () => {
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -50,16 +51,16 @@ const SurveysPage = () => {
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()} // Prevent sidebar from closing when clicking inside
           >
             <div className="flex items-center justify-between p-4">
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -72,29 +73,33 @@ const SurveysPage = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              Surveys
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Complete surveys to help us improve your event experience
-            </p>
+          <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <div>
+                <h1 className="text-2xl font-bold text-white md:text-3xl">
+                  Surveys
+                </h1>
+                <p className="mt-2 text-white/80">
+                  Complete surveys to help us improve your event experience
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Available Surveys Section */}
-          <div className="mb-8 rounded-lg bg-[#072446] p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
+          <div className="mb-8 rounded-xl bg-white p-6 shadow-md">
+            <h2 className="mb-6 text-xl font-bold text-[#082865]">
               Available Surveys
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-400">Loading surveys...</p>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
               </div>
             ) : availableSurveys && availableSurveys.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {availableSurveys.map((survey) => {
                   const surveyId =
                     typeof survey._id === "string"
@@ -104,30 +109,32 @@ const SurveysPage = () => {
                   return (
                     <div
                       key={surveyId}
-                      className="rounded-lg border-l-4 border-[#E1A913] bg-[#072446] p-4 shadow-md"
+                      className="group overflow-hidden rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-[#0055FF]/20 hover:shadow-md"
                     >
-                      <div className="flex flex-col justify-between md:flex-row md:items-center">
+                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <div>
-                          <h3 className="text-lg font-semibold text-[#E1A913]">
+                          <h3 className="text-lg font-bold text-[#082865]">
                             {survey.title}
                           </h3>
-                          <p className="text-sm text-gray-400">
+                          <p className="mt-1 text-gray-600">
                             {survey.description}
                           </p>
-                          <p className="mt-1 text-xs text-gray-500">
-                            Created{" "}
-                            {formatDistanceToNow(
-                              new Date(survey.createdAt as string),
-                              {
-                                addSuffix: true,
-                              },
-                            )}
-                          </p>
+                          <div className="mt-2 flex items-center text-xs text-gray-500">
+                            <span className="rounded-full bg-gray-100 px-2 py-1 font-medium">
+                              Created{" "}
+                              {formatDistanceToNow(
+                                new Date(survey.createdAt as string),
+                                {
+                                  addSuffix: true,
+                                },
+                              )}
+                            </span>
+                          </div>
                         </div>
                         <div className="mt-4 md:mt-0">
                           <Button
                             onClick={() => handleTakeSurvey(surveyId)}
-                            className="flex items-center space-x-2 bg-[#E1A913] text-white hover:bg-[#c6900f]"
+                            className="flex items-center space-x-2 bg-[#0055FF] text-white shadow-sm transition-all hover:bg-[#004BD9] hover:shadow-md"
                           >
                             <span>Take Survey</span>
                             <ChevronRight size={16} />
@@ -139,9 +146,11 @@ const SurveysPage = () => {
                 })}
               </div>
             ) : (
-              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-600 p-4">
-                <AlertCircle size={24} className="text-gray-400" />
-                <p className="text-center text-gray-400">
+              <div className="flex h-40 flex-col items-center justify-center space-y-3 rounded-lg border border-gray-100 bg-gray-50 p-6">
+                <div className="rounded-full bg-gray-100 p-3">
+                  <AlertCircle size={24} className="text-gray-400" />
+                </div>
+                <p className="text-center text-gray-500">
                   No surveys available at the moment.
                 </p>
               </div>
@@ -149,17 +158,17 @@ const SurveysPage = () => {
           </div>
 
           {/* Completed Surveys Section */}
-          <div className="rounded-lg bg-[#072446] p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
+          <div className="rounded-xl bg-white p-6 shadow-md">
+            <h2 className="mb-6 text-xl font-bold text-[#082865]">
               Completed Surveys
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-400">Loading surveys...</p>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
               </div>
             ) : completedSurveys && completedSurveys.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {completedSurveys.map((survey) => {
                   const surveyId =
                     typeof survey._id === "string"
@@ -169,35 +178,30 @@ const SurveysPage = () => {
                   return (
                     <div
                       key={surveyId}
-                      className="rounded-lg border-l-4 border-gray-600 bg-[#072446] p-4 shadow-md"
+                      className="group overflow-hidden rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-green-500/20 hover:shadow-md"
                     >
-                      <div className="flex flex-col justify-between md:flex-row md:items-center">
+                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <div>
-                          <div className="flex items-center">
-                            <h3 className="text-lg font-semibold text-[#E1A913]">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-[#082865]">
                               {survey.title}
                             </h3>
-                            <CheckCircle
-                              size={16}
-                              className="ml-2 text-green-500"
-                            />
+                            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                              <CheckCircle size={12} /> Completed
+                            </span>
                           </div>
-                          <p className="text-sm text-gray-400">
+                          <p className="mt-1 text-gray-600">
                             {survey.description}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500">
-                            Completed
                           </p>
                         </div>
                         <div className="mt-4 md:mt-0">
                           <Button
-                            variant="outline"
                             onClick={() =>
                               router.push(
                                 `/attendee/surveys/${surveyId}/results`,
                               )
                             }
-                            className="flex items-center space-x-2 bg-[#E1A913] text-white hover:bg-[#c6900f]"
+                            className="flex items-center space-x-2 bg-[#0055FF] text-white shadow-sm transition-all hover:bg-[#004BD9] hover:shadow-md"
                           >
                             <span>View Results</span>
                             <ChevronRight size={16} />
@@ -209,9 +213,11 @@ const SurveysPage = () => {
                 })}
               </div>
             ) : (
-              <div className="flex h-40 flex-col items-center justify-center space-y-2 rounded-lg border-2 border-dashed border-gray-600 p-4">
-                <AlertCircle size={24} className="text-gray-400" />
-                <p className="text-center text-gray-400">
+              <div className="flex h-40 flex-col items-center justify-center space-y-3 rounded-lg border border-gray-100 bg-gray-50 p-6">
+                <div className="rounded-full bg-gray-100 p-3">
+                  <AlertCircle size={24} className="text-gray-400" />
+                </div>
+                <p className="text-center text-gray-500">
                   You haven&apos;t completed any surveys yet.
                 </p>
               </div>

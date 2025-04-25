@@ -13,55 +13,56 @@ const Sidebar = () => {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="sticky top-0 flex h-screen w-60 flex-col justify-between overflow-y-auto bg-[#072446] p-5 text-[#B0B8C5]">
+    <div className="sticky top-0 flex h-screen w-64 flex-col justify-between overflow-y-auto bg-gradient-to-b from-[#082865] to-[#004BD9] p-6 text-white">
       {/* Navigation Links */}
       <div>
-        <h2 className="mb-6 text-xl font-bold text-[#E1A913]">GatherEase</h2>
-        <nav className="space-y-4">
+        <h2 className="mb-8 text-2xl font-bold text-white">GatherEase</h2>
+        <nav className="space-y-6">
           <Link
             href="/attendee/dashboard"
-            className={`flex items-center gap-2 hover:text-[#00b0a6] ${
-              isActive("/attendee/dashboard") ? "text-[#00b0a6]" : ""
-            }`}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/attendee/dashboard")
+              ? "bg-white/10 text-white font-medium"
+              : "text-white/70 hover:bg-white/5 hover:text-white"}`}
           >
-            <Home size={20} /> Dashboard
+            <Home size={18} strokeWidth={2} /> Dashboard
           </Link>
           <Link
             href="/attendee/events"
-            className={`flex items-center gap-2 hover:text-[#00b0a6] ${
-              isActive("/attendee/events") ? "text-[#00b0a6]" : ""
-            }`}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/attendee/events")
+              ? "bg-white/10 text-white font-medium"
+              : "text-white/70 hover:bg-white/5 hover:text-white"}`}
           >
-            <Calendar size={20} /> My Events
+            <Calendar size={18} strokeWidth={2} /> My Events
           </Link>
           <Link
             href="/attendee/notifications"
-            className={`flex items-center gap-2 hover:text-[#00b0a6] ${
-              isActive("/attendee/notifications") ? "text-[#00b0a6]" : ""
-            }`}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/attendee/notifications")
+              ? "bg-white/10 text-white font-medium"
+              : "text-white/70 hover:bg-white/5 hover:text-white"}`}
           >
-            <Bell size={20} /> Notifications
+            <Bell size={18} strokeWidth={2} />
+            <span className="flex-1">Notifications</span>
             {!isError && unreadCount && unreadCount > 0 && (
-              <span className="rounded-full bg-red-500 px-2 py-1 text-xs text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0055FF] text-xs font-medium text-white">
                 {unreadCount}
               </span>
             )}
           </Link>
           <Link
             href="/attendee/surveys"
-            className={`flex items-center gap-2 hover:text-[#00b0a6] ${
-              isActive("/attendee/surveys") ? "text-[#00b0a6]" : ""
-            }`}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/attendee/surveys")
+              ? "bg-white/10 text-white font-medium"
+              : "text-white/70 hover:bg-white/5 hover:text-white"}`}
           >
-            <List size={20} /> Surveys
+            <List size={18} strokeWidth={2} /> Surveys
           </Link>
           <Link
             href="/attendee/settings"
-            className={`flex items-center gap-2 hover:text-[#00b0a6] ${
-              isActive("/attendee/settings") ? "text-[#00b0a6]" : ""
-            }`}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${isActive("/attendee/settings")
+              ? "bg-white/10 text-white font-medium"
+              : "text-white/70 hover:bg-white/5 hover:text-white"}`}
           >
-            <Settings size={20} /> Settings
+            <Settings size={18} strokeWidth={2} /> Settings
           </Link>
         </nav>
       </div>
@@ -69,9 +70,9 @@ const Sidebar = () => {
       {/* Logout Button */}
       <SignOutButton
         redirectUrl="/"
-        className="mt-4 flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
+        className="mt-6 flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white backdrop-blur-sm transition-all hover:bg-white/10"
       >
-        <LogOut size={20} /> Sign Out
+        <LogOut size={18} strokeWidth={2} /> Sign Out
       </SignOutButton>
     </div>
   );

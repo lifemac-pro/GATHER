@@ -177,8 +177,8 @@ const SettingsPage = () => {
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
-        <h2 className="text-xl font-bold text-[#E1A913]">GatherEase</h2>
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -191,17 +191,16 @@ const SettingsPage = () => {
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()} // Prevent sidebar from closing when clicking inside
           >
             <div className="flex items-center justify-between p-4">
-              {/* <h2 className="text-xl font-bold text-[#E1A913]">GatherEase</h2> */}
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -214,33 +213,38 @@ const SettingsPage = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
-        <h1 className="mb-6 text-2xl font-bold text-gray-800 md:text-3xl">
-          Settings
-        </h1>
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
+        <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+          <h1 className="text-2xl font-bold text-white md:text-3xl">
+            Settings
+          </h1>
+          <p className="mt-2 text-white/80">
+            Manage your profile and notification preferences
+          </p>
+        </div>
 
         {isUserLoading ? (
-          <div className="flex h-60 items-center justify-center rounded-lg bg-[#072446] p-6 shadow-md">
-            <Loader2 className="mr-2 h-6 w-6 animate-spin text-[#E1A913]" />
-            <p className="text-gray-400">Loading your profile...</p>
+          <div className="flex h-60 items-center justify-center rounded-xl bg-white p-6 shadow-md">
+            <div className="flex items-center">
+              <div className="mr-3 h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
+              <p className="text-gray-600">Loading your profile...</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Profile Section */}
-            <section className="rounded-lg bg-[#072446] p-6 shadow-md">
-              <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
-                Profile
-              </h2>
+            <section className="rounded-xl bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-bold text-[#082865]">Profile</h2>
 
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-400">
+                    <label className="block text-sm font-medium text-gray-600">
                       Full Name
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Enter your full name"
@@ -248,12 +252,12 @@ const SettingsPage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400">
+                    <label className="block text-sm font-medium text-gray-600">
                       Email
                     </label>
                     <input
                       type="email"
-                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
@@ -263,11 +267,11 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400">
+                  <label className="block text-sm font-medium text-gray-600">
                     Bio
                   </label>
                   <textarea
-                    className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                    className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell us about yourself"
@@ -277,24 +281,24 @@ const SettingsPage = () => {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-400">
+                    <label className="block text-sm font-medium text-gray-600">
                       Organization
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                       value={organization}
                       onChange={(e) => setOrganization(e.target.value)}
                       placeholder="Your company or organization"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400">
+                    <label className="block text-sm font-medium text-gray-600">
                       Job Title
                     </label>
                     <input
                       type="text"
-                      className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                      className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder="Your job title"
@@ -303,12 +307,12 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-400">
+                  <label className="block text-sm font-medium text-gray-600">
                     Phone Number
                   </label>
                   <input
                     type="tel"
-                    className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-[#E1A913] focus:ring-[#E1A913]"
+                    className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-[#0055FF] focus:ring-[#0055FF]"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Your phone number"
@@ -319,7 +323,7 @@ const SettingsPage = () => {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={handleProfileSave}
-                  className="rounded-md bg-[#E1A913] px-4 py-2 font-medium text-white hover:bg-[#c6900f]"
+                  className="rounded-md bg-[#0055FF] px-4 py-2 font-medium text-white shadow-sm transition-all hover:bg-[#004BD9] hover:shadow-md"
                   disabled={isProfileSaving}
                 >
                   {isProfileSaving ? (
@@ -338,8 +342,8 @@ const SettingsPage = () => {
             </section>
 
             {/* Notifications Section */}
-            <section className="rounded-lg bg-[#072446] p-6 shadow-md">
-              <h2 className="mb-2 text-xl font-semibold text-[#E1A913]">
+            <section className="rounded-xl bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-bold text-[#082865]">
                 Notifications
               </h2>
 
@@ -348,13 +352,13 @@ const SettingsPage = () => {
                   <input
                     id="emailNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF]"
                     checked={emailNotifications}
                     onChange={() => setEmailNotifications(!emailNotifications)}
                   />
                   <label
                     htmlFor="emailNotifications"
-                    className="text-sm text-gray-400"
+                    className="text-sm text-gray-600"
                   >
                     Receive email notifications
                   </label>
@@ -364,13 +368,13 @@ const SettingsPage = () => {
                   <input
                     id="inAppNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF]"
                     checked={inAppNotifications}
                     onChange={() => setInAppNotifications(!inAppNotifications)}
                   />
                   <label
                     htmlFor="inAppNotifications"
-                    className="text-sm text-gray-400"
+                    className="text-sm text-gray-600"
                   >
                     Receive in-app notifications
                   </label>
@@ -380,13 +384,13 @@ const SettingsPage = () => {
                   <input
                     id="eventReminders"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF]"
                     checked={eventReminders}
                     onChange={() => setEventReminders(!eventReminders)}
                   />
                   <label
                     htmlFor="eventReminders"
-                    className="text-sm text-gray-400"
+                    className="text-sm text-gray-600"
                   >
                     Receive event reminders
                   </label>
@@ -396,7 +400,7 @@ const SettingsPage = () => {
                   <input
                     id="surveyNotifications"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#E1A913] focus:ring-[#E1A913]"
+                    className="h-4 w-4 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF]"
                     checked={surveyNotifications}
                     onChange={() =>
                       setSurveyNotifications(!surveyNotifications)
@@ -404,7 +408,7 @@ const SettingsPage = () => {
                   />
                   <label
                     htmlFor="surveyNotifications"
-                    className="text-sm text-gray-400"
+                    className="text-sm text-gray-600"
                   >
                     Receive survey notifications
                   </label>
@@ -414,7 +418,7 @@ const SettingsPage = () => {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={handleNotificationsSave}
-                  className="rounded-md bg-[#E1A913] px-4 py-2 font-medium text-white hover:bg-[#c6900f]"
+                  className="rounded-md bg-[#0055FF] px-4 py-2 font-medium text-white shadow-sm transition-all hover:bg-[#004BD9] hover:shadow-md"
                   disabled={isNotificationsSaving}
                 >
                   {isNotificationsSaving ? (

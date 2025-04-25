@@ -92,7 +92,8 @@ const NotificationsPage = () => {
       </aside>
 
       {/* Mobile Navbar */}
-      <nav className="flex items-center justify-between bg-[#072446] p-4 md:hidden">
+      <nav className="flex items-center justify-between bg-[#082865] p-4 shadow-md md:hidden">
+        <h2 className="text-xl font-bold text-white">GatherEase</h2>
         <button
           className="text-white"
           onClick={() => setMobileMenuOpen(true)}
@@ -105,16 +106,16 @@ const NotificationsPage = () => {
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-screen w-64 transform bg-[#072446] text-[#B0B8C5] shadow-lg transition-transform duration-300"
+            className="fixed left-0 top-0 h-screen w-72 transform bg-gradient-to-b from-[#082865] to-[#004BD9] shadow-lg transition-transform duration-300"
             onClick={(e) => e.stopPropagation()} // Prevent sidebar from closing when clicking inside
           >
             <div className="flex items-center justify-between p-4">
               <button
-                className="text-white"
+                className="absolute right-4 top-4 text-white/80 transition hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close Menu"
               >
@@ -127,45 +128,47 @@ const NotificationsPage = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#6fc3f7] p-6">
+      <main className="flex-1 bg-gradient-to-b from-[#f0f9ff] to-[#e0f2fe] p-6">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              Notifications
-            </h1>
-            <div className="flex space-x-2">
-              {unreadCount && unreadCount > 0 && (
-                <Button
-                  onClick={handleMarkAllAsRead}
-                  className="bg-[#E1A913] text-white hover:bg-[#c99a0f]"
-                >
-                  Mark all as read
-                </Button>
-              )}
-              {notifications && notifications.length > 0 && (
-                <Button
-                  onClick={handleDeleteAll}
-                  className="bg-red-500 text-white hover:bg-red-600"
-                >
-                  Delete all
-                </Button>
-              )}
+          <div className="mb-6 rounded-xl bg-gradient-to-r from-[#082865] to-[#0055FF] p-6 shadow-lg">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                Notifications
+              </h1>
+              <div className="flex flex-wrap gap-2">
+                {unreadCount && unreadCount > 0 && (
+                  <Button
+                    onClick={handleMarkAllAsRead}
+                    className="rounded-lg bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+                  >
+                    Mark all as read
+                  </Button>
+                )}
+                {notifications && notifications.length > 0 && (
+                  <Button
+                    onClick={handleDeleteAll}
+                    className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white backdrop-blur-sm transition-all hover:bg-white/10"
+                  >
+                    Delete all
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Main Card Container */}
-          <div className="rounded-lg bg-[#072446] p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold text-[#E1A913]">
+          <div className="rounded-xl bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-bold text-[#082865]">
               Your Notifications
             </h2>
 
             {isLoading ? (
               <div className="flex h-40 items-center justify-center">
-                <p className="text-gray-400">Loading notifications...</p>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0055FF] border-t-transparent"></div>
               </div>
             ) : notifications?.length === 0 ? (
-              <div className="rounded-lg border border-gray-600 bg-[#072446] p-4">
-                <p className="text-gray-400">
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-6 text-center">
+                <p className="text-gray-500">
                   No notifications available at the moment.
                 </p>
               </div>
@@ -180,7 +183,7 @@ const NotificationsPage = () => {
                   return (
                     <div
                       key={notificationId}
-                      className={`rounded-lg border-l-4 ${notification.read ? "border-gray-600" : "border-[#E1A913]"} bg-[#072446] p-4 shadow-md`}
+                      className={`rounded-lg border-l-4 ${notification.read ? "border-gray-300" : "border-[#0055FF]"} bg-white p-4 shadow-sm transition-all hover:shadow-md`}
                     >
                       {/* Notification Header - Always Visible */}
                       <div className="flex items-center justify-between">
@@ -191,11 +194,11 @@ const NotificationsPage = () => {
                           }
                         >
                           <div className="flex items-center">
-                            <h2 className="text-lg font-semibold text-[#E1A913]">
+                            <h2 className="text-lg font-semibold text-[#082865]">
                               {notification.title}
                             </h2>
                             {!notification.read && (
-                              <span className="ml-2 inline-block rounded-full bg-[#E1A913] px-2 py-0.5 text-xs text-white">
+                              <span className="ml-2 inline-block rounded-full bg-[#0055FF] px-2 py-0.5 text-xs font-medium text-white">
                                 New
                               </span>
                             )}
@@ -211,7 +214,7 @@ const NotificationsPage = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 rounded-full p-0 text-red-500 hover:bg-red-100 hover:text-red-600"
+                            className="h-8 w-8 rounded-full p-0 text-gray-400 hover:bg-gray-100 hover:text-red-500"
                             onClick={(e) => {
                               e.stopPropagation();
                               void handleDelete(notificationId);
@@ -236,23 +239,23 @@ const NotificationsPage = () => {
 
                       {/* Expanded Content */}
                       {expandedNotificationId === notificationId && (
-                        <div className="mt-3 border-t border-gray-600 pt-3">
-                          <p className="text-gray-400">
+                        <div className="mt-3 border-t border-gray-100 pt-3">
+                          <p className="text-gray-600">
                             {notification.message}
                           </p>
 
                           {notification.type && (
                             <div className="mt-2 text-sm">
-                              <span className="rounded-full border border-gray-600 bg-[#072446] px-2 py-1 text-xs text-gray-400">
+                              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
                                 {notification.type.replace(/_/g, " ")}
                               </span>
                             </div>
                           )}
 
-                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                             <Link
                               href={`/attendee/notification/${notificationId}`}
-                              className="inline-flex items-center text-sm text-[#E1A913] hover:underline"
+                              className="inline-flex items-center text-sm font-medium text-[#0055FF] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span>View Details</span>
@@ -263,7 +266,7 @@ const NotificationsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-[#E1A913] bg-[#072446] text-[#E1A913] hover:bg-[#E1A913] hover:text-white"
+                                className="border-[#0055FF] bg-white text-[#0055FF] hover:bg-[#0055FF] hover:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   void handleMarkAsRead(notificationId);
@@ -275,7 +278,7 @@ const NotificationsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-red-500 bg-[#072446] text-red-500 hover:bg-red-500 hover:text-white"
+                                className="border-gray-300 bg-white text-gray-600 hover:bg-gray-100"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   void handleDelete(notificationId);
