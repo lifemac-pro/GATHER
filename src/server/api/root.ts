@@ -13,6 +13,8 @@ import { surveyTemplateRouter } from "@/server/api/routers/survey-template";
 import { attendeeRouter } from "@/server/api/routers/attendee";
 import { waitlistRouter } from "@/server/api/routers/waitlist";
 import { eventTemplateRouter } from "@/server/api/routers/event-template";
+import { registrationFormRouter } from "@/server/api/routers/registration-form";
+import { registrationSubmissionRouter } from "@/server/api/routers/registration-submission";
 
 /**
  * This is the primary router for your server.
@@ -33,6 +35,8 @@ export const appRouter = createTRPCRouter({
   attendee: attendeeRouter,
   waitlist: waitlistRouter,
   eventTemplate: eventTemplateRouter,
+  registrationForm: registrationFormRouter,
+  registrationSubmission: registrationSubmissionRouter,
 });
 
 // export type definition of API

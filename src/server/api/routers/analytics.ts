@@ -211,7 +211,7 @@ export const analyticsRouter = createTRPCRouter({
           revenue,
           conversionRate,
           totalAttendees: attendees.length,
-          checkedInAttendees: attendees.filter((a) => a.status === "checked-in")
+          checkedInAttendees: attendees.filter((a) => (a.status === "attended" || a.checkedInAt))
             .length,
         };
       } catch (error) {
@@ -317,6 +317,7 @@ function calculateRegistrationTrend(
     ([date, count]) => ({
       date,
       count,
+      cumulative: 0, // Initialize cumulative property
     }),
   );
 
@@ -344,7 +345,7 @@ function calculateCheckInTrend(
 
   // Filter attendees by date range if provided and check-in status
   let filteredAttendees = attendees.filter(
-    (attendee) => attendee.status === "checked-in" && attendee.checkedInAt,
+    (attendee) => (attendee.status === "attended" || attendee.checkedInAt),
   );
   if (startDate && endDate) {
     filteredAttendees = filteredAttendees.filter((attendee) => {
@@ -365,6 +366,7 @@ function calculateCheckInTrend(
   const trend = Array.from(checkInsByDate.entries()).map(([date, count]) => ({
     date,
     count,
+    cumulative: 0, // Initialize cumulative property
   }));
 
   // Sort by date
@@ -391,8 +393,17 @@ function calculateStatusBreakdown(attendees: any[]) {
   };
 
   attendees.forEach((attendee) => {
-    const status = attendee.status || "registered";
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
+    // Map any status to one of our known statuses
+    let status = attendee.status || "registered";
+    // Handle the case where status might be "checked-in" in the data but not in our type
+    if (status === "checked-in") status = "attended";
+    // Only increment if it's one of our known statuses
+    if (status in statusCounts) {
+      statusCounts[status as keyof typeof statusCounts] += 1;
+    } else {
+      // Default to registered if unknown status
+      statusCounts.registered += 1;
+    }
   });
 
   // Convert to array of objects
@@ -419,7 +430,11 @@ async function calculateDemographics(attendees: any[]) {
 
   // Convert to array and sort by count
   const domainData = Array.from(emailDomains.entries())
-    .map(([domain, count]) => ({ domain, count }))
+    .map(([domain, count]) => ({
+      domain,
+      count,
+      percentage: 0 // Initialize percentage property
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10); // Top 10 domains
 
@@ -441,7 +456,11 @@ async function calculateDemographics(attendees: any[]) {
 
   // Convert to array and sort by count
   const locationData = Array.from(locations.entries())
-    .map(([location, count]) => ({ location, count }))
+    .map(([location, count]) => ({
+      location,
+      count,
+      percentage: 0 // Initialize percentage property
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10); // Top 10 locations
 
@@ -507,7 +526,7 @@ function calculateRevenue(attendees: any[], event: any) {
     registered:
       price * attendees.filter((a) => a.status === "registered").length,
     "checked-in":
-      price * attendees.filter((a) => a.status === "checked-in").length,
+      price * attendees.filter((a) => a.status === "attended" || a.checkedInAt).length,
     cancelled: price * attendees.filter((a) => a.status === "cancelled").length,
     waitlisted:
       price * attendees.filter((a) => a.status === "waitlisted").length,
@@ -533,9 +552,9 @@ function calculateRevenue(attendees: any[], event: any) {
 }
 
 // Helper function to calculate conversion rate
-function calculateConversionRate(attendees: any[], event: any) {
+function calculateConversionRate(attendees: any[], _event: any) {
   const totalRegistrations = attendees.length;
-  const checkedIn = attendees.filter((a) => a.status === "checked-in").length;
+  const checkedIn = attendees.filter((a) => a.status === "attended" || a.checkedInAt).length;
 
   return {
     registrationToCheckIn:

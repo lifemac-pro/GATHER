@@ -32,6 +32,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/use-toast";
 import { SurveyTemplateForm } from "@/components/ui/survey/survey-template-form";
+import { SurveyShare } from "@/components/ui/survey/survey-share";
 import { format } from "date-fns";
 import {
   Plus,
@@ -250,11 +251,18 @@ export default function EventSurveysPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
+                        <SurveyShare
+                          surveyId={template.id}
+                          eventId={params.id}
+                          surveyName={template.name}
+                        />
+
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() => handleSendNow(template.id)}
                           disabled={isSending === template.id}
+                          title="Send to all attendees"
                         >
                           {isSending === template.id ? (
                             <LoadingSpinner size="sm" />

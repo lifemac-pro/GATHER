@@ -345,3 +345,118 @@ export interface PostInput {
 export interface PostDocument extends BaseDocument, PostInput {}
 
 export type PostModel = BaseModel<PostDocument>
+
+/**
+ * Registration Form Field Types
+ */
+export interface RegistrationFormField {
+  id: string;
+  label: string;
+  type: "text" | "email" | "phone" | "number" | "date" | "select" | "checkbox" | "radio" | "textarea" | "file";
+  placeholder?: string;
+  helpText?: string;
+  required: boolean;
+  options?: string[];
+  validation?: string;
+  order: number;
+  defaultValue?: string;
+  isHidden?: boolean;
+  isSystem?: boolean;
+  maxLength?: number;
+  minLength?: number;
+  maxSize?: number;
+  allowedFileTypes?: string[];
+}
+
+/**
+ * Registration Form Section Types
+ */
+export interface RegistrationFormSection {
+  id: string;
+  title: string;
+  description?: string;
+  order: number;
+  fields: RegistrationFormField[];
+  isCollapsible?: boolean;
+  isCollapsed?: boolean;
+}
+
+/**
+ * Registration Form Template interfaces
+ */
+export interface RegistrationFormInput {
+  eventId: string;
+  name: string;
+  description?: string;
+  sections: RegistrationFormSection[];
+  isActive: boolean;
+  isDefault?: boolean;
+  requiresApproval?: boolean;
+  collectPayment?: boolean;
+  paymentAmount?: number;
+  paymentCurrency?: string;
+  paymentDescription?: string;
+  maxRegistrations?: number;
+  startDate?: Date;
+  endDate?: Date;
+  createdById: string;
+}
+
+export interface RegistrationFormDocument extends BaseDocument, RegistrationFormInput {}
+
+export interface RegistrationFormModel extends BaseModel<RegistrationFormDocument> {
+  findByEvent(eventId: string): Promise<RegistrationFormDocument[]>;
+  findActiveByEvent(eventId: string): Promise<RegistrationFormDocument | null>;
+}
+
+/**
+ * Registration Submission Field Response
+ */
+export interface FieldResponse {
+  fieldId: string;
+  fieldLabel: string;
+  value: any;
+  fileUrl?: string;
+}
+
+/**
+ * Registration Submission Section Response
+ */
+export interface SectionResponse {
+  sectionId: string;
+  sectionTitle: string;
+  fields: FieldResponse[];
+}
+
+/**
+ * Registration Submission interfaces
+ */
+export interface RegistrationSubmissionInput {
+  formId: string;
+  eventId: string;
+  userId: string;
+  attendeeId?: string;
+  sections: SectionResponse[];
+  status: "pending" | "approved" | "rejected" | "cancelled" | "confirmed";
+  paymentStatus: "not_required" | "pending" | "completed" | "failed" | "refunded";
+  paymentIntentId?: string;
+  paymentAmount?: number;
+  paymentCurrency?: string;
+  notes?: string;
+  rejectionReason?: string;
+  submittedAt: Date;
+  approvedAt?: Date;
+  approvedById?: string;
+  rejectedAt?: Date;
+  rejectedById?: string;
+  confirmedAt?: Date;
+}
+
+export interface RegistrationSubmissionDocument extends BaseDocument, RegistrationSubmissionInput {}
+
+export interface RegistrationSubmissionModel extends BaseModel<RegistrationSubmissionDocument> {
+  findByEvent(eventId: string): Promise<RegistrationSubmissionDocument[]>;
+  findByUser(userId: string): Promise<RegistrationSubmissionDocument[]>;
+  findByForm(formId: string): Promise<RegistrationSubmissionDocument[]>;
+  countByStatus(eventId: string): Promise<Array<{ _id: string; count: number }>>;
+}

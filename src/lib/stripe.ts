@@ -1,12 +1,10 @@
-import { loadStripe } from "@stripe/stripe-js";
+"use server";
+
 import Stripe from "stripe";
 import { env } from "@/env";
 
+// Server-side only - uses the secret key
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-03-31.basil",
   typescript: true,
 });
-
-export const stripePromise = loadStripe(
-  env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
-);

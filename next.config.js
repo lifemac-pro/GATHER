@@ -29,7 +29,6 @@ const config = {
   // Production optimizations
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
 
   // Configure headers for security
   async headers() {

@@ -1,8 +1,9 @@
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdvancedAnalytics } from "@/components/analytics/advanced-analytics";
 import { api } from "@/trpc/react";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 
 // Mock the TRPC API
 vi.mock("@/trpc/react", () => ({
@@ -161,7 +162,7 @@ describe("Advanced Analytics Feature", () => {
   });
 
   it("updates date range", async () => {
-    const mockUseQuery = api.analytics.getEventAnalytics.useQuery as vi.Mock;
+    const mockUseQuery = api.analytics.getEventAnalytics.useQuery as Mock;
 
     render(<AdvancedAnalytics eventId="test-event-id" />);
 
@@ -184,7 +185,7 @@ describe("Advanced Analytics Feature", () => {
 
   it("handles loading state", () => {
     // Mock loading state
-    (api.analytics.getEventAnalytics.useQuery as vi.Mock).mockReturnValueOnce({
+    (api.analytics.getEventAnalytics.useQuery as Mock).mockReturnValueOnce({
       data: null,
       isLoading: true,
       error: null,

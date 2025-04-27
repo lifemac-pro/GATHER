@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -38,15 +41,65 @@ import { Star } from "lucide-react";
 
 const COLORS = ["#072446", "#E1A913", "#00b0a6", "#B0B8C5"];
 
+// Define types for the survey data
+interface SurveyResponse {
+  id: string;
+  event: {
+    id: string;
+    name: string;
+  };
+  user: {
+    id: string;
+    name: string;
+  };
+  rating: number;
+  feedback: string;
+  submittedAt: string;
+}
+
+interface EventStats {
+  eventId: string | null;
+  eventName: string;
+  avgRating: number;
+  responseCount: number;
+}
+
+interface SurveyStats {
+  sentiment: {
+    positive: number;
+    neutral: number;
+    negative: number;
+    total: number;
+  };
+  ratingDistribution: Record<string, number>;
+  monthlyTrends: Array<{
+    month: string;
+    avgRating: number;
+    count: number;
+  }>;
+  topEvents: EventStats[];
+}
+
 export default function SurveysPage() {
-  const [selectedEventId, setSelectedEventId] = useState<string>();
+  const router = useRouter();
+  const [selectedEventId, setSelectedEventId] = useState<string>("all");
+
+  // Only pass eventId to the query if it's not "all"
   const { data: surveys } = api.survey.getAll.useQuery({
-    eventId: selectedEventId,
-  });
-  const { data: stats } = api.survey.getStats.useQuery();
+    eventId: selectedEventId !== "all" ? selectedEventId : undefined,
+  }) as { data: SurveyResponse[] | undefined };
+
+  const { data: stats } = api.survey.getStats.useQuery() as { data: SurveyStats | undefined };
 
   if (!stats) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-[70vh] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-lg font-medium">Loading survey data...</p>
+        </div>
+      </div>
+    );
   }
 
   // Prepare data for sentiment chart
@@ -66,7 +119,16 @@ export default function SurveysPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#072446]">Survey Feedback</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-[#072446]">Survey Feedback</h1>
+        <Button
+          onClick={() => router.push("/admin/surveys/create")}
+          className="bg-[#072446] hover:bg-[#051a33]"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create Survey
+        </Button>
+      </div>
 
       {/* Charts Grid */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -168,9 +230,9 @@ export default function SurveysPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {stats.topEvents.map((event) => (
+              {stats.topEvents.map((event, index) => (
                 <div
-                  key={event.eventId}
+                  key={event.eventId ?? `event-${index}`}
                   className="flex items-center justify-between border-b pb-2 last:border-0"
                 >
                   <div>
@@ -202,10 +264,15 @@ export default function SurveysPage() {
                 <SelectValue placeholder="Filter by event" />
               </SelectTrigger>
               <SelectContent>
-                {stats.topEvents.map((event) => (
-                  <SelectItem key={event.eventId} value={event.eventId}>
-                    {event.eventName}
-                  </SelectItem>
+                <SelectItem key="all-events" value="all">
+                  All Events
+                </SelectItem>
+                {stats.topEvents.map((event, index) => (
+                  event.eventId ? (
+                    <SelectItem key={event.eventId} value={event.eventId}>
+                      {event.eventName}
+                    </SelectItem>
+                  ) : null
                 ))}
               </SelectContent>
             </Select>
@@ -223,24 +290,32 @@ export default function SurveysPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {surveys?.map((survey: any) => (
-                <TableRow key={survey.id}>
-                  <TableCell>{survey.event.name}</TableCell>
-                  <TableCell>{survey.user.name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-[#E1A913]" fill="#E1A913" />
-                      <span>{survey.rating}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {survey.feedback}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(survey.submittedAt), "MMM d, yyyy")}
+              {!surveys || surveys.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No survey responses found
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                surveys.map((survey) => (
+                  <TableRow key={survey.id}>
+                    <TableCell>{survey.event.name}</TableCell>
+                    <TableCell>{survey.user.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-[#E1A913]" fill="#E1A913" />
+                        <span>{survey.rating}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-md truncate">
+                      {survey.feedback}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(survey.submittedAt), "MMM d, yyyy")}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

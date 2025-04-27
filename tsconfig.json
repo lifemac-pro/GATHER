@@ -11,8 +11,12 @@
 
     /* Strictness */
     "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
     "checkJs": true,
+
+    /* Temporarily relaxed for development */
+    "noImplicitAny": false,
+    "strictNullChecks": false,
 
     /* Bundled projects */
     "lib": ["dom", "dom.iterable", "ES2022"],

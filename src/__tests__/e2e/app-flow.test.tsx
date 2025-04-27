@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { api } from "@/trpc/react";
@@ -6,7 +7,7 @@ import EventsPage from "@/app/events/page";
 import EventDetailsPage from "@/app/events/[id]/page";
 import AdminDashboardPage from "@/app/admin/page";
 import AdminEventsPage from "@/app/admin/events/page";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 
 // Mock the TRPC API
 vi.mock("@/trpc/react", () => ({
@@ -325,7 +326,7 @@ vi.mock("next/navigation", () => ({
 
 // Mock next/link
 vi.mock("next/link", () => ({
-  default: ({ href, children }) => {
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => {
     return <a href={href}>{children}</a>;
   },
 }));
@@ -350,9 +351,12 @@ vi.mock("@clerk/nextjs", () => ({
 }));
 
 // Mock Stripe
+vi.mock("@/lib/stripe-client", () => ({
+  stripePromise: Promise.resolve({}),
+}));
+
 vi.mock("@/lib/stripe", () => ({
   stripe: {},
-  stripePromise: Promise.resolve({}),
 }));
 
 // Mock useParams
@@ -396,7 +400,7 @@ describe("End-to-End Application Flow", () => {
 
   it.skip("renders the event details page with event information", async () => {
     // Mock the event details for a non-recurring event
-    (api.event.getById.useQuery as vi.Mock).mockReturnValueOnce({
+    (api.event.getById.useQuery as Mock).mockReturnValueOnce({
       data: {
         id: "event-1",
         name: "Tech Conference 2023",
@@ -429,7 +433,7 @@ describe("End-to-End Application Flow", () => {
 
   it.skip("renders the event details page for a recurring virtual event", async () => {
     // Mock the event details for a recurring virtual event
-    (api.event.getById.useQuery as vi.Mock).mockReturnValueOnce({
+    (api.event.getById.useQuery as Mock).mockReturnValueOnce({
       data: {
         id: "event-2",
         name: "Weekly Team Meeting",

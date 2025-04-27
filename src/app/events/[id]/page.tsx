@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,12 +39,16 @@ export default function EventDetailsPage({
 }: {
   params: { id: string };
 }) {
+  // Unwrap params using React.use()
+  const unwrappedParams = React.use(params);
+  const eventId = unwrappedParams.id;
+
   // Get user session from Clerk
   const { isSignedIn, user } = useUser();
   const [showPayment, setShowPayment] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
   const { data: event, isLoading } = api.event.getById.useQuery({
-    id: params.id,
+    id: eventId,
   });
   const register = api.attendee.register.useMutation({
     onSuccess: () => {
@@ -58,15 +63,15 @@ export default function EventDetailsPage({
   // Get registration status for current user
   const { data: registration, isLoading: isRegistrationLoading } =
     api.attendee.getRegistration.useQuery(
-      { eventId: params.id },
-      { enabled: !!isSignedIn && !!params.id },
+      { eventId },
+      { enabled: !!isSignedIn && !!eventId },
     );
 
   // Get attendees for this event
   const { data: attendees, isLoading: isAttendeesLoading } =
     api.attendee.getByEvent.useQuery(
-      { eventId: params.id },
-      { enabled: !!params.id },
+      { eventId },
+      { enabled: !!eventId },
     );
 
   if (isLoading) {
@@ -104,7 +109,7 @@ export default function EventDetailsPage({
 
   const handlePaymentSuccess = async () => {
     await register.mutateAsync({
-      eventId: params.id,
+      eventId,
       name: user?.fullName || "",
       email: user?.primaryEmailAddress?.emailAddress || "",
     });

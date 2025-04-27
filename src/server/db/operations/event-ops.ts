@@ -654,4 +654,83 @@ export const EventOps = {
   async createTestEventIfNoneExist(): Promise<Event | null> {
     return null;
   },
+
+  // Get events by IDs
+  async getByIds(ids: string[]): Promise<Event[]> {
+    try {
+      console.log("EventOps.getByIds: Starting with", ids.length, "IDs");
+      const mongoose = await connectToDatabase();
+      console.log("EventOps.getByIds: Database connected");
+
+      // Check if connection is established
+      if (!mongoose.connection || mongoose.connection.readyState !== 1) {
+        console.error(
+          "EventOps.getByIds: MongoDB connection not ready, state:",
+          mongoose.connection?.readyState,
+        );
+        return [];
+      }
+
+      const db = mongoose.connection.db;
+      if (!db) {
+        console.error("EventOps.getByIds: Database connection not established");
+        return [];
+      }
+
+      // If no IDs provided, return empty array
+      if (!ids || ids.length === 0) {
+        console.log("EventOps.getByIds: No IDs provided");
+        return [];
+      }
+
+      console.log("EventOps.getByIds: Querying events by IDs");
+      // Find events by IDs with timeout
+      const events = await Promise.race([
+        db
+          .collection("events")
+          .find({ id: { $in: ids } })
+          .toArray(),
+        new Promise<any[]>((_, reject) =>
+          setTimeout(() => {
+            console.error("EventOps.getByIds: Query timeout");
+            reject(new Error("MongoDB query timed out"));
+          }, 5000),
+        ),
+      ]);
+
+      console.log("EventOps.getByIds: Found", events.length, "events");
+
+      // Process events to ensure valid dates
+      return events.map((event) => {
+        try {
+          return {
+            ...(event as unknown as Event),
+            startDate: ensureValidDate(event.startDate),
+            endDate: ensureValidDate(event.endDate),
+            name: event.name || "Unnamed Event",
+            category: event.category || "general",
+            status: event.status || "published",
+          };
+        } catch (mapError) {
+          console.error("EventOps.getByIds: Error mapping event:", mapError);
+          // Return a minimal valid event object
+          return {
+            id: event.id || "unknown-id",
+            name: "Error Event",
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 3600000),
+            category: "general",
+            status: "published",
+            createdById: "system",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+      });
+    } catch (error) {
+      console.error("EventOps.getByIds: Caught error:", error);
+      // Return empty array on error
+      return [];
+    }
+  },
 };

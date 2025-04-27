@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { EventOps } from "@/server/db/operations/event-ops";
-import { isValid } from "date-fns";
+// import { isValid } from "date-fns";
 
 // Import connectToDatabase to ensure MongoDB connection
 import { connectToDatabase } from "@/server/db/mongo";
@@ -92,7 +92,7 @@ export const eventRouter = createTRPCRouter({
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to create event: ${error && typeof error === "object" && "message" in error ? error.message : String(error)}`,
+          message: `Failed to create event: ${error instanceof Error ? error.message : String(error)}`,
         });
       }
     }),
@@ -221,7 +221,7 @@ export const eventRouter = createTRPCRouter({
         console.error("Error updating event:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to update event: ${error && typeof error === "object" && "message" in error ? error.message : String(error)}`,
+          message: `Failed to update event: ${error instanceof Error ? error.message : String(error)}`,
         });
       }
     }),
@@ -358,7 +358,7 @@ export const eventRouter = createTRPCRouter({
 
         throw new TRPCError({
           code: errorCode,
-          message: `Failed to delete event: ${error && typeof error === "object" && "message" in error ? error.message : String(error)}`,
+          message: `Failed to delete event: ${error instanceof Error ? error.message : String(error)}`,
         });
       }
     }),
@@ -372,14 +372,14 @@ export const eventRouter = createTRPCRouter({
     }
   }),
 
-  getById: publicProcedure
+  getByIdSimple: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       try {
         const event = await EventOps.getById(input.id);
         return event;
       } catch (error) {
-        console.error("Error in getById:", error);
+        console.error("Error in getByIdSimple:", error);
         return null;
       }
     }),
@@ -451,11 +451,11 @@ export const eventRouter = createTRPCRouter({
 
           // Filter by price range
           if (input.minPrice !== undefined) {
-            events = events.filter((event) => event.price >= input.minPrice!);
+            events = events.filter((event) => (event.price ?? 0) >= input.minPrice!);
           }
 
           if (input.maxPrice !== undefined) {
-            events = events.filter((event) => event.price <= input.maxPrice!);
+            events = events.filter((event) => (event.price ?? 0) <= input.maxPrice!);
           }
 
           // Filter by featured
@@ -483,7 +483,7 @@ export const eventRouter = createTRPCRouter({
       await connectToDatabase();
 
       // Get all real events with better error handling
-      let events: Array<any> = [];
+      let events: Array<Record<string, unknown>> = [];
       try {
         events = await EventOps.getAll();
       } catch (getAllError) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Elements } from "@stripe/react-stripe-js";
-import { stripePromise } from "@/lib/stripe";
+import { stripePromise } from "@/lib/stripe-client";
 import { useEffect, useState } from "react";
 import { PaymentForm } from "./payment-form";
 

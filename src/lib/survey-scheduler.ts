@@ -82,7 +82,7 @@ export async function processSurveySchedules() {
 /**
  * Send surveys for a specific template
  */
-async function sendSurveysForTemplate(template: any, event: any) {
+export async function sendSurveysForTemplate(template: any, event: any) {
   logger.info(
     `Sending surveys for template: ${template.id}, event: ${event.name}`,
   );

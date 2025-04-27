@@ -60,7 +60,7 @@ export const surveyTemplateRouter = createTRPCRouter({
       // Process questions to ensure they have IDs
       const questions = input.questions.map((q) => ({
         ...q,
-        id: q.id || nanoid(),
+        id: q.id ?? nanoid(),
       }));
 
       // Create survey template
@@ -119,11 +119,11 @@ export const surveyTemplateRouter = createTRPCRouter({
       }
 
       // Process questions if provided
-      const updateData: any = { ...input };
+      const updateData = { ...input } as Record<string, unknown>;
       if (input.questions) {
         updateData.questions = input.questions.map((q) => ({
           ...q,
-          id: q.id || nanoid(),
+          id: q.id ?? nanoid(),
         }));
       }
 
@@ -139,7 +139,7 @@ export const surveyTemplateRouter = createTRPCRouter({
 
   getByEvent: protectedProcedure
     .input(z.object({ eventId: z.string() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       // Ensure MongoDB is connected
       await connectToDatabase();
 
@@ -150,7 +150,7 @@ export const surveyTemplateRouter = createTRPCRouter({
 
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       // Ensure MongoDB is connected
       await connectToDatabase();
 
@@ -238,8 +238,8 @@ export const surveyTemplateRouter = createTRPCRouter({
       }
 
       // Import and call the survey scheduler function
-      const { sendSurveysForTemplate } = await import("@/lib/survey-scheduler");
-      await sendSurveysForTemplate(template, event);
+      const surveyScheduler = await import("@/lib/survey-scheduler");
+      await surveyScheduler.sendSurveysForTemplate(template, event);
 
       return { success: true };
     }),

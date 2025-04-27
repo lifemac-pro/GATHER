@@ -34,16 +34,13 @@ export const eventTemplateRouter = createTRPCRouter({
       }
 
       // Connect to database
-      const mongoose = await connectToDatabase();
-      const db = mongoose.connection.db;
+      await connectToDatabase();
 
-      if (!db) throw new Error("Database connection not established");
+      // Import the EventTemplate model
+      const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
       // Get templates for this user
-      const templates = await db
-        .collection("eventTemplates")
-        .find({ createdById: userId })
-        .toArray();
+      const templates = await EventTemplate.findByCreator(userId);
 
       return templates;
     } catch (error) {
@@ -73,13 +70,13 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        await connectToDatabase();
 
-        if (!db) throw new Error("Database connection not established");
+        // Import the EventTemplate model
+        const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
         // Get template
-        const template = await db.collection("eventTemplates").findOne({
+        const template = await EventTemplate.findOne({
           id: input.id,
           createdById: userId,
         });
@@ -122,21 +119,19 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        await connectToDatabase();
 
-        if (!db) throw new Error("Database connection not established");
+        // Import the EventTemplate model
+        const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
         // Create template
-        const template = {
+        const template = new EventTemplate({
           id: nanoid(),
           ...input,
           createdById: userId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+        });
 
-        await db.collection("eventTemplates").insertOne(template);
+        await template.save();
 
         return template;
       } catch (error) {
@@ -171,13 +166,13 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        await connectToDatabase();
 
-        if (!db) throw new Error("Database connection not established");
+        // Import the EventTemplate model
+        const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
         // Check if template exists and belongs to user
-        const existingTemplate = await db.collection("eventTemplates").findOne({
+        const existingTemplate = await EventTemplate.findOne({
           id: input.id,
           createdById: userId,
         });
@@ -191,19 +186,14 @@ export const eventTemplateRouter = createTRPCRouter({
 
         // Update template
         const { id, ...updateData } = input;
-        const updatedTemplate = {
-          ...updateData,
-          updatedAt: new Date(),
-        };
 
-        await db
-          .collection("eventTemplates")
-          .updateOne({ id }, { $set: updatedTemplate });
+        const updatedTemplate = await EventTemplate.findOneAndUpdate(
+          { id },
+          { $set: updateData },
+          { new: true }
+        );
 
-        return {
-          id,
-          ...updatedTemplate,
-        };
+        return updatedTemplate;
       } catch (error) {
         console.error("Error updating template:", error);
         if (error instanceof TRPCError) {
@@ -234,13 +224,13 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        await connectToDatabase();
 
-        if (!db) throw new Error("Database connection not established");
+        // Import the EventTemplate model
+        const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
         // Check if template exists and belongs to user
-        const existingTemplate = await db.collection("eventTemplates").findOne({
+        const existingTemplate = await EventTemplate.findOne({
           id: input.id,
           createdById: userId,
         });
@@ -253,7 +243,7 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Delete template
-        await db.collection("eventTemplates").deleteOne({ id: input.id });
+        await EventTemplate.deleteOne({ id: input.id });
 
         return { success: true };
       } catch (error) {
@@ -292,13 +282,13 @@ export const eventTemplateRouter = createTRPCRouter({
         }
 
         // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        await connectToDatabase();
 
-        if (!db) throw new Error("Database connection not established");
+        // Import the EventTemplate model
+        const EventTemplate = (await import("@/server/db/models/event-template")).default;
 
         // Get template
-        const template = await db.collection("eventTemplates").findOne({
+        const template = await EventTemplate.findOne({
           id: input.templateId,
           createdById: userId,
         });
@@ -321,7 +311,7 @@ export const eventTemplateRouter = createTRPCRouter({
           featured: false,
           price: template.price || 0,
           image: template.image || "",
-          createdById: userId,
+          createdById: userId as string, // Type assertion to ensure it's a string
           status: "published",
           maxAttendees: template.maxAttendees
             ? [template.maxAttendees.toString()]

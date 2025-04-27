@@ -11,6 +11,8 @@ import {
   SurveyTemplate,
   Attendee,
 } from "@/server/db/models";
+import { sendSurveyInvitation } from "@/lib/whatsapp-service";
+import { sendSurveyInvitationSMS } from "@/lib/sms-service";
 import { startOfMonth, addMonths, subMonths } from "date-fns";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
@@ -329,4 +331,254 @@ export const surveyRouter = createTRPCRouter({
       topEvents,
     };
   }),
+
+  // Get survey response statistics
+  getResponseStats: protectedProcedure
+    .input(
+      z.object({
+        surveyId: z.string(),
+        eventId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Find the survey template
+      const template = await SurveyTemplate.findOne({ id: input.surveyId });
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Survey template not found",
+        });
+      }
+
+      // Find the event
+      const event = await Event.findOne({ id: input.eventId });
+      if (!event) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Get all attendees for this event
+      const attendees = await Attendee.find({ eventId: input.eventId });
+      const totalAttendees = attendees.length;
+
+      // Get all surveys sent for this template
+      const sentSurveys = await Survey.find({
+        templateId: input.surveyId,
+        eventId: input.eventId,
+      });
+
+      // Get all completed surveys
+      const completedSurveys = await Survey.find({
+        templateId: input.surveyId,
+        eventId: input.eventId,
+        isCompleted: true,
+      });
+
+      // Get opened but not completed surveys
+      const openedSurveys = await Survey.find({
+        templateId: input.surveyId,
+        eventId: input.eventId,
+        isOpened: true,
+        isCompleted: false,
+      });
+
+      // Calculate average rating
+      let avgRating = 0;
+      if (completedSurveys.length > 0) {
+        const totalRating = completedSurveys.reduce((sum, survey) => {
+          return sum + (survey.rating || 0);
+        }, 0);
+        avgRating = totalRating / completedSurveys.length;
+      }
+
+      return {
+        totalAttendees,
+        totalSent: sentSurveys.length,
+        totalResponses: completedSurveys.length,
+        opened: openedSurveys.length + completedSurveys.length,
+        avgRating,
+      };
+    }),
+
+  // Track when a survey is opened
+  trackOpen: publicProcedure
+    .input(
+      z.object({
+        templateId: z.string(),
+        attendeeId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      try {
+        // Find the survey
+        const survey = await Survey.findOne({
+          templateId: input.templateId,
+          attendeeId: input.attendeeId,
+        });
+
+        if (survey) {
+          // Update the survey to mark it as opened
+          await Survey.updateOne(
+            { _id: survey._id },
+            {
+              $set: {
+                isOpened: true,
+                openedAt: new Date(),
+              }
+            }
+          );
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error tracking survey open:", error);
+        return { success: false };
+      }
+    }),
+
+  // Share survey via WhatsApp
+  shareViaWhatsApp: protectedProcedure
+    .input(
+      z.object({
+        surveyId: z.string(),
+        eventId: z.string(),
+        phoneNumber: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      // Find the survey template
+      const template = await SurveyTemplate.findOne({ id: input.surveyId });
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Survey template not found",
+        });
+      }
+
+      // Find the event
+      const event = await Event.findOne({ id: input.eventId });
+      if (!event) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Generate a temporary token for the survey
+      // In a real implementation, you would create a proper token with an expiration
+      const tempToken = Buffer.from(
+        JSON.stringify({
+          templateId: template.id,
+          attendeeId: "manual-share", // This is a placeholder
+          timestamp: new Date().toISOString(),
+        }),
+      ).toString("base64");
+
+      // Create the survey URL
+      const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+      const surveyUrl = `${baseUrl}/surveys/${template.id}?token=${tempToken}`;
+
+      // Send the WhatsApp message
+      const result = await sendSurveyInvitation({
+        phone: input.phoneNumber,
+        recipientName: "Attendee", // Generic name for manual sharing
+        eventName: event.name,
+        surveyUrl,
+      });
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send WhatsApp message",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  // Share survey via SMS
+  shareViaSMS: protectedProcedure
+    .input(
+      z.object({
+        surveyId: z.string(),
+        eventId: z.string(),
+        phoneNumber: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      // Find the survey template
+      const template = await SurveyTemplate.findOne({ id: input.surveyId });
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Survey template not found",
+        });
+      }
+
+      // Find the event
+      const event = await Event.findOne({ id: input.eventId });
+      if (!event) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Generate a temporary token for the survey
+      // In a real implementation, you would create a proper token with an expiration
+      const tempToken = Buffer.from(
+        JSON.stringify({
+          templateId: template.id,
+          attendeeId: "manual-share", // This is a placeholder
+          timestamp: new Date().toISOString(),
+        }),
+      ).toString("base64");
+
+      // Create the survey URL
+      const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+      const surveyUrl = `${baseUrl}/surveys/${template.id}?token=${tempToken}`;
+
+      // Send the SMS message
+      const result = await sendSurveyInvitationSMS({
+        phone: input.phoneNumber,
+        recipientName: "Attendee", // Generic name for manual sharing
+        eventName: event.name,
+        surveyUrl,
+      });
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send SMS message",
+        });
+      }
+
+      return { success: true };
+    }),
 });

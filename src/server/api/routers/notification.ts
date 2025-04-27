@@ -19,7 +19,7 @@ export const notificationRouter = createTRPCRouter({
         type: z.enum(["event", "chat", "system", "reminder"]).optional(),
       }),
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const query = Notification.find({ userId: "user-id" }) // Would need to get from session
         .sort({ createdAt: -1 })
         .limit(input.limit + 1);
@@ -30,7 +30,7 @@ export const notificationRouter = createTRPCRouter({
       }
 
       if (input.type) {
-        query.where("type", input.type);
+        void query.where("type", input.type);
       }
 
       const notifications = await query;
@@ -52,7 +52,7 @@ export const notificationRouter = createTRPCRouter({
         notificationIds: z.array(z.string()),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       await Notification.updateMany(
         {
           id: { $in: input.notificationIds },
@@ -66,7 +66,7 @@ export const notificationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+  markAllAsRead: protectedProcedure.mutation(async () => {
     await Notification.updateMany(
       { userId: "user-id" }, // Would need to get from session
       { $set: { read: true } },
@@ -77,7 +77,7 @@ export const notificationRouter = createTRPCRouter({
 
   delete: protectedProcedure
     .input(z.object({ notificationId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const notification = await Notification.findOneAndDelete({
         id: input.notificationId,
         userId: "user-id", // Would need to get from session
@@ -93,7 +93,7 @@ export const notificationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
+  getUnreadCount: protectedProcedure.query(async () => {
     const count = await Notification.countDocuments({
       userId: "user-id", // Would need to get from session
       read: false,
@@ -182,12 +182,10 @@ export const notificationRouter = createTRPCRouter({
                 error: "No email address",
               };
 
-            let emailResult;
-
             // Send different email templates based on notification type
             switch (input.type) {
               case "update":
-                emailResult = await sendEventUpdate({
+                await sendEventUpdate({
                   email: attendee.email,
                   eventName: event.name,
                   attendeeName: attendee.name,
@@ -197,7 +195,7 @@ export const notificationRouter = createTRPCRouter({
                 break;
 
               case "cancellation":
-                emailResult = await sendEventCancellation({
+                await sendEventCancellation({
                   email: attendee.email,
                   eventName: event.name,
                   eventDate: event.startDate,
@@ -217,13 +215,13 @@ export const notificationRouter = createTRPCRouter({
                   ),
                 );
 
-                emailResult = await sendEventReminder({
+                await sendEventReminder({
                   email: attendee.email,
                   eventName: event.name,
                   eventDate: event.startDate,
-                  eventLocation: event.location || "TBD",
+                  eventLocation: event.location ?? "TBD",
                   attendeeName: attendee.name,
-                  ticketCode: attendee.ticketCode,
+                  ticketCode: attendee.ticketCode ?? "NO-CODE",
                   eventUrl: `${process.env.NEXTAUTH_URL}/events/${event.id}`,
                   hoursUntilEvent,
                 });
@@ -254,13 +252,19 @@ export const notificationRouter = createTRPCRouter({
         const failedCount = emailResults.filter((r) => !r.success).length;
 
         // Update notification record with results
-        notification.successCount = successCount;
-        notification.failedCount = failedCount;
-        await notification.save();
+        await Notification.findOneAndUpdate(
+          { id: notification.id },
+          {
+            $set: {
+              successCount: successCount,
+              failedCount: failedCount
+            }
+          }
+        );
 
         return {
           success: true,
-          notificationId: notification.id,
+          notificationId: notification.id as string,
           totalRecipients: attendees.length,
           successCount,
           failedCount,

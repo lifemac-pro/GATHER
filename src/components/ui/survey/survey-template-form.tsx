@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -128,7 +128,7 @@ export function SurveyTemplateForm({
   });
 
   // Set form values when template data is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (templateData) {
       form.reset({
         ...templateData,

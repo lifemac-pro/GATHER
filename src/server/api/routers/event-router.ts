@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import type { Session } from "next-auth";
 import { nanoid } from "nanoid";
 import { EventOps } from "@/server/db/operations/event-ops";
-import type { EventDocument } from "@/server/db/models/types";
+import type { EventDocument, EventModel } from "@/server/db/models/types";
 // We're not using cache anymore
 // import { cache } from "@/lib/cache";
 
@@ -109,7 +109,7 @@ export const eventRouter = createTRPCRouter({
 
             // Use the Event model to generate instances
             const Event = (await import("@/server/db/models/event-db")).default;
-            await Event.generateRecurringInstances(
+            await (Event as EventModel).generateRecurringInstances(
               event.id,
               startDate,
               endDate,
@@ -247,36 +247,38 @@ export const eventRouter = createTRPCRouter({
         if (event.isRecurring && input.isRecurring) {
           try {
             // Check if we need to update future instances
-            const updateFutureInstances = (confirm) => {
+            const updateFutureInstances = async (confirm: boolean) => {
               if (confirm) {
                 // Update all future instances
-                const Event = require("@/server/db/models/event-db").default;
+                const Event = (await import("@/server/db/models/event-db")).default as EventModel;
                 const now = new Date();
 
                 // Find all future instances
-                Event.find({
-                  parentEventId: input.id,
-                  startDate: { $gte: now },
-                })
-                  .then((instances) => {
-                    // Update each instance
-                    instances.forEach((instance) => {
-                      // Calculate new dates based on the original date difference
-                      const originalStartDate =
-                        instance.originalStartDate || instance.startDate;
-                      const timeDiff =
-                        originalStartDate.getTime() - event.startDate.getTime();
+                try {
+                  const instances = await Event.find({
+                    parentEventId: input.id,
+                    startDate: { $gte: now },
+                  });
 
-                      const newStartDate = new Date(
-                        input.startDate.getTime() + timeDiff,
-                      );
-                      const newEndDate = new Date(
-                        newStartDate.getTime() +
-                          (input.endDate.getTime() - input.startDate.getTime()),
-                      );
+                  // Update each instance
+                  for (const instance of instances) {
+                    // Calculate new dates based on the original date difference
+                    const originalStartDate =
+                      instance.originalStartDate ?? instance.startDate;
+                    const timeDiff =
+                      originalStartDate.getTime() - event.startDate.getTime();
 
-                      // Update the instance
-                      Event.updateOne(
+                    const newStartDate = new Date(
+                      input.startDate.getTime() + timeDiff,
+                    );
+                    const newEndDate = new Date(
+                      newStartDate.getTime() +
+                        (input.endDate.getTime() - input.startDate.getTime()),
+                    );
+
+                    // Update the instance
+                    try {
+                      await Event.updateOne(
                         { id: instance.id },
                         {
                           name: input.name,
@@ -291,22 +293,22 @@ export const eventRouter = createTRPCRouter({
                           startDate: newStartDate,
                           endDate: newEndDate,
                         },
-                      ).catch((err) =>
-                        console.error(
-                          `Error updating instance ${instance.id}:`,
-                          err,
-                        ),
                       );
-                    });
-                  })
-                  .catch((err) =>
-                    console.error("Error finding instances:", err),
-                  );
+                    } catch (err) {
+                      console.error(
+                        `Error updating instance ${instance.id}:`,
+                        err,
+                      );
+                    }
+                  }
+                } catch (err) {
+                  console.error("Error finding instances:", err);
+                }
               }
             };
 
             // For now, always update future instances
-            updateFutureInstances(true);
+            await updateFutureInstances(true);
 
             // Regenerate instances if needed
             if (
@@ -320,7 +322,7 @@ export const eventRouter = createTRPCRouter({
 
               const Event = (await import("@/server/db/models/event-db"))
                 .default;
-              await Event.generateRecurringInstances(
+              await (Event as EventModel).generateRecurringInstances(
                 input.id,
                 startDate,
                 endDate,
@@ -367,11 +369,11 @@ export const eventRouter = createTRPCRouter({
               message: `Event with ID ${input.id} not found`,
             });
           }
-        } catch (findError: any) {
+        } catch (findError) {
           console.error("Error finding event:", findError);
           // If the event doesn't exist, we'll just proceed with deletion anyway
           // This handles the case where the event might have been deleted already
-          if (findError.message?.includes("not found")) {
+          if (findError instanceof Error && findError.message.includes("not found")) {
             console.log("Event not found, but proceeding with deletion anyway");
             return { success: true };
           }
@@ -463,12 +465,13 @@ export const eventRouter = createTRPCRouter({
         console.log("Found events:", events.length);
 
         if (events.length > 0) {
+          const firstEvent = events[0];
           console.log("First event details:", {
-            id: events[0].id,
-            name: events[0].name,
-            category: events[0].category,
-            startDate: events[0].startDate,
-            createdById: events[0].createdById,
+            id: firstEvent?.id ?? 'unknown',
+            name: firstEvent?.name ?? 'unknown',
+            category: firstEvent?.category ?? 'unknown',
+            startDate: firstEvent?.startDate ?? new Date(),
+            createdById: firstEvent?.createdById ?? 'unknown',
           });
         }
 
@@ -482,7 +485,7 @@ export const eventRouter = createTRPCRouter({
           // Count templates by event
           const templateCountsByEvent = templates.reduce(
             (acc, template) => {
-              acc[template.eventId] = (acc[template.eventId] || 0) + 1;
+              acc[template.eventId] = (acc[template.eventId] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -494,7 +497,7 @@ export const eventRouter = createTRPCRouter({
           // Count responses by event
           const responseCountsByEvent = surveys.reduce(
             (acc, survey) => {
-              acc[survey.eventId] = (acc[survey.eventId] || 0) + 1;
+              acc[survey.eventId] = (acc[survey.eventId] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -503,8 +506,8 @@ export const eventRouter = createTRPCRouter({
           // Enrich events with survey data
           const enrichedEvents = events.map((event) => ({
             ...event,
-            surveyCount: templateCountsByEvent[event.id] || 0,
-            responseCount: responseCountsByEvent[event.id] || 0,
+            surveyCount: templateCountsByEvent[event.id] ?? 0,
+            responseCount: responseCountsByEvent[event.id] ?? 0,
             hasSurveys: Boolean(templateCountsByEvent[event.id]),
           }));
 
@@ -542,7 +545,7 @@ export const eventRouter = createTRPCRouter({
 
         // Create a test event instead of returning an empty array
         console.log("Creating a test event as fallback");
-        const testEvent: Event = {
+        const testEvent = {
           id: nanoid(),
           name: "Test Event (TRPC Fallback)",
           description:
@@ -579,19 +582,19 @@ export const eventRouter = createTRPCRouter({
         const Event = (await import("@/server/db/models/event-db")).default;
 
         // Find events in the date range
-        const events = await Event.findInDateRange(
+        const events = await (Event as EventModel).findInDateRange(
           input.startDate,
           input.endDate,
         );
 
         // For recurring events, generate instances if needed
         const recurringEvents = events.filter(
-          (event) => event.isRecurring && !event.parentEventId,
+          (event: EventDocument) => event.isRecurring && !event.parentEventId,
         );
 
         for (const event of recurringEvents) {
           try {
-            await Event.generateRecurringInstances(
+            await (Event as EventModel).generateRecurringInstances(
               event.id,
               input.startDate,
               input.endDate,
@@ -605,7 +608,7 @@ export const eventRouter = createTRPCRouter({
         }
 
         // Get all events again, now including the newly generated instances
-        const allEvents = await Event.findInDateRange(
+        const allEvents = await (Event as EventModel).findInDateRange(
           input.startDate,
           input.endDate,
         );
@@ -632,21 +635,21 @@ export const eventRouter = createTRPCRouter({
         const Event = (await import("@/server/db/models/event-db")).default;
 
         // Set default date range if not provided (next 3 months)
-        const startDate = input.startDate || new Date();
-        const endDate = input.endDate || new Date(startDate.getTime());
+        const startDate = input.startDate ?? new Date();
+        const endDate = input.endDate ?? new Date(startDate.getTime());
         if (!input.endDate) {
           endDate.setMonth(endDate.getMonth() + 3);
         }
 
         // Generate instances if needed
-        await Event.generateRecurringInstances(
+        await (Event as EventModel).generateRecurringInstances(
           input.parentEventId,
           startDate,
           endDate,
         );
 
         // Get all instances
-        const instances = await Event.findRecurringInstances(
+        const instances = await (Event as EventModel).findRecurringInstances(
           input.parentEventId,
         );
 
@@ -672,13 +675,16 @@ export const eventRouter = createTRPCRouter({
         const userId = (ctx as Context).session?.user?.id ?? "user-id";
 
         // Import the Event model
-        const Event = (await import("@/server/db/models/event-db")).default;
+        const EventModel = (await import("@/server/db/models/event-db")).default;
 
         // Find the instance
-        const instance = await Event.findOne({ id: input.id });
-        if (!instance) {
+        const instanceResult = await EventModel.findOne({ id: input.id });
+        if (!instanceResult) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
+
+        // Type assertion to handle the instance type
+        const instance = instanceResult as unknown as EventDocument;
 
         // Check if user is authorized
         if (instance.createdById !== userId) {
@@ -702,22 +708,34 @@ export const eventRouter = createTRPCRouter({
 
         // Update future instances if requested
         if (input.updateFutureInstances && instance.parentEventId) {
-          const now = new Date();
+          // const now = new Date(); // Not used
 
           // Find all future instances
-          const futureInstances = await Event.find({
+          const futureInstancesResult = await EventModel.find({
             parentEventId: instance.parentEventId,
             startDate: { $gt: instance.startDate },
           });
+
+          // Type assertion for the array of instances
+          const futureInstances = futureInstancesResult as unknown as EventDocument[];
 
           // Update each instance
           for (const futureInstance of futureInstances) {
             // Calculate new dates based on the original date difference
             const originalStartDate =
-              futureInstance.originalStartDate || futureInstance.startDate;
-            const parentEvent = await Event.findOne({
+              futureInstance.originalStartDate ?? futureInstance.startDate;
+
+            // Find parent event
+            const parentEventResult = await EventModel.findOne({
               id: instance.parentEventId,
             });
+
+            if (!parentEventResult) {
+              console.error(`Parent event ${instance.parentEventId} not found`);
+              continue;
+            }
+
+            const parentEvent = parentEventResult as unknown as EventDocument;
 
             if (parentEvent) {
               const timeDiff =
@@ -732,7 +750,7 @@ export const eventRouter = createTRPCRouter({
               );
 
               // Update the instance
-              await Event.updateOne(
+              await EventModel.updateOne(
                 { id: futureInstance.id },
                 {
                   name: input.name,
@@ -760,6 +778,23 @@ export const eventRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to update event instance: ${err.message || "Unknown error"}`,
         });
+      }
+    }),
+
+  // Get events by IDs
+  getByIds: publicProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .query(async ({ input }) => {
+      try {
+        console.log("Executing getByIds procedure with", input.ids.length, "IDs");
+        const events = await EventOps.getByIds(input.ids);
+        console.log("Found", events.length, "events by IDs");
+        return events;
+      } catch (error) {
+        const err = error as Error;
+        console.error("Error in getByIds:", err);
+        // Return empty array instead of throwing
+        return [];
       }
     }),
 });

@@ -8,3 +8,6 @@ export * from "./notification";
 export * from "./setting";
 export * from "./post";
 export * from "./chat";
+export * from "./event-template";
+export * from "./registration-form";
+export * from "./registration-submission";

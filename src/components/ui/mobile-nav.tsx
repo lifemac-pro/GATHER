@@ -16,6 +16,7 @@ import {
   BarChart,
   PlusCircle,
   Bell,
+  FileText,
 } from "lucide-react";
 
 export function MobileNav() {
@@ -117,6 +118,18 @@ export function MobileNav() {
                   >
                     <Users className="mr-2 h-4 w-4" />
                     Attendees
+                  </Button>
+                </Link>
+
+                <Link href="/admin/surveys" passHref>
+                  <Button
+                    variant={
+                      pathname === "/admin/surveys" ? "default" : "ghost"
+                    }
+                    className="w-full justify-start"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Surveys
                   </Button>
                 </Link>
 

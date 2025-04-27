@@ -34,36 +34,57 @@ export default function SurveyPage({ params }: { params: { id: string } }) {
 
   // Validate token
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-  const [tokenData, setTokenData] = useState<any>(null);
+
+  // Define token data interface
+  interface TokenData {
+    templateId: string;
+    attendeeId: string;
+    timestamp?: string;
+  }
+
+  // We're setting tokenData but not using it directly in the component
+  // It might be used in the future or by child components
+  const [tokenData, setTokenData] = useState<TokenData | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
+
+  // Track survey open
+  const trackSurveyOpen = api.survey.trackOpen.useMutation();
 
   useEffect(() => {
     if (!token) return;
 
     try {
       const decoded = atob(token);
-      const data = JSON.parse(decoded);
+      const data = JSON.parse(decoded) as TokenData;
 
       if (data.templateId === params.id) {
         setTokenValid(true);
         setTokenData(data);
+
+        // Track that the survey was opened
+        if (data.attendeeId) {
+          trackSurveyOpen.mutate({
+            templateId: data.templateId,
+            attendeeId: data.attendeeId,
+          });
+        }
       } else {
         setTokenValid(false);
       }
     } catch (error) {
-      console.error("Error validating token:", error);
+      console.error("Error validating token:", error instanceof Error ? error.message : String(error));
       setTokenValid(false);
     }
-  }, [token, params.id]);
+  }, [token, params.id, trackSurveyOpen]);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="container mx-auto flex h-[70vh] max-w-3xl items-center justify-center py-12">
         <LoadingSpinner size="lg" text="Loading survey..." />
       </div>
     );
   }
 
-  if (error || !template) {
+  if (error ?? !template) {
     return (
       <div className="container mx-auto max-w-3xl py-12">
         <Card className="border-destructive">
@@ -73,7 +94,7 @@ export default function SurveyPage({ params }: { params: { id: string } }) {
               <CardTitle>Survey Not Found</CardTitle>
             </div>
             <CardDescription>
-              The survey you're looking for doesn't exist or has been removed.
+              The survey you&apos;re looking for doesn&apos;t exist or has been removed.
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -184,7 +205,7 @@ export default function SurveyPage({ params }: { params: { id: string } }) {
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertCircle className="mb-2 h-8 w-8 text-muted-foreground" />
               <p className="text-muted-foreground">
-                This survey doesn't have any questions.
+                This survey doesn&apos;t have any questions.
               </p>
             </div>
           )}

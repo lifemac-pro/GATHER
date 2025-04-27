@@ -7,6 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/trpc/react";
 import { EventCard } from "./event-card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { type Event as EventType } from "@/server/db/operations/event-ops";
+
+// Create a unified event type to handle both event types
+type UnifiedEvent = EventType;
 
 interface EventListProps {
   category?: string;
@@ -36,21 +40,27 @@ export function EventList({
     ? api.event.getFeatured.useQuery()
     : upcoming
       ? api.event.getUpcoming.useQuery()
-      : api.event.getAll.useQuery();
+      : api.event.getAll.useQuery() as {
+          data: UnifiedEvent[] | undefined;
+          isLoading: boolean;
+          error: Error | null
+        };
+
+  // Get the utils at the component level, not inside useEffect
+  const utils = api.useUtils();
 
   // Force a refetch when refreshKey changes or on component mount
   useEffect(() => {
     console.log("Refreshing events with refreshKey:", refreshKey);
     // Invalidate the queries to force a refetch
-    const utils = api.useUtils();
     if (featured) {
-      utils.event.getFeatured.invalidate();
+      void utils.event.getFeatured.invalidate();
     } else if (upcoming) {
-      utils.event.getUpcoming.invalidate();
+      void utils.event.getUpcoming.invalidate();
     } else {
-      utils.event.getAll.invalidate();
+      void utils.event.getAll.invalidate();
     }
-  }, [refreshKey, featured, upcoming]);
+  }, [refreshKey, featured, upcoming, utils]);
 
   // Enhanced debugging for events data
   console.log("Events data received:", allData ? "Yes" : "No");
@@ -60,15 +70,16 @@ export function EventList({
 
   // Log event details for debugging
   if (allData && allData.length > 0) {
+    const firstEvent = allData[0]!;
     console.log("First event details:", {
-      id: allData[0].id,
-      name: allData[0].name,
-      category: allData[0].category,
-      createdById: allData[0].createdById,
-      image: allData[0].image
-        ? allData[0].image.length > 50
-          ? allData[0].image.substring(0, 50) + "..."
-          : allData[0].image
+      id: firstEvent.id,
+      name: firstEvent.name,
+      category: firstEvent.category,
+      createdById: firstEvent.createdById,
+      image: firstEvent.image
+        ? firstEvent.image.length > 50
+          ? firstEvent.image.substring(0, 50) + "..."
+          : firstEvent.image
         : "No image",
     });
   }
@@ -91,7 +102,7 @@ export function EventList({
   // Apply all filters
   const filteredData =
     eventsData.length > 0
-      ? eventsData.filter((event) => {
+      ? eventsData.filter((event: UnifiedEvent) => {
           // Category filter
           if (categoryParam && event.category !== categoryParam) return false;
 
@@ -126,13 +137,13 @@ export function EventList({
           }
 
           // Price range filters
-          if (minPriceParam && event.price < parseInt(minPriceParam))
+          if (minPriceParam && event.price !== undefined && event.price < parseInt(minPriceParam))
             return false;
-          if (maxPriceParam && event.price > parseInt(maxPriceParam))
+          if (maxPriceParam && event.price !== undefined && event.price > parseInt(maxPriceParam))
             return false;
 
           // Featured filter (only if explicitly requested)
-          if (featuredParam && !event.featured) return false;
+          if (featuredParam && event.featured !== undefined && !event.featured) return false;
 
           return true;
         })
@@ -154,10 +165,11 @@ export function EventList({
 
   // Show error state
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center text-destructive">
         <p>Error loading events:</p>
-        <p className="mt-2">{error.message}</p>
+        <p className="mt-2">{errorMessage}</p>
       </div>
     );
   }
@@ -184,7 +196,7 @@ export function EventList({
           {allData ? `${allData.length} events from TRPC` : "No data from TRPC"}
           {categoryParam ? `, filtered by category: ${categoryParam}` : ""}
           {searchTerm ? `, search term: ${searchTerm}` : ""}
-          {error ? `, Error: ${error.message}` : ""}
+          {error ? `, Error: ${String(error)}` : ""}
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
           Events data: {eventsData.length} events, Filtered data:{" "}
@@ -197,7 +209,7 @@ export function EventList({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {filteredData.map((event) => (
+        {filteredData.map((event: UnifiedEvent) => (
           <EventCard
             key={event.id}
             id={event.id}
