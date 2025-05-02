@@ -8,6 +8,9 @@
  */
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
+
+// Remove references to 'enhancedProcedure' if unused
 import { ZodError } from "zod";
 import { db } from "@/server/db";
 import { headers } from "next/headers";
@@ -31,61 +34,54 @@ import { connectToDatabase } from "@/server/db/mongo";
  * Context type for TRPC
  */
 export interface Context {
-  db: typeof db;
-  headers: Headers;
-  session: any | null;
+  session: {
+    userId: string;
+    user?: {
+      id: string;
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      role?: "admin" | "super_admin" | "user";
+    };
+  } | null;
 }
 
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}): Promise<Context> => {
-  let session = null;
+// Context creator
+export const createTRPCContext = async (opts: { headers: Headers }): Promise<Context> => {
+  const auth = await getAuth(opts);
+  
+  // Handle auth response types properly
+  if (!auth) return { session: null };
 
-  try {
-    // Ensure MongoDB is connected
-    await connectToDatabase();
-
-    const auth = await getAuth({ headers: opts.headers });
-
-    // If auth is available, include the full auth object as session
-    if (auth) {
-      session = {
+  // For development environment fallback
+  if ('user' in auth) {
+    return {
+      session: {
         userId: auth.userId,
-        sessionId: auth.sessionId,
-        user:
-          auth && "user" in auth && auth.user
-            ? {
-                id: auth.user.id,
-                firstName: auth.user.firstName || "",
-                lastName: auth.user.lastName || "",
-                email: auth.user.email || "",
-              }
-            : undefined,
-      };
-    }
-  } catch (error) {
-    console.error("Error in TRPC context:", error);
-    // Continue without authentication
-
-    // In development, provide a mock session
-    if (process.env.NODE_ENV === "development") {
-      session = {
-        userId: "dev-user-id",
-        sessionId: "dev-session",
         user: {
-          id: "dev-user-id",
-          firstName: "Dev",
-          lastName: "User",
-          email: "dev@example.com",
-        },
-      };
-    }
+          id: auth.userId,
+          email: auth.user.email,
+          firstName: auth.user.firstName || '',
+          lastName: auth.user.lastName || '',
+          role: 'user'
+        }
+      }
+    };
   }
 
+  // For production Clerk auth
   return {
-    db,
-    session,
-    ...opts,
+    session: {
+      userId: auth.userId,
+      user: {
+        id: auth.userId,
+        // Use type assertion since we know the shape of auth in production
+        email: (auth as any).emailAddresses?.[0]?.emailAddress || '',
+        firstName: (auth as any).firstName || '',
+        lastName: (auth as any).lastName || '',
+        role: ((auth as any).publicMetadata?.role as "admin" | "super_admin" | "user") || "user"
+      }
+    }
   };
 };
 
@@ -96,7 +92,7 @@ export const createTRPCContext = async (opts: {
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.create({
+const t = initTRPC.context<Context>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
     // Format ZodErrors in a more user-friendly way
@@ -143,47 +139,69 @@ export const createCallerFactory = t.createCallerFactory;
  */
 export const createTRPCRouter = t.router;
 
+// Base procedure
+const procedure = t.procedure;
+
 /**
  * Public (unauthenticated) procedure
- *
- * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
- * guarantee that a user querying is authorized, but you can still access user session data if they
- * are logged in.
  */
-// Apply error handling middleware to all procedures
-const enhancedProcedure = t.procedure.use(errorHandlerMiddleware);
-
-export const publicProcedure = enhancedProcedure;
+export const publicProcedure = procedure;
 
 /**
  * Protected (authenticated) procedure
- *
- * This is the base piece you use to build new queries and mutations on your tRPC API. It guarantees
- * that the user is authenticated before running the procedure.
- *
- * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = enhancedProcedure.use(({ ctx, next }) => {
-  // Check if we have a session with a userId
-  if (
-    !ctx ||
-    !("session" in ctx) ||
-    !ctx.session ||
-    typeof ctx.session !== "object" ||
-    !("userId" in ctx.session)
-  ) {
+export const protectedProcedure = procedure.use(({ ctx, next }) => {
+  if (!ctx?.session?.userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "You must be logged in to access this resource",
     });
   }
 
-  // If we have a session, continue with the request
   return next({
     ctx: {
       ...ctx,
-      // Ensure the session is passed to the next handler
-      session: ctx && "session" in ctx ? ctx.session : null,
+      session: ctx.session,
+    },
+  });
+});
+
+/**
+ * Admin procedure - requires authentication and admin role
+ */
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const user = ctx.session?.user;
+  if (!user?.role || (user.role !== "admin" && user.role !== "super_admin")) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You must be an admin to access this resource"
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session,
+    },
+  });
+});
+
+/**
+ * Super Admin procedure - requires authentication and super admin role
+ */
+export const superAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const user = ctx.session?.user;
+  if (!user?.role || user.role !== "super_admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You must be a super admin to access this resource"
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session,
     },
   });
 });

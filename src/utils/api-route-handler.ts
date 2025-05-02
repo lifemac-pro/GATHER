@@ -22,14 +22,14 @@ export interface ApiRouteHandlerOptions<T> {
   paramsSchema?: ZodSchema<any>;
 
   /**
-   * Whether to require authentication
-   */
-  requireAuth?: boolean;
-
-  /**
    * Required roles for authorization
    */
   requiredRoles?: ("admin" | "super_admin")[];
+
+  /**
+   * Whether to require authentication
+   */
+  requireAuth?: boolean;
 }
 
 /**

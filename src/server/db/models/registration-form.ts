@@ -70,27 +70,60 @@ const registrationFormSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Update updatedAt timestamp
-registrationFormSchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+// Update updatedAt timestamp - only in non-edge environment
+try {
+  registrationFormSchema.pre("save", function (next) {
+    this.updatedAt = new Date();
+    next();
+  });
+} catch (error) {
+  console.warn("Skipping pre-save hook in edge environment");
+}
 
-// Add static methods
-registrationFormSchema.statics.findByEvent = async function (eventId: string) {
-  return this.find({ eventId }).sort({ createdAt: -1 });
+// Add static methods - only in non-edge environment
+try {
+  registrationFormSchema.statics.findByEvent = async function (eventId: string) {
+    return this.find({ eventId }).sort({ createdAt: -1 });
+  };
+
+  registrationFormSchema.statics.findActiveByEvent = async function (eventId: string) {
+    return this.findOne({ eventId, isActive: true }).sort({ createdAt: -1 });
+  };
+} catch (error) {
+  console.warn("Skipping static methods in edge environment");
+}
+
+// Define the type for our model with static methods
+type RegistrationFormModel = mongoose.Model<RegistrationFormDocument> & {
+  findByEvent(eventId: string): Promise<RegistrationFormDocument[]>;
+  findActiveByEvent(eventId: string): Promise<RegistrationFormDocument | null>;
 };
 
-registrationFormSchema.statics.findActiveByEvent = async function (eventId: string) {
-  return this.findOne({ eventId, isActive: true }).sort({ createdAt: -1 });
+// Create a function to get the RegistrationForm model
+const getRegistrationFormModel = (): RegistrationFormModel => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      countDocuments: async () => 0,
+      findByEvent: async () => [],
+      findActiveByEvent: async () => null,
+    } as unknown as RegistrationFormModel;
+  }
+
+  // Return the actual model
+  return (mongoose.models.RegistrationForm ||
+    mongoose.model<RegistrationFormDocument>(
+      "RegistrationForm",
+      registrationFormSchema,
+    )) as RegistrationFormModel;
 };
 
 // Create and export the model
-export const RegistrationForm = (mongoose.models.RegistrationForm ||
-  mongoose.model<RegistrationFormDocument>(
-    "RegistrationForm",
-    registrationFormSchema,
-  )) as mongoose.Model<RegistrationFormDocument> & {
-    findByEvent(eventId: string): Promise<RegistrationFormDocument[]>;
-    findActiveByEvent(eventId: string): Promise<RegistrationFormDocument | null>;
-  };
+export const RegistrationForm = getRegistrationFormModel();

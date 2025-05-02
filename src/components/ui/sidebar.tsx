@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  Activity,
 } from "lucide-react"; // <-- import Menu icon for mobile toggle
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
@@ -37,6 +38,11 @@ const navigation = [
     name: "Analytics",
     href: "/admin/analytics",
     icon: BarChart2,
+  },
+  {
+    name: "Real-Time",
+    href: "/admin/real-time",
+    icon: Activity,
   },
   {
     name: "Surveys",

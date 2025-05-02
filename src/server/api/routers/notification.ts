@@ -9,6 +9,8 @@ import {
   sendEventCancellation,
   sendEventReminder,
 } from "@/lib/email-service";
+import { getSocket } from "@/lib/socket";
+import { sendNotification } from "@/server/socket";
 
 export const notificationRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -16,54 +18,103 @@ export const notificationRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(50).default(20),
         cursor: z.string().optional(),
-        type: z.enum(["event", "chat", "system", "reminder"]).optional(),
-      }),
+        type: z.enum(["event", "survey", "info", "reminder"]).optional(),
+      }).optional(),
     )
-    .query(async ({ input }) => {
-      const query = Notification.find({ userId: "user-id" }) // Would need to get from session
-        .sort({ createdAt: -1 })
-        .limit(input.limit + 1);
+    .query(async ({ ctx, input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
 
-      if (input.cursor) {
-        // Handle cursor pagination differently
-        // query.where("_id").lt(input.cursor);
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
-      if (input.type) {
-        void query.where("type", input.type);
+      try {
+        const limit = input?.limit ?? 20;
+
+        // Create query
+        const query = Notification.find({ userId })
+          .sort({ createdAt: -1 })
+          .limit(limit + 1);
+
+        // Apply cursor pagination
+        if (input?.cursor) {
+          query.where("_id").lt(input.cursor);
+        }
+
+        // Apply type filter
+        if (input?.type) {
+          query.where("type", input.type);
+        }
+
+        // Execute query
+        const notifications = await query;
+
+        // Check if there are more results
+        const hasMore = notifications.length > limit;
+
+        // Return results
+        return notifications.slice(0, limit);
+      } catch (error) {
+        console.error("Error getting notifications:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get notifications",
+        });
       }
-
-      const notifications = await query;
-      const hasMore = notifications.length > input.limit;
-
-      return {
-        notifications: notifications.slice(0, input.limit),
-        nextCursor:
-          hasMore && notifications.length > 0
-            ? notifications[Math.min(notifications.length - 1, input.limit - 1)]
-                ?._id
-            : undefined,
-      };
     }),
 
   markAsRead: protectedProcedure
     .input(
       z.object({
-        notificationIds: z.array(z.string()),
+        id: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
-      await Notification.updateMany(
-        {
-          id: { $in: input.notificationIds },
-          userId: "user-id", // Would need to get from session
-        },
-        {
-          $set: { read: true },
-        },
-      );
+    .mutation(async ({ ctx, input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
 
-      return { success: true };
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      try {
+        // Update notification
+        const result = await Notification.updateOne(
+          {
+            _id: input.id,
+            userId,
+          },
+          {
+            $set: {
+              read: true,
+              updatedAt: new Date(),
+            },
+          },
+        );
+
+        if (result.modifiedCount === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Notification not found",
+          });
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to mark notification as read",
+        });
+      }
     }),
 
   markAllAsRead: protectedProcedure.mutation(async () => {

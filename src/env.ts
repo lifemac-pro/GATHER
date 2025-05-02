@@ -12,6 +12,16 @@ const server = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   UPLOADTHING_SECRET: z.string().min(1).optional(),
   UPLOADTHING_APP_ID: z.string().min(1).optional(),
+
+  // Cron job configuration
+  CRON_SECRET: z.string().min(1).optional(),
+
+  // Email configuration
+  EMAIL_SERVER_HOST: z.string().min(1).optional(),
+  EMAIL_SERVER_PORT: z.string().optional(),
+  EMAIL_SERVER_USER: z.string().min(1).optional(),
+  EMAIL_SERVER_PASSWORD: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().email().optional(),
 });
 
 /**
@@ -39,6 +49,15 @@ const processEnv = {
   CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
   UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
   UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+
+  // Email configuration
+  EMAIL_SERVER_HOST: process.env.EMAIL_SERVER_HOST,
+  EMAIL_SERVER_PORT: process.env.EMAIL_SERVER_PORT,
+  EMAIL_SERVER_USER: process.env.EMAIL_SERVER_USER,
+  EMAIL_SERVER_PASSWORD: process.env.EMAIL_SERVER_PASSWORD,
+  EMAIL_FROM: process.env.EMAIL_FROM,
+
+  // Clerk client configuration
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,

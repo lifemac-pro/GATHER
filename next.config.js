@@ -52,6 +52,11 @@ const config = {
       },
     ];
   },
+
+  // Configure experimental features
+  experimental: {
+    serverComponentsExternalPackages: ["mongoose"],
+  },
 };
 
 export default config;

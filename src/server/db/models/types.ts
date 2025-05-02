@@ -13,18 +13,20 @@ export interface BaseDocument extends Document {
  * Base model interface with common methods
  * Using a custom interface to avoid TypeScript errors with Mongoose
  */
+export interface BaseQueryMethods {
+  lean<T = any>(): Promise<T>;
+  populate(path: string, select?: string): Promise<any>;
+  exec(): Promise<any>;
+}
+
 export interface BaseModel<T extends Document> {
-  findById(id: string | Types.ObjectId): Promise<T | null>;
-  findOne(conditions: any): Promise<T | null>;
-  find(conditions?: any): Promise<T[]>;
+  findById(id: string | Types.ObjectId): Promise<T | null> & BaseQueryMethods;
+  findOne(conditions: any): Promise<T | null> & BaseQueryMethods;
+  find(conditions?: any): Promise<T[]> & BaseQueryMethods;
   create(data: any): Promise<T>;
   updateOne(conditions: any, update: any): Promise<any>;
-  findOneAndUpdate(
-    conditions: any,
-    update: any,
-    options?: any,
-  ): Promise<T | null>;
-  findOneAndDelete(conditions: any): Promise<T | null>;
+  findOneAndUpdate(conditions: any, update: any, options?: any): Promise<T | null> & BaseQueryMethods;
+  findOneAndDelete(conditions: any): Promise<T | null> & BaseQueryMethods;
   deleteOne(conditions: any): Promise<any>;
   deleteMany(conditions: any): Promise<any>;
   countDocuments(conditions?: any): Promise<number>;
@@ -43,7 +45,10 @@ export interface UserInput {
   profileImage?: string | null;
 }
 
-export interface UserDocument extends BaseDocument, UserInput {}
+export interface UserDocument extends BaseDocument, UserInput {
+  name: string; // Virtual getter that combines firstName and lastName
+  fullName: string; // Alias for name
+}
 
 export interface UserModel extends BaseModel<UserDocument> {
   findByEmail(email: string): Promise<UserDocument | null>;
@@ -293,6 +298,25 @@ export interface SurveyModel extends BaseModel<SurveyDocument> {
 }
 
 /**
+ * Survey Response interfaces
+ */
+export interface SurveyResponseInput {
+  surveyId: string;
+  userId: string;
+  answers: Array<{
+    questionId: string;
+    value: string | number | string[];
+  }>;
+}
+
+export interface SurveyResponseDocument extends BaseDocument, SurveyResponseInput {}
+
+export interface SurveyResponseModel extends BaseModel<SurveyResponseDocument> {
+  findBySurvey(surveyId: string): Promise<SurveyResponseDocument[]>;
+  findByUser(userId: string): Promise<SurveyResponseDocument[]>;
+}
+
+/**
  * Waitlist model interfaces
  */
 export interface WaitlistInput {
@@ -459,4 +483,22 @@ export interface RegistrationSubmissionModel extends BaseModel<RegistrationSubmi
   findByUser(userId: string): Promise<RegistrationSubmissionDocument[]>;
   findByForm(formId: string): Promise<RegistrationSubmissionDocument[]>;
   countByStatus(eventId: string): Promise<Array<{ _id: string; count: number }>>;
+}
+
+/**
+ * User Preference model interfaces
+ */
+export interface UserPreferenceInput {
+  userId: string;
+  emailNotifications: boolean;
+  eventReminders: boolean;
+  surveyReminders: boolean;
+  marketingEmails: boolean;
+}
+
+export interface UserPreferenceDocument extends BaseDocument, UserPreferenceInput {}
+
+export interface UserPreferenceModel extends BaseModel<UserPreferenceDocument> {
+  findByUser(userId: string): Promise<UserPreferenceDocument | null>;
+  updatePreferences(userId: string, preferences: Partial<UserPreferenceInput>): Promise<UserPreferenceDocument | null>;
 }

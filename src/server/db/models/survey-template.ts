@@ -36,14 +36,39 @@ const surveyTemplateSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Update updatedAt timestamp
-surveyTemplateSchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+// Update updatedAt timestamp - only in non-edge environment
+try {
+  surveyTemplateSchema.pre("save", function (next) {
+    this.updatedAt = new Date();
+    next();
+  });
+} catch (error) {
+  console.warn("Skipping pre-save hook in edge environment");
+}
 
-export const SurveyTemplate = (mongoose.models.SurveyTemplate ||
-  mongoose.model<SurveyTemplateDocument>(
-    "SurveyTemplate",
-    surveyTemplateSchema,
-  )) as mongoose.Model<SurveyTemplateDocument>;
+// Create a function to get the SurveyTemplate model
+const getSurveyTemplateModel = (): mongoose.Model<SurveyTemplateDocument> => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      countDocuments: async () => 0,
+    } as unknown as mongoose.Model<SurveyTemplateDocument>;
+  }
+
+  // Return the actual model
+  return (mongoose.models.SurveyTemplate ||
+    mongoose.model<SurveyTemplateDocument>(
+      "SurveyTemplate",
+      surveyTemplateSchema,
+    )) as mongoose.Model<SurveyTemplateDocument>;
+};
+
+// Export the SurveyTemplate model
+export const SurveyTemplate = getSurveyTemplateModel();

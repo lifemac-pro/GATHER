@@ -35,11 +35,36 @@ const waitlistSchema = new mongoose.Schema({
   },
 });
 
-// Add compound index for uniqueness
-waitlistSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+// Add compound index for uniqueness - only in non-edge environment
+try {
+  waitlistSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+} catch (error) {
+  console.warn("Skipping index creation in edge environment");
+}
 
-export const Waitlist = (mongoose.models.Waitlist ||
-  mongoose.model<WaitlistDocument>(
-    "Waitlist",
-    waitlistSchema,
-  )) as mongoose.Model<WaitlistDocument>;
+// Create a function to get the Waitlist model
+const getWaitlistModel = (): mongoose.Model<WaitlistDocument> => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      countDocuments: async () => 0,
+    } as unknown as mongoose.Model<WaitlistDocument>;
+  }
+
+  // Return the actual model
+  return (mongoose.models.Waitlist ||
+    mongoose.model<WaitlistDocument>(
+      "Waitlist",
+      waitlistSchema,
+    )) as mongoose.Model<WaitlistDocument>;
+};
+
+// Export the Waitlist model
+export const Waitlist = getWaitlistModel();

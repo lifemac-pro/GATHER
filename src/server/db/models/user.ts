@@ -4,17 +4,40 @@ import { type UserDocument, type UserModel } from "./types";
 
 const userSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
-  name: String,
   email: { type: String, required: true },
   emailVerified: Date,
   image: String,
   password: { type: String },
-  role: { type: String, enum: ["admin", "super_admin"], default: "admin" },
+  role: { 
+    type: String, 
+    enum: ["admin", "super_admin", "user"], 
+    default: "user" 
+  },
   firstName: { type: String },
   lastName: { type: String },
   profileImage: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Add virtual getter for name
+userSchema.virtual("name").get(function(this: UserDocument) {
+  if (this.firstName && this.lastName) {
+    return `${this.firstName} ${this.lastName}`;
+  } else if (this.firstName) {
+    return this.firstName;
+  } else if (this.lastName) {
+    return this.lastName;
+  }
+  return "Anonymous";
+});
+
+// Add virtual getter for fullName (alias for name)
+userSchema.virtual("fullName").get(function(this: UserDocument) {
+  return this.name;
 });
 
 // Add static methods
@@ -31,7 +54,7 @@ userSchema.statics.validatePassword = async function (
 
 // Add pre-save hook for password hashing
 userSchema.pre("save", async function (next) {
-  const user = this as UserDocument;
+  const user = this as unknown as UserDocument;
 
   // Only hash the password if it has been modified (or is new)
   if (!user.isModified("password")) return next();
@@ -54,5 +77,27 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-export const User = (mongoose.models.User ||
-  mongoose.model<UserDocument, UserModel>("User", userSchema)) as UserModel;
+// Create a function to get the User model
+const getUserModel = (): UserModel => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      findByEmail: async () => null,
+      validatePassword: async () => false,
+    } as unknown as UserModel;
+  }
+
+  // Return the actual model
+  return (mongoose.models.User ||
+    mongoose.model<UserDocument, UserModel>("User", userSchema)) as UserModel;
+};
+
+// Export the User model
+export const User = getUserModel();

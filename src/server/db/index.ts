@@ -2,6 +2,7 @@ import { connectToDatabase } from "./mongo";
 import mongoose from "mongoose";
 
 export * from "./models";
+export { connectToDatabase };
 
 // Initialize database connection
 void connectToDatabase();

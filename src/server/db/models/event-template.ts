@@ -39,27 +39,59 @@ const eventTemplateSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Add indexes
-eventTemplateSchema.index({ id: 1 }, { unique: true });
-eventTemplateSchema.index({ createdById: 1 });
+// Add indexes - only in non-edge environment
+try {
+  eventTemplateSchema.index({ id: 1 }, { unique: true });
+  eventTemplateSchema.index({ createdById: 1 });
+} catch (error) {
+  console.warn("Skipping index creation in edge environment");
+}
 
-// Update updatedAt timestamp
-eventTemplateSchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+// Update updatedAt timestamp - only in non-edge environment
+try {
+  eventTemplateSchema.pre("save", function (next) {
+    this.updatedAt = new Date();
+    next();
+  });
+} catch (error) {
+  console.warn("Skipping pre-save hook in edge environment");
+}
 
-// Add static methods
-eventTemplateSchema.statics.findByCreator = async function (userId: string) {
-  return this.find({ createdById: userId }).sort({ createdAt: -1 });
+// Add static methods - only in non-edge environment
+try {
+  eventTemplateSchema.statics.findByCreator = async function (userId: string) {
+    return this.find({ createdById: userId }).sort({ createdAt: -1 });
+  };
+} catch (error) {
+  console.warn("Skipping static methods in edge environment");
+}
+
+// Create a function to get the EventTemplate model
+const getEventTemplateModel = (): EventTemplateModel => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      findByCreator: async () => [],
+    } as unknown as EventTemplateModel;
+  }
+
+  // Return the actual model
+  return (mongoose.models.EventTemplate ||
+    mongoose.model<EventTemplateDocument, EventTemplateModel>(
+      "EventTemplate",
+      eventTemplateSchema
+    )) as EventTemplateModel;
 };
 
 // Create and export the model
-const EventTemplate = (mongoose.models.EventTemplate ||
-  mongoose.model<EventTemplateDocument, EventTemplateModel>(
-    "EventTemplate",
-    eventTemplateSchema
-  )) as EventTemplateModel;
+const EventTemplate = getEventTemplateModel();
 
 export default EventTemplate;
 export { EventTemplate };

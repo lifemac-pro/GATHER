@@ -12,7 +12,6 @@ const notificationSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
-    index: true,
   },
   title: {
     type: String,
@@ -29,7 +28,6 @@ const notificationSchema = new mongoose.Schema({
   },
   eventId: {
     type: String,
-    index: true,
   },
   read: {
     type: Boolean,
@@ -42,8 +40,39 @@ const notificationSchema = new mongoose.Schema({
   actionUrl: String,
 });
 
-export const Notification = (mongoose.models.Notification ||
-  mongoose.model<NotificationDocument>(
-    "Notification",
-    notificationSchema,
-  )) as mongoose.Model<NotificationDocument>;
+// Add indexes - only in non-edge environment
+try {
+  notificationSchema.index({ userId: 1 });
+  notificationSchema.index({ eventId: 1 });
+} catch (error) {
+  console.warn("Skipping index creation in edge environment");
+}
+
+// Create a function to get the Notification model
+const getNotificationModel = (): mongoose.Model<NotificationDocument> => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      countDocuments: async () => 0,
+      findOneAndUpdate: async () => null,
+      updateMany: async () => ({ nModified: 0 }),
+    } as unknown as mongoose.Model<NotificationDocument>;
+  }
+
+  // Return the actual model
+  return (mongoose.models.Notification ||
+    mongoose.model<NotificationDocument>(
+      "Notification",
+      notificationSchema,
+    )) as mongoose.Model<NotificationDocument>;
+};
+
+// Export the Notification model
+export const Notification = getNotificationModel();

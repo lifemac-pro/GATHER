@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
   lastName: String,
   role: {
     type: String,
-    enum: ["admin", "super_admin"],
-    default: "admin",
+    enum: ["admin", "super_admin", "user"],
+    default: "user",
   },
   createdAt: {
     type: Date,

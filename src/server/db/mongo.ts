@@ -40,7 +40,9 @@ export async function connectToDatabase() {
   }
 
   // If there's an existing connection in a different state, close it
+  // Check if we're in a middleware/edge context first
   if (
+    typeof mongoose.connection !== 'undefined' &&
     mongoose.connection.readyState > 0 &&
     mongoose.connection.readyState !== 1
   ) {
@@ -54,12 +56,18 @@ export async function connectToDatabase() {
   // Reset connection attempts if this is a fresh connection attempt
 
   try {
-    // Connect to MongoDB
+    // Check if we're in a middleware/edge context
+    if (typeof mongoose.connect !== 'function') {
+      console.warn("Running in edge environment, skipping MongoDB connection");
+      // Return mongoose without connecting in edge environment
+      return mongoose;
+    }
 
     // Connect to MongoDB using the connection string from environment variables
     if (!env.DATABASE_URL) {
       throw new Error("DATABASE_URL is not defined in environment variables");
     }
+
     // Create a clean connection options object without any problematic options
     const safeConnectionOptions = {
       serverSelectionTimeoutMS: 60000,
@@ -73,7 +81,16 @@ export async function connectToDatabase() {
       family: 4,
     };
 
-    await mongoose.connect(env.DATABASE_URL, safeConnectionOptions);
+    try {
+      await mongoose.connect(env.DATABASE_URL, safeConnectionOptions);
+    } catch (connectError) {
+      console.error("Error connecting to MongoDB:", connectError);
+      // In edge environment, just return mongoose without connecting
+      if (process.env.NEXT_RUNTIME === "edge") {
+        return mongoose;
+      }
+      throw connectError;
+    }
 
     // Set up connection event handlers
     mongoose.connection.on("error", (err) => {
@@ -106,8 +123,8 @@ export async function connectToDatabase() {
       isConnected = true;
     });
 
-    // Verify connection is actually established
-    if (mongoose.connection.readyState !== 1) {
+    // Verify connection is actually established - only if not in edge environment
+    if (typeof mongoose.connection !== 'undefined' && mongoose.connection.readyState !== 1) {
       console.log(
         `MongoDB connection not fully established. Current state: ${mongoose.connection.readyState}`,
       );
@@ -116,12 +133,14 @@ export async function connectToDatabase() {
 
       // Check again
       // Check if not connected (1) or connecting (2)
-      const readyState = mongoose.connection.readyState;
-      // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-      if (readyState === 0 || readyState === 3) {
-        throw new Error(
-          `MongoDB connection failed to establish. State: ${mongoose.connection.readyState}`,
-        );
+      if (typeof mongoose.connection !== 'undefined') {
+        const readyState = mongoose.connection.readyState;
+        // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+        if (readyState === 0 || readyState === 3) {
+          throw new Error(
+            `MongoDB connection failed to establish. State: ${mongoose.connection.readyState}`,
+          );
+        }
       }
     }
 

@@ -16,8 +16,8 @@ export const users = createTable(
     email: text("email").notNull(),
     firstName: text("first_name"),
     lastName: text("last_name"),
-    role: text("role", { enum: ["admin", "super_admin"] })
-      .default("admin")
+    role: text("role", { enum: ["admin", "super_admin", "user"] })
+      .default("user")
       .notNull(),
     createdAt: int("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)

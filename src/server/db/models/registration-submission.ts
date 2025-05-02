@@ -81,14 +81,8 @@ registrationSubmissionSchema.statics.countByStatus = async function (eventId: st
   ]);
 };
 
-// Create and export the model
-export const RegistrationSubmission = (mongoose.models.RegistrationSubmission ||
-  mongoose.model<RegistrationSubmissionDocument>(
-    "RegistrationSubmission",
-    registrationSubmissionSchema,
-  )) as mongoose.Model<RegistrationSubmissionDocument> & {
-    findByEvent(eventId: string): Promise<RegistrationSubmissionDocument[]>;
-    findByUser(userId: string): Promise<RegistrationSubmissionDocument[]>;
-    findByForm(formId: string): Promise<RegistrationSubmissionDocument[]>;
-    countByStatus(eventId: string): Promise<Array<{ _id: string; count: number }>>;
-  };
+// Create model with edge runtime handling
+let modelName = "RegistrationSubmission";
+export const RegistrationSubmission = (process.env.NEXT_RUNTIME === "edge")
+  ? (mongoose.models?.[modelName] || mongoose.model(modelName, registrationSubmissionSchema))
+  : (mongoose.models?.[modelName] || mongoose.model(modelName, registrationSubmissionSchema));

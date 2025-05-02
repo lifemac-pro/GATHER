@@ -1,5 +1,4 @@
-import { SignInButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import { RoleSelection } from "@/components/ui/landing/role-selection";
 
 export function HeroSection() {
   return (
@@ -16,14 +15,7 @@ export function HeroSection() {
           Discover and manage events with ease. Your all-in-one platform for
           creating memorable gatherings.
         </p>
-        <SignInButton mode="modal">
-          <Button
-            className="bg-white text-primary transition-all duration-200 hover:bg-white/90 hover:shadow-lg"
-            size="lg"
-          >
-            Sign in to Continue
-          </Button>
-        </SignInButton>
+        <RoleSelection />
       </div>
     </section>
   );

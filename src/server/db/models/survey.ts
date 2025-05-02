@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
-import { type SurveyDocument } from "./types";
+import { type SurveyDocument, type SurveyModel } from "./types";
 
 const responseSchema = new mongoose.Schema({
   questionId: { type: String, required: true },
@@ -21,19 +21,54 @@ const surveySchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Indexes for faster queries
-surveySchema.index({ eventId: 1 });
-surveySchema.index({ userId: 1 });
-surveySchema.index({ templateId: 1 });
+// Indexes for faster queries - only in non-edge environment
+try {
+  surveySchema.index({ eventId: 1 });
+  surveySchema.index({ userId: 1 });
+  surveySchema.index({ templateId: 1 });
+} catch (error) {
+  console.warn("Skipping index creation in edge environment");
+}
 
-// Update updatedAt timestamp
-surveySchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+// Update updatedAt timestamp - only in non-edge environment
+try {
+  surveySchema.pre("save", function (next) {
+    this.updatedAt = new Date();
+    next();
+  });
+} catch (error) {
+  console.warn("Skipping pre-save hook in edge environment");
+}
 
-export const Survey = (mongoose.models.Survey ||
-  mongoose.model<SurveyDocument>(
-    "Survey",
-    surveySchema,
-  )) as mongoose.Model<SurveyDocument>;
+// Create a function to get the Survey model
+const getSurveyModel = (): SurveyModel => {
+  // Check if we're in a middleware/edge context
+  if (typeof mongoose.models === 'undefined') {
+    // Return a mock model for middleware/edge context
+    return {
+      findOne: async () => null,
+      findById: async () => null,
+      find: async () => [],
+      create: async () => ({}),
+      updateOne: async () => ({}),
+      deleteOne: async () => ({}),
+      countDocuments: async () => 0,
+      lean: async () => [],
+      populate: async () => {},
+      findByEvent: async () => [],
+      findByUser: async () => [],
+      findByTemplate: async () => [],
+      getEventRating: async () => 0,
+    } as unknown as SurveyModel;
+  }
+
+  // Return the actual model
+  return (mongoose.models.Survey as unknown as SurveyModel ||
+    mongoose.model<SurveyDocument, SurveyModel>(
+      "Survey",
+      surveySchema,
+    ) as SurveyModel);
+};
+
+// Export the Survey model
+export const Survey = getSurveyModel();
