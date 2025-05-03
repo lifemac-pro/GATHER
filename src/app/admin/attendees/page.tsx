@@ -207,7 +207,7 @@ export default function AttendeesPage() {
 
   const handleBulkRequestFeedback = async () => {
     const selectedAttendees =
-      attendeesData?.items?.filter((a: any) => selectedIds.includes(a.id)) ||
+      attendeesData?.attendees?.filter((a: any) => selectedIds.includes(a.id)) ||
       [];
     if (!selectedAttendees) return;
 
@@ -229,7 +229,7 @@ export default function AttendeesPage() {
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(
-      checked ? (attendeesData?.items?.map((a: any) => a.id) ?? []) : [],
+      checked ? (attendeesData?.attendees?.map((a: any) => a.id) ?? []) : [],
     );
   };
 
@@ -277,7 +277,7 @@ export default function AttendeesPage() {
       {/* Analytics */}
       <AttendeeAnalytics
         dailyTrends={
-          stats.dailyTrends.map((trend) => {
+          stats?.dailyTrends?.map((trend) => {
             // Ensure date is always a string and never undefined
             const dateStr = trend.date
               ? new Date(trend.date).toISOString().split("T")[0]
@@ -289,14 +289,9 @@ export default function AttendeesPage() {
               checkIns: Math.floor(count * 0.8),
               cancellations: Math.floor(count * 0.1),
             };
-          }) as Array<{
-            date: string;
-            registrations: number;
-            checkIns: number;
-            cancellations: number;
-          }>
+          }) ?? []
         }
-        statusDistribution={Object.entries(stats.attendeesByStatus).map(
+        statusDistribution={Object.entries(stats?.attendeesByStatus ?? {}).map(
           ([status, count]) => ({
             status,
             count,
@@ -356,7 +351,7 @@ export default function AttendeesPage() {
                 <TableHead className="w-[50px]">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === attendeesData.items.length}
+                    checked={selectedIds.length === attendeesData.attendees.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="h-4 w-4"
                   />
@@ -419,7 +414,7 @@ export default function AttendeesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendeesData?.items?.map((attendee: any) => (
+              {attendeesData?.attendees?.map((attendee: any) => (
                 <TableRow key={attendee.id}>
                   <TableCell>
                     <input
@@ -499,9 +494,9 @@ export default function AttendeesPage() {
           <div className="mt-4">
             <Pagination
               currentPage={page}
-              pageCount={attendeesData.pagination.pageCount}
+              pageCount={Math.ceil((attendeesData?.total ?? 0) / pageSize)}
               pageSize={pageSize}
-              total={Number(attendeesData.pagination.total) || 0}
+              total={attendeesData?.total ?? 0}
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
             />

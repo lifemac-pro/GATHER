@@ -369,171 +369,175 @@ export const attendeeRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       // Ensure MongoDB is connected
-      await connectToDatabase();
+      try {
+        await connectToDatabase();
+      } catch (error) {
+        console.error("Failed to connect to database:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database connection failed. Please try again.",
+        });
+      }
 
-      // Get user ID from session
-      const userId =
-        ctx &&
-        ctx.session &&
-        typeof ctx.session === "object" &&
-        "userId" in ctx.session
-          ? ctx.session.userId
-          : undefined;
+      const userId = ctx.session?.userId;
       if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
-      try {
-        // Try to find event with timeout
-        const event = await Promise.race([
-          Event.findOne({ id: input.eventId }).lean(),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("MongoDB operation timed out")),
-              8000,
+      const OPERATION_TIMEOUT = 15000; // Increased timeout to 15 seconds
+      const MAX_RETRIES = 3;
+      let retryCount = 0;
+
+      while (retryCount < MAX_RETRIES) {
+        try {
+          // Check if event exists first
+          const event = await Promise.race([
+            Event.findOne({ id: input.eventId }).lean(),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Event lookup timed out")),
+                OPERATION_TIMEOUT,
+              ),
             ),
-          ),
-        ]);
+          ]);
 
-        // If no event found, return error
-        if (!event) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Event not found",
-          });
-        }
+          if (!event) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Event not found",
+            });
+          }
 
-        // Check if user is already registered
-        const existingRegistration = await Promise.race([
-          Attendee.findOne({ eventId: input.eventId, userId }).lean(),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("MongoDB operation timed out")),
-              8000,
+          // Check existing registration with timeout
+          const existingRegistration = await Promise.race([
+            Attendee.findOne({
+              eventId: input.eventId,
+              userId,
+            }).lean(),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Registration lookup timed out")),
+                OPERATION_TIMEOUT,
+              ),
             ),
-          ),
-        ]);
+          ]);
 
-        if (existingRegistration) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "You are already registered for this event",
-          });
-        }
+          if (existingRegistration) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "You are already registered for this event",
+            });
+          }
 
-        // Check if event is at capacity
-        const attendeeCount = await Promise.race([
-          Attendee.countDocuments({ eventId: input.eventId }),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("MongoDB operation timed out")),
-              8000,
-            ),
-          ),
-        ]);
+          // Check capacity with timeout
+          const [attendeeCount, user] = await Promise.all([
+            Promise.race([
+              Attendee.countDocuments({ eventId: input.eventId }),
+              new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error("Attendee count lookup timed out")),
+                  OPERATION_TIMEOUT,
+                ),
+              ),
+            ]),
+            User.findOne({ id: userId }).lean().exec(),
+          ]);
 
-        const eventObj = event as any;
-        const maxAttendees =
-          eventObj?.maxAttendees &&
-          Array.isArray(eventObj.maxAttendees) &&
-          eventObj.maxAttendees.length > 0
+          const eventObj = event as any;
+          const maxAttendees = eventObj?.maxAttendees && Array.isArray(eventObj.maxAttendees) 
             ? parseInt(eventObj.maxAttendees[0])
             : 0;
 
-        if (maxAttendees > 0 && (attendeeCount as number) >= maxAttendees) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "This event is at capacity",
-          });
-        }
+          if (maxAttendees > 0 && (attendeeCount as number) >= maxAttendees) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "This event is at capacity",
+            });
+          }
 
-        // Get user info if available
-        const user = await User.findOne({ id: userId }).catch(() => null);
+          // Create new registration with optimized data
+          const attendeeData = {
+            id: nanoid(),
+            eventId: input.eventId,
+            userId,
+            name: input.name || (user ? `${user.firstName} ${user.lastName}` : "Anonymous"),
+            email: input.email || (user ? user.email : ""),
+            phone: input.phone,
+            status: "registered",
+            ticketCode: nanoid(8).toUpperCase(),
+            registeredAt: new Date(),
+            demographics: input.demographics || {},
+          };
 
-        // Create new registration
-        const attendeeData = {
-          id: nanoid(),
-          eventId: input.eventId,
-          userId,
-          name:
-            input.name ||
-            (user ? `${user.firstName} ${user.lastName}` : "Anonymous"),
-          email: input.email || (user ? user.email : ""),
-          phone: input.phone,
-          status: "registered",
-          ticketCode: nanoid(8).toUpperCase(),
-          registeredAt: new Date(),
-          demographics: input.demographics || {},
-        };
-
-        // Try to create attendee with timeout
-        const attendee = await Promise.race([
-          Attendee.create(attendeeData),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("MongoDB operation timed out")),
-              8000,
+          // Create attendee with timeout
+          const attendee = await Promise.race([
+            Attendee.create(attendeeData),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Attendee creation timed out")),
+                OPERATION_TIMEOUT,
+              ),
             ),
-          ),
-        ]);
+          ]);
 
-        // No need to add to mock data
+          if (!attendee) {
+            throw new Error("Failed to create attendee record");
+          }
 
-        // Handle attendee object safely
-        if (!attendee) return null;
-
-        // Send registration confirmation email
-        try {
-          await sendRegistrationConfirmation({
+          // Send registration confirmation email asynchronously
+          // Don't wait for email to complete
+          sendRegistrationConfirmation({
             email: attendeeData.email,
-            eventName: (event as any).name || "Event",
-            eventDate: (event as any).startDate || new Date(),
-            eventLocation: (event as any).location || "TBD",
+            eventName: eventObj.name || "Event",
+            eventDate: eventObj.startDate || new Date(),
+            eventLocation: eventObj.location || "TBD",
             attendeeName: attendeeData.name,
             ticketCode: attendeeData.ticketCode,
-            eventUrl: `${process.env.NEXTAUTH_URL}/events/${(event as any).id || ""}`,
+            eventUrl: `${process.env.NEXTAUTH_URL}/events/${eventObj.id || ""}`,
+          }).catch((emailError) => {
+            console.error("Failed to send registration confirmation email:", emailError);
           });
-        } catch (emailError) {
-          console.error(
-            "Failed to send registration confirmation email:",
-            emailError,
-          );
-          // Don't fail the registration if email sending fails
-        }
 
-        // Convert to plain object if possible
-        if (attendee && typeof attendee === "object") {
-          if (
-            "toObject" in attendee &&
-            typeof attendee.toObject === "function"
-          ) {
-            return attendee.toObject();
+          return attendee.toObject ? attendee.toObject() : attendee;
+
+        } catch (error) {
+          retryCount++;
+          
+          // If it's the last retry or a non-retryable error, throw it
+          if (retryCount === MAX_RETRIES || 
+              (error instanceof TRPCError && 
+               error.code !== "INTERNAL_SERVER_ERROR")) {
+            console.error("Error registering for event:", error);
+            
+            if (error instanceof TRPCError) {
+              throw error;
+            }
+
+            // Check for specific timeout errors
+            const err = error as Error;
+            if (err.message && err.message.includes("timed out")) {
+              throw new TRPCError({
+                code: "TIMEOUT",
+                message: "Database operation timed out. Please try again.",
+              });
+            }
+
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to register for event",
+            });
           }
-          return attendee;
+
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+          continue;
         }
-
-        return null;
-      } catch (error) {
-        console.error("Error registering for event:", error);
-
-        // If it's a timeout error, return a specific error
-        const err = error as any;
-        if (err && err.message === "MongoDB operation timed out") {
-          throw new TRPCError({
-            code: "TIMEOUT",
-            message: "Database operation timed out. Please try again.",
-          });
-        }
-
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to register for event",
-        });
       }
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Maximum retries exceeded. Please try again later.",
+      });
     }),
 
   checkIn: protectedProcedure
@@ -832,28 +836,105 @@ export const attendeeRouter = createTRPCRouter({
           ];
         }
 
-        if (eventId) {
+        if (eventId && eventId !== "all") {
           query.eventId = eventId;
         }
 
-        if (status) {
+        if (status && status !== "all") {
           query.status = status;
         }
 
-        const attendees = await Attendee.find(query)
-          .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
-          .skip((page - 1) * pageSize)
-          .limit(pageSize)
-          .lean();
+        console.log("Attendee query:", JSON.stringify(query, null, 2));
+        console.log("Sort config:", { field: sortBy, order: sortOrder });
+        console.log("Pagination:", { page, pageSize });
 
-        const total = await Attendee.countDocuments(query);
+        // Use aggregation pipeline to efficiently join with users and events
+        const aggregationPipeline = [
+          { $match: query },
+          { $sort: { [sortBy]: sortOrder === "asc" ? 1 : -1 } },
+          { $skip: (page - 1) * pageSize },
+          { $limit: pageSize },
+          {
+            $lookup: {
+              from: "users",
+              let: { userId: "$userId" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$id", "$$userId"] }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    name: { $concat: ["$firstName", " ", "$lastName"] },
+                    email: 1
+                  }
+                }
+              ],
+              as: "userArray"
+            }
+          },
+          {
+            $lookup: {
+              from: "events",
+              let: { eventId: "$eventId" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$id", "$$eventId"] }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    name: 1
+                  }
+                }
+              ],
+              as: "eventArray"
+            }
+          },
+          {
+            $addFields: {
+              user: {
+                $cond: {
+                  if: { $gt: [{ $size: "$userArray" }, 0] },
+                  then: { $arrayElemAt: ["$userArray", 0] },
+                  else: { name: "Unknown", email: "unknown@example.com" }
+                }
+              },
+              event: {
+                $cond: {
+                  if: { $gt: [{ $size: "$eventArray" }, 0] },
+                  then: { $arrayElemAt: ["$eventArray", 0] },
+                  else: { name: "Unknown Event" }
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              userArray: 0,
+              eventArray: 0
+            }
+          }
+        ];
+
+        const [attendees, totalCount] = await Promise.all([
+          Attendee.aggregate(aggregationPipeline),
+          Attendee.countDocuments(query)
+        ]);
+
+        console.log("Found attendees:", attendees.length);
+        console.log("Total matching attendees:", totalCount);
 
         return {
           attendees,
-          total,
+          total: totalCount,
           page,
           pageSize,
-          totalPages: Math.ceil(total / pageSize),
+          totalPages: Math.ceil(totalCount / pageSize),
         };
       } catch (error) {
         console.error("Error fetching attendees:", error);

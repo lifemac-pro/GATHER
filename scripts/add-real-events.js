@@ -1,9 +1,10 @@
 // Script to add real events to the database
-const { MongoClient } = require("mongodb");
-const { nanoid } = require("nanoid");
+import { MongoClient } from "mongodb";
+import { nanoid } from "nanoid";
+import { env } from "@/env";
 
 // MongoDB connection string
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/gather";
+const uri = env.DATABASE_URL;
 
 // Sample real events data
 const realEvents = [

@@ -61,10 +61,10 @@ export default function RegistrationConfirmationPage({ params }: { params: { id:
         <CardHeader>
           <div className="flex items-center space-x-2">
             <CheckCircle className="h-6 w-6 text-green-600" />
-            <CardTitle>Registration Submitted</CardTitle>
+            <CardTitle>Successfully Registered!</CardTitle>
           </div>
           <CardDescription>
-            Your registration for {event.name} has been submitted successfully
+            You have successfully registered for {event.name}. You can now view this event in your events list.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,13 +94,23 @@ export default function RegistrationConfirmationPage({ params }: { params: { id:
               )}
             </div>
             
-            <div className="space-y-2 rounded-md bg-muted/30 p-4">
-              <p className="font-medium">What happens next?</p>
-              <ul className="ml-6 list-disc space-y-1 text-sm">
-                <li>You will receive a confirmation email with the details of your registration.</li>
-                <li>If approval is required, you will be notified once your registration is reviewed.</li>
-                <li>You can view your registration status in your account at any time.</li>
-              </ul>
+            <div className="space-y-4">
+              <div className="rounded-md bg-green-100 p-4 dark:bg-green-900/30">
+                <p className="font-medium text-green-800 dark:text-green-100">Registration Status</p>
+                <p className="mt-1 text-sm text-green-700 dark:text-green-200">
+                  Your registration has been confirmed. You can view the event details and status in your events list.
+                </p>
+              </div>
+              
+              <div className="rounded-md bg-muted/30 p-4">
+                <p className="font-medium">What happens next?</p>
+                <ul className="ml-6 list-disc space-y-1 text-sm">
+                  <li>You will receive a confirmation email with the details of your registration.</li>
+                  <li>If approval is required, you will be notified once your registration is reviewed.</li>
+                  <li>You can view your registration status in your account at any time.</li>
+                  <li>Add the event to your calendar to make sure you don't miss it!</li>
+                </ul>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -108,8 +118,11 @@ export default function RegistrationConfirmationPage({ params }: { params: { id:
           <Button variant="outline" onClick={() => router.push(`/events/${params.id}`)}>
             Back to Event
           </Button>
-          <Button onClick={() => router.push("/account/registrations")}>
-            View My Registrations
+          <Button 
+            onClick={() => router.push("/attendee/events")}
+            className="bg-[#00b0a6] text-white hover:bg-[#00b0a6]/90"
+          >
+            View My Events
           </Button>
         </CardFooter>
       </Card>

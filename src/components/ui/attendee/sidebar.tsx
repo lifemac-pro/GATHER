@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   Bell,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../button";
@@ -21,6 +22,11 @@ const navigation = [
     name: "Dashboard",
     href: "/attendee/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Browse Events",
+    href: "/events",
+    icon: Search,
   },
   {
     name: "My Events",

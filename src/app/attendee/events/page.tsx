@@ -107,7 +107,7 @@ export default function AttendeeEventsPage() {
                 You don't have any upcoming events. Browse events to register.
               </p>
               <Button 
-                onClick={() => router.push("/events")}
+                onClick={() => router.push("/events/browse")}
                 className="bg-[#00b0a6] text-white hover:bg-[#00b0a6]/90"
               >
                 Browse Events

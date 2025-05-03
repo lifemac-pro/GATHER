@@ -69,8 +69,14 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
   const submitForm = api.registrationSubmission.submit.useMutation({
     onSuccess: () => {
       toast({
-        title: "Registration submitted",
-        description: "Your registration has been submitted successfully",
+        title: "Successfully registered!",
+        description: (
+          <div className="space-y-2">
+            <p>You have successfully registered for this event.</p>
+            <p>You can view this event in your <a href="/attendee/events" className="font-medium underline hover:text-primary">My Events</a> list.</p>
+          </div>
+        ),
+        duration: 5000,
       });
       if (onSuccess) onSuccess();
     },
