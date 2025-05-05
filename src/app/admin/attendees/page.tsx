@@ -40,7 +40,6 @@ import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActions } from "@/components/ui/admin/bulk-actions";
-import { AttendeeAnalytics } from "@/components/ui/admin/attendee-analytics";
 
 const COLORS = ["#072446", "#E1A913", "#00b0a6", "#B0B8C5"];
 
@@ -71,10 +70,6 @@ export default function AttendeesPage() {
     cancelled: "bg-red-100 text-red-700",
     waitlisted: "bg-yellow-100 text-yellow-700",
   };
-  const [analyticsDateRange, setAnalyticsDateRange] = useState({
-    start: new Date(new Date().setDate(new Date().getDate() - 30)),
-    end: new Date(),
-  });
 
   const { toast } = useToast();
 
@@ -89,14 +84,6 @@ export default function AttendeesPage() {
       pageSize,
     });
 
-  const { data: stats, isLoading: statsLoading } =
-    api.attendee.getStats.useQuery({
-      startDate: analyticsDateRange.start,
-      endDate: analyticsDateRange.end,
-      eventId: selectedEventId,
-    });
-
-  // Fetch events from the API
   const { data: events, isLoading: eventsLoading } =
     api.event.getAll.useQuery();
 
@@ -239,7 +226,7 @@ export default function AttendeesPage() {
     );
   };
 
-  if (!attendeesData || !stats || !events) {
+  if (!attendeesData || !events) {
     return (
       <div className="container flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner size="lg" text="Loading attendee data..." />
@@ -273,36 +260,6 @@ export default function AttendeesPage() {
           </Button>
         </div>
       </div>
-
-      {/* Analytics */}
-      <AttendeeAnalytics
-        dailyTrends={
-          stats?.dailyTrends?.map((trend) => {
-            // Ensure date is always a string and never undefined
-            const dateStr = trend.date
-              ? new Date(trend.date).toISOString().split("T")[0]
-              : new Date().toISOString().split("T")[0];
-            const count = typeof trend.count === "number" ? trend.count : 0;
-            return {
-              date: dateStr, // Explicitly typed as string
-              registrations: count,
-              checkIns: Math.floor(count * 0.8),
-              cancellations: Math.floor(count * 0.1),
-            };
-          }) ?? []
-        }
-        statusDistribution={Object.entries(stats?.attendeesByStatus ?? {}).map(
-          ([status, count]) => ({
-            status,
-            count,
-          }),
-        )}
-        startDate={analyticsDateRange.start}
-        endDate={analyticsDateRange.end}
-        onDateRangeChange={(start, end) =>
-          setAnalyticsDateRange({ start, end })
-        }
-      />
 
       {/* Filters */}
       <div className="flex gap-4">
