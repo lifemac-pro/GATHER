@@ -4,26 +4,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfMonth, subMonths } from "date-fns";
 
@@ -34,7 +22,6 @@ export default function AnalyticsPage() {
     from: startOfMonth(subMonths(new Date(), 1)),
     to: new Date(),
   });
-  const [selectedMetric, setSelectedMetric] = useState("registrations");
 
   // In TRPC v11, we don't need to pass parameters if the procedure doesn't expect them
   const { data: stats, isLoading } = api.analytics.getStats.useQuery();
@@ -69,17 +56,6 @@ export default function AnalyticsPage() {
               }
             }}
           />
-          <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select metric" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="registrations">Registrations</SelectItem>
-              <SelectItem value="checkIns">Check-ins</SelectItem>
-              <SelectItem value="cancellations">Cancellations</SelectItem>
-              <SelectItem value="feedback">Feedback</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -122,32 +98,7 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-6">
-          <h3 className="mb-4 text-lg font-medium">Trend Analysis</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart
-              data={[
-                { name: "Jan", value: 30 },
-                { name: "Feb", value: 45 },
-                { name: "Mar", value: 60 },
-              ]}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey={selectedMetric}
-                stroke="#00b0a6"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-4">
         <Card className="p-6">
           <h3 className="mb-4 text-lg font-medium">Event Categories</h3>
           <ResponsiveContainer width="100%" height={400}>
