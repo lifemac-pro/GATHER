@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/auth-context";
+import { AttendeeSidebar } from "@/components/ui/attendee/sidebar";
 
 export default function EventsPage() {
   const searchParams = useSearchParams();
@@ -35,71 +36,67 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8 flex flex-col items-start justify-between md:flex-row md:items-center">
-        <h1 className="mb-4 text-3xl font-bold md:mb-0">Events</h1>
+    <>
+      <AttendeeSidebar />
+      <div className="container mx-auto py-8 md:ml-64">
+        <div className="mb-8 flex flex-col items-start justify-between md:flex-row md:items-center">
+          <h1 className="mb-4 text-3xl font-bold md:mb-0">Events</h1>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              console.log("Refreshing events page");
-              // Increment refresh key to trigger re-fetch
-              setRefreshKey((prev) => prev + 1);
-              // Force a router refresh
-              router.refresh();
-              // Show a toast notification
-              toast({
-                title: "Refreshing events",
-                description: "Fetching the latest events from the database...",
-              });
-            }}
-          >
-            Refresh Events
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => router.push("/debug-events")}
-          >
-            Debug Events
-          </Button>
-
-          {user && (
-            <Button onClick={() => router.push("/events/create")}>
-              Create Event
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                console.log("Refreshing events page");
+                // Increment refresh key to trigger re-fetch
+                setRefreshKey((prev) => prev + 1);
+                // Force a router refresh
+                router.refresh();
+                // Show a toast notification
+                toast({
+                  title: "Refreshing events",
+                  description: "Fetching the latest events from the database...",
+                });
+              }}
+            >
+              Refresh Events
             </Button>
-          )}
+
+            {user && (
+              <Button onClick={() => router.push("/events/create")}>
+                Create Event
+              </Button>
+            )}
+          </div>
         </div>
+
+        <div className="mb-8 rounded-lg bg-white p-6 shadow">
+          <EventSearch />
+        </div>
+
+        <Tabs
+          defaultValue={activeTab}
+          onValueChange={handleTabChange}
+          className="mb-8"
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all">All Events</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="featured">Featured</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all">
+            <EventList refreshKey={refreshKey} />
+          </TabsContent>
+
+          <TabsContent value="upcoming">
+            <EventList upcoming={true} refreshKey={refreshKey} />
+          </TabsContent>
+
+          <TabsContent value="featured">
+            <EventList featured={true} refreshKey={refreshKey} />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <div className="mb-8 rounded-lg bg-white p-6 shadow">
-        <EventSearch />
-      </div>
-
-      <Tabs
-        defaultValue={activeTab}
-        onValueChange={handleTabChange}
-        className="mb-8"
-      >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">All Events</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="featured">Featured</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all">
-          <EventList refreshKey={refreshKey} />
-        </TabsContent>
-
-        <TabsContent value="upcoming">
-          <EventList upcoming={true} refreshKey={refreshKey} />
-        </TabsContent>
-
-        <TabsContent value="featured">
-          <EventList featured={true} refreshKey={refreshKey} />
-        </TabsContent>
-      </Tabs>
-    </div>
+    </>
   );
 }

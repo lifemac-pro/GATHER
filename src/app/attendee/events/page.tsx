@@ -103,15 +103,9 @@ export default function AttendeeEventsPage() {
           ) : (
             <div className="rounded-lg border border-dashed p-8 text-center">
               <h3 className="mb-2 text-lg font-semibold">No upcoming events</h3>
-              <p className="mb-4 text-muted-foreground">
-                You don't have any upcoming events. Browse events to register.
+              <p className="text-muted-foreground">
+                You don't have any upcoming events.
               </p>
-              <Button 
-                onClick={() => router.push("/events/browse")}
-                className="bg-[#00b0a6] text-white hover:bg-[#00b0a6]/90"
-              >
-                Browse Events
-              </Button>
             </div>
           )}
         </TabsContent>

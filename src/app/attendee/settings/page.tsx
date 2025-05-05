@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { api } from "@/trpc/react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,14 @@ import { User, Bell, Shield } from "lucide-react";
 
 export default function AttendeeSettingsPage() {
   const { user, isLoaded } = useUser();
-  
+  const { client } = useClerk();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    lastName: '',
+    email: ''
+  });
+
   // Fetch user preferences
   const { data: preferences, isLoading: isPreferencesLoading } = 
     api.attendee.getPreferences.useQuery(
@@ -39,6 +46,28 @@ export default function AttendeeSettingsPage() {
     marketingEmails: false,
   });
 
+  // Update notification settings when preferences are loaded
+  useEffect(() => {
+    if (preferences && !isPreferencesLoading) {
+      setNotificationSettings({
+        emailNotifications: preferences.emailNotifications,
+        eventReminders: preferences.eventReminders,
+        surveyReminders: preferences.surveyReminders,
+        marketingEmails: preferences.marketingEmails,
+      });
+    }
+  }, [preferences, isPreferencesLoading]);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.primaryEmailAddress?.emailAddress || ''
+      });
+    }
+  }, [user]);
+
   const isLoading = !isLoaded || isPreferencesLoading;
 
   if (isLoading) {
@@ -49,16 +78,6 @@ export default function AttendeeSettingsPage() {
     );
   }
 
-  // Update notification settings when preferences are loaded
-  if (preferences && !isPreferencesLoading) {
-    setNotificationSettings({
-      emailNotifications: preferences.emailNotifications,
-      eventReminders: preferences.eventReminders,
-      surveyReminders: preferences.surveyReminders,
-      marketingEmails: preferences.marketingEmails,
-    });
-  }
-
   const handleToggleChange = (key: keyof typeof notificationSettings) => {
     const newSettings = {
       ...notificationSettings,
@@ -66,6 +85,21 @@ export default function AttendeeSettingsPage() {
     };
     setNotificationSettings(newSettings);
     updatePreferences.mutate(newSettings);
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      setIsUpdating(true);
+      await user?.update({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName
+      });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -93,40 +127,59 @@ export default function AttendeeSettingsPage() {
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                View and update your profile information
+                Update your profile information
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input 
-                  id="name" 
-                  value={`${user?.firstName || ''} ${user?.lastName || ''}`} 
-                  disabled 
-                />
-                <p className="text-xs text-muted-foreground">
-                  To change your name, update your Clerk profile
-                </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input 
+                    id="firstName"
+                    value={profileData.firstName}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      firstName: e.target.value
+                    }))}
+                    placeholder="Enter your first name"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input 
+                    id="lastName"
+                    value={profileData.lastName}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      lastName: e.target.value
+                    }))}
+                    placeholder="Enter your last name"
+                  />
+                </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input 
-                  id="email" 
-                  value={user?.primaryEmailAddress?.emailAddress || ''} 
-                  disabled 
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  disabled
+                  className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  To change your email, update your Clerk profile
+                  Email changes require additional verification. Please contact support if you need to update your email.
                 </p>
               </div>
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={() => window.open('https://accounts.clerk.dev/user/profile', '_blank')}
+                onClick={handleUpdateProfile}
+                disabled={isUpdating}
                 className="bg-[#00b0a6] text-white hover:bg-[#00b0a6]/90"
               >
-                Edit Profile in Clerk
+                {isUpdating ? "Updating..." : "Save Changes"}
               </Button>
             </CardFooter>
           </Card>
