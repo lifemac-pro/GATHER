@@ -21,8 +21,7 @@ import { format } from "date-fns";
 
 export default function EventRegistrationPage({ params }: { params: { id: string } }) {
   // Unwrap params using React.use()
-  const unwrappedParams = React.use(params);
-  const eventId = unwrappedParams.id;
+  const { id: eventId } = params;
 
   const router = useRouter();
   const { toast } = useToast();
@@ -36,7 +35,9 @@ export default function EventRegistrationPage({ params }: { params: { id: string
   );
 
   // Get active registration form
-  const { data: form, isLoading: isLoadingForm } = api.registrationForm.getActiveByEvent.useQuery(
+  const { data: form, isLoading: isLoadingForm } = api.registrationForm.getActiveByEvent.useQuery<
+    { id: string } | null
+  >(
     { eventId },
     { enabled: !!eventId }
   );
@@ -175,13 +176,13 @@ export default function EventRegistrationPage({ params }: { params: { id: string
             </div>
           )}
 
-          {event.startTime && (
+          {event.startDate && (
             <div className="flex items-center text-muted-foreground">
               <Clock className="mr-2 h-4 w-4" />
               <span>
-                {format(new Date(`2000-01-01T${event.startTime}`), "h:mm a")}
-                {event.endTime &&
-                  ` - ${format(new Date(`2000-01-01T${event.endTime}`), "h:mm a")}`}
+                {format(new Date(event.startDate), "h:mm a")}
+                {event.endDate &&
+                  ` - ${format(new Date(event.endDate), "h:mm a")}`}
               </span>
             </div>
           )}

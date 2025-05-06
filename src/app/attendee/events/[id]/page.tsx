@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { trackUserEvent } from "@/lib/analytics-client";
 import { useUser } from "@clerk/nextjs";
@@ -45,7 +45,21 @@ export default function AttendeeEventDetailsPage() {
     api.event.getById.useQuery(
       { id: eventId },
       { enabled: !!eventId }
-    );
+    ) as { data: {
+      id: string;
+      name: any;
+      startDate: string | number | Date;
+      endDate: string | number | Date;
+      image: any;
+      isVirtual: any;
+      virtualMeetingInfo: any;
+      location: any;
+      maxAttendees: any;
+      price: number | boolean;
+      description: ReactNode;
+      speakers: any;
+      organizer: any; schedule?: { time: string; title: string; description?: string }[] 
+} | null, isLoading: boolean };
 
   // Fetch registration status
   const { data: registration, isLoading: isRegistrationLoading } =
@@ -291,7 +305,7 @@ export default function AttendeeEventDetailsPage() {
                 </div>
               )}
 
-              {event.price && event.price > 0 && (
+              {typeof event.price === "number" && event.price > 0 && (
                 <div className="flex items-start gap-3">
                   <Ticket className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#00b0a6]" />
                   <div>

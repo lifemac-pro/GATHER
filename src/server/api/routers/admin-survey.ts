@@ -8,10 +8,10 @@ import { nanoid } from "nanoid";
 
 // Mock model for compatibility
 const SurveyResponse = {
-  deleteMany: async () => null,
-  find: () => ({
-    sort: () => ({
-      populate: () => []
+  deleteMany: async (p0: { surveyId: string; }) => null,
+  find: (p0: { surveyId: string; }) => ({
+    sort: (p0: { createdAt: number; }) => ({
+      populate: (p0: string) => []
     })
   })
 };
@@ -44,7 +44,7 @@ export const adminSurveyRouter = createTRPCRouter({
         const survey = await Survey.create({
           ...input,
           id: nanoid(),
-          createdBy: ctx.auth.userId,
+          createdBy: ctx.session.userId,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -105,6 +105,7 @@ export const adminSurveyRouter = createTRPCRouter({
           id,
           {
             ...updateData,
+            isActive: updateData.isActive ?? existingSurvey.isActive,
             updatedAt: new Date()
           },
           { new: true }
@@ -232,9 +233,9 @@ export const adminSurveyRouter = createTRPCRouter({
         await connectToDatabase();
 
         const surveys = await Survey.find()
-          .sort({ createdAt: -1 })
           .populate('eventId')
-          .populate('createdBy');
+          .populate('createdBy')
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
         return surveys;
       } catch (error) {

@@ -70,7 +70,7 @@ export default function EventSurveysPage({
     data: templates,
     isLoading: isLoadingTemplates,
     refetch: refetchTemplates,
-  } = api.surveyTemplate.getByEvent.useQuery(
+  } = api.surveyTemplate.getByEvent.useQuery<{ id: string; name: string; isActive: boolean; sendTiming: string; sendDelay?: number; sendTime?: string; questions?: any[]; createdAt: string }[]>(
     { eventId: params.id },
     { enabled: !!params.id },
   );

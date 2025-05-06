@@ -23,11 +23,17 @@ export default function SurveyPage({ params }: { params: { id: string } }) {
   const [submitted, setSubmitted] = useState(false);
 
   // Fetch survey template
+  interface SurveyTemplate {
+    name: string;
+    description?: string;
+    questions?: { id: string; text: string; type: string; required: boolean; order: number }[];
+  }
+
   const {
     data: template,
     isLoading,
     error,
-  } = api.surveyTemplate.getById.useQuery(
+  } = api.surveyTemplate.getById.useQuery<SurveyTemplate>(
     { id: params.id },
     { enabled: !!params.id },
   );
@@ -198,7 +204,12 @@ export default function SurveyPage({ params }: { params: { id: string } }) {
             <DynamicSurveyForm
               templateId={params.id}
               token={token}
-              questions={template.questions}
+              questions={template.questions?.map((question) => ({
+                ...question,
+                type: ["text", "rating", "multiple_choice", "checkbox", "dropdown"].includes(question.type)
+                  ? (question.type as "text" | "rating" | "multiple_choice" | "checkbox" | "dropdown")
+                  : "text", // Default to "text" if type is invalid
+              }))}
               onSuccess={() => setSubmitted(true)}
             />
           ) : (

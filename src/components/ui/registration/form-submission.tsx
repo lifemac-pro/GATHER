@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect,ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,7 +60,20 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
   const [formData, setFormData] = useState<any>(null);
 
   // Fetch form data
-  const { data: form, isLoading } = api.registrationForm.getById.useQuery(
+  const { data: form, isLoading } = api.registrationForm.getById.useQuery<
+    {
+      paymentDescription: string;
+      paymentCurrency: ReactNode;
+      paymentAmount: ReactNode;
+      collectPayment: any;
+      description: any;
+      startDate: boolean;
+      endDate: boolean;
+      name: ReactNode;
+      isActive: any; sections: {
+      title: any; id: string; fields: { id: string; type: string; required?: boolean; defaultValue?: any; label: string; placeholder?: string; helpText?: string; options?: string[] }[] 
+}[] }
+  >(
     { id: formId },
     { enabled: !!formId }
   );
@@ -245,7 +258,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
   }
 
   // Check if registration period has ended
-  if (form.endDate && new Date(form.endDate) < new Date()) {
+  if (form.endDate && typeof form.endDate === "string" && new Date(form.endDate) < new Date()) {
     return (
       <Card>
         <CardHeader>
@@ -262,7 +275,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
   }
 
   // Check if registration period has not started
-  if (form.startDate && new Date(form.startDate) > new Date()) {
+  if (form.startDate && typeof form.startDate === "string" && new Date(form.startDate) > new Date()) {
     return (
       <Card>
         <CardHeader>

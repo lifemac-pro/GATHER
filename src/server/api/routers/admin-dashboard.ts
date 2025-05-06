@@ -8,17 +8,17 @@ import { addDays, subDays, startOfDay, endOfDay } from "date-fns";
 
 // Mock models for compatibility
 const SurveyResponse = {
-  countDocuments: async () => 0,
+  countDocuments: async (p0: { surveyId: any; }) => 0,
   find: () => ({
-    sort: () => ({
-      limit: () => ({
-        populate: () => ({
-          populate: () => []
+    sort: (p0: { createdAt: number; }) => ({
+      limit: (p0?: number) => ({
+        populate: (p0: string) => ({
+          populate: (p0: { path: string; populate: { path: string; }; }) => []
         })
       })
     })
   }),
-  aggregate: async () => []
+  aggregate: async (p0: ({ $match: { createdAt: { $gte: Date; $lte: Date; }; }; $group?: undefined; $project?: undefined; $sort?: undefined; } | { $group: { _id: { year: { $year: string; }; month: { $month: string; }; day: { $dayOfMonth: string; }; }; count: { $sum: number; }; }; $match?: undefined; $project?: undefined; $sort?: undefined; } | { $project: { _id: number; date: { $dateFromParts: { year: string; month: string; day: string; }; }; count: number; }; $match?: undefined; $group?: undefined; $sort?: undefined; } | { $sort: { date: number; }; $match?: undefined; $group?: undefined; $project?: undefined; })[]) => []
 };
 
 const RegistrationForm = {
@@ -51,7 +51,9 @@ export const adminDashboardRouter = createTRPCRouter({
         const checkedInAttendees = await Attendee.countDocuments({ status: "checked-in" });
         const totalSurveys = await Survey.countDocuments();
         const activeSurveys = await Survey.countDocuments({ isActive: true });
-        const totalSurveyResponses = await SurveyResponse.countDocuments();
+        const totalSurveyResponses = await SurveyResponse.countDocuments({
+          surveyId: undefined
+        });
 
         // Calculate response rate
         const responseRate = totalAttendees > 0
@@ -220,7 +222,7 @@ export const adminDashboardRouter = createTRPCRouter({
           .populate('eventId');
 
         // Get recent survey responses
-        const recentSurveyResponses = await SurveyResponse.find()
+        const recentSurveyResponses = SurveyResponse.find()
           .sort({ createdAt: -1 })
           .limit(5)
           .populate('userId')

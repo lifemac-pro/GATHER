@@ -74,7 +74,7 @@ export const eventRouter = createTRPCRouter({
         });
 
         // Get user ID from session
-        const userId = (ctx as Context).session?.user?.id ?? "user-id";
+        const userId = (ctx as unknown as Context).session?.user?.id ?? "user-id";
         console.log("User ID for event creation:", userId);
 
         // Create the event using direct operations
@@ -83,7 +83,16 @@ export const eventRouter = createTRPCRouter({
           description: input.description || "",
           location: input.location || "",
           isVirtual: input.isVirtual || false,
-          virtualMeetingInfo: input.virtualMeetingInfo,
+          virtualMeetingInfo: input.virtualMeetingInfo
+            ? {
+                provider: input.virtualMeetingInfo.provider!,
+                meetingUrl: input.virtualMeetingInfo.meetingUrl,
+                meetingId: input.virtualMeetingInfo.meetingId,
+                password: input.virtualMeetingInfo.password,
+                hostUrl: input.virtualMeetingInfo.hostUrl,
+                additionalInfo: input.virtualMeetingInfo.additionalInfo,
+              }
+            : undefined,
           startDate: input.startDate,
           endDate: input.endDate,
           category: input.category,
@@ -96,7 +105,12 @@ export const eventRouter = createTRPCRouter({
             ? [input.maxAttendees.toString()]
             : [],
           isRecurring: input.isRecurring || false,
-          recurrenceRule: input.recurrenceRule,
+          recurrenceRule: input.recurrenceRule
+            ? {
+                ...input.recurrenceRule,
+                frequency: input.recurrenceRule.frequency ?? "daily", // Provide a default frequency if missing
+              }
+            : undefined,
         });
 
         // Generate recurring instances if needed
@@ -213,7 +227,7 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       try {
         // Get user ID from session
-        const userId = (ctx as Context).session?.user?.id ?? "user-id";
+        const userId = (ctx as unknown as Context).session?.user?.id ?? "user-id";
 
         // Find event
         const event = await EventOps.getById(input.id);
@@ -232,7 +246,9 @@ export const eventRouter = createTRPCRouter({
           description: input.description || "",
           location: input.location || "",
           isVirtual: input.isVirtual || false,
-          virtualMeetingInfo: input.virtualMeetingInfo,
+          virtualMeetingInfo: input.virtualMeetingInfo?.provider
+            ? input.virtualMeetingInfo
+            : undefined,
           startDate: input.startDate,
           endDate: input.endDate,
           category: input.category,
@@ -240,7 +256,12 @@ export const eventRouter = createTRPCRouter({
           price: input.price || 0,
           image: input.image || "",
           isRecurring: input.isRecurring || false,
-          recurrenceRule: input.recurrenceRule,
+          recurrenceRule: input.recurrenceRule
+            ? {
+                ...input.recurrenceRule,
+                frequency: input.recurrenceRule.frequency ?? "daily", // Provide a default frequency if missing
+              }
+            : undefined,
         });
 
         // Handle recurring event updates
@@ -355,7 +376,7 @@ export const eventRouter = createTRPCRouter({
         console.log("Deleting event with ID:", input.id);
 
         // Get user ID from session
-        const userId = (ctx as Context).session?.user?.id ?? "user-id";
+        const userId = (ctx as unknown as Context).session?.user?.id ?? "user-id";
         console.log("User ID for event deletion:", userId);
 
         // Find event
@@ -672,7 +693,7 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       try {
         // Get user ID from session
-        const userId = (ctx as Context).session?.user?.id ?? "user-id";
+        const userId = (ctx as unknown as Context).session?.user?.id ?? "user-id";
 
         // Import the Event model
         const EventModel = (await import("@/server/db/models/event-db")).default;

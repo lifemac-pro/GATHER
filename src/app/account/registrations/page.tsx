@@ -300,17 +300,17 @@ export default function UserRegistrationsPage() {
                               </span>
                             </div>
                             
-                            {getEventDetails(registrationDetails.eventId)!.startTime && (
+                            {getEventDetails(registrationDetails.eventId)?.startDate && (
                               <div className="flex items-center">
                                 <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                                 <span>
                                   {format(
-                                    new Date(`2000-01-01T${getEventDetails(registrationDetails.eventId)!.startTime}`),
+                                    new Date(getEventDetails(registrationDetails.eventId)!.startDate),
                                     "h:mm a"
                                   )}
-                                  {getEventDetails(registrationDetails.eventId)!.endTime &&
+                                  {getEventDetails(registrationDetails.eventId)?.endDate &&
                                     ` - ${format(
-                                      new Date(`2000-01-01T${getEventDetails(registrationDetails.eventId)!.endTime}`),
+                                      new Date(getEventDetails(registrationDetails.eventId)!.endDate),
                                       "h:mm a"
                                     )}`}
                                 </span>

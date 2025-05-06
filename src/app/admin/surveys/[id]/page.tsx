@@ -22,7 +22,7 @@ export default function SurveyDetailPage({ params }: { params: { id: string } })
   const { data: template, isLoading } = api.surveyTemplate.getById.useQuery(
     { id: params.id },
     { enabled: !!params.id }
-  );
+  ) as { data: { name: string; id: string; eventId: string; isActive: boolean; sendTiming: string; sendDelay?: number; sendTime?: string; description?: string; reminderEnabled: boolean; reminderDelay?: number; questions?: { id: string; text: string; type: string; required: boolean; options?: string[] }[] } | undefined };
   
   // Send survey now mutation
   const sendSurvey = api.surveyTemplate.sendNow.useMutation({

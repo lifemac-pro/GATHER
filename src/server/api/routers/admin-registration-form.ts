@@ -7,14 +7,14 @@ import { nanoid } from "nanoid";
 
 // Mock models for compatibility
 const RegistrationForm = {
-  create: async () => ({ id: 'mock-id' }),
-  findById: async () => null,
-  findByIdAndUpdate: async () => null,
-  findByIdAndDelete: async () => null,
+  create: async (p0?: { id: string; createdBy: any; createdAt: Date; updatedAt: Date; name?: string; description?: string; startDate?: Date; endDate?: Date; eventId?: string; isActive?: boolean; sections?: { description?: string; fields?: { options?: string[]; type?: "number" | "text" | "date" | "select" | "email" | "checkbox" | "phone" | "radio" | "textarea"; required?: boolean; label?: string; placeholder?: string; helpText?: string; }[]; title?: string; }[]; requireApproval?: boolean; }) => ({ id: 'mock-id' }),
+  findById: async (id?: string) => null,
+  findByIdAndUpdate: async (id?: string, p0?: { updatedAt: Date; name?: string; description?: string; startDate?: Date; endDate?: Date; eventId?: string; isActive?: boolean; sections?: { description?: string; fields?: { options?: string[]; type?: "number" | "text" | "date" | "select" | "email" | "checkbox" | "phone" | "radio" | "textarea"; required?: boolean; label?: string; placeholder?: string; helpText?: string; }[]; title?: string; }[]; requireApproval?: boolean; }, p1?: { new: boolean; }) => null,
+  findByIdAndDelete: async (id?: string) => null,
   find: () => ({
-    sort: () => ({
-      populate: () => ({
-        populate: () => []
+    sort: (p0?: { createdAt: number; }) => ({
+      populate: (p0?: string) => ({
+        populate: (p0?: string) => []
       })
     })
   }),
@@ -22,10 +22,10 @@ const RegistrationForm = {
 };
 
 const FormSubmission = {
-  deleteMany: async () => null,
-  find: () => ({
-    sort: () => ({
-      populate: () => []
+  deleteMany: async (p0?: { formId: string; }) => null,
+  find: (p0?: { formId: string; }) => ({
+    sort: (p0?: { createdAt: number; }) => ({
+      populate: (p0?: string) => []
     })
   })
 };
@@ -68,7 +68,7 @@ export const adminRegistrationFormRouter = createTRPCRouter({
         const form = await RegistrationForm.create({
           ...input,
           id: nanoid(),
-          createdBy: ctx.auth.userId,
+          createdBy: ctx.session.userId,
           createdAt: new Date(),
           updatedAt: new Date(),
         });

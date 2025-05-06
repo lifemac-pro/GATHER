@@ -290,10 +290,12 @@ export interface SurveyInput {
 }
 
 export interface SurveyDocument extends BaseDocument, SurveyInput {
+  isActive: any;
   name: string;
 }
 
 export interface SurveyModel extends BaseModel<SurveyDocument> {
+  findByIdAndDelete(id: string): unknown;
   findByIdAndUpdate(surveyId: string, arg1: { isActive: boolean; updatedAt: Date; }, arg2: { new: boolean; }): unknown;
   findByEvent(eventId: string): Promise<SurveyDocument[]>;
   findByUser(userId: string): Promise<SurveyDocument[]>;

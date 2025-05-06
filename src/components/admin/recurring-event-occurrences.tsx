@@ -13,11 +13,27 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
+import { string } from "zod";
 
 interface RecurringEventOccurrencesProps {
   recurringEventId: string;
   parentEventId: string;
 }
+
+interface RecurringEvent {
+  excludedDates: string[];
+  modifiedOccurrences: { date: string; eventId: string }[];
+  recurrencePattern: {
+    frequency: string;
+    interval: number;
+    endDate?: string;
+    count?: number;
+  };
+}
+const { data: fetchedRecurringEvent, isLoading: isLoadingRecurringEvent } =
+  api.recurringEvent.getById.useQuery(
+    { id: recurringEventId }
+  );
 
 export function RecurringEventOccurrences({ recurringEventId, parentEventId }: RecurringEventOccurrencesProps) {
   const { toast } = useToast();
@@ -30,10 +46,9 @@ export function RecurringEventOccurrences({ recurringEventId, parentEventId }: R
 
   // Get recurring event details
   const { data: recurringEvent, isLoading: isLoadingRecurringEvent } =
-    api.recurringEvent.getById.useQuery(
+    api.recurringEvent.getById.useQuery<RecurringEvent | null>(
       { id: recurringEventId },
-      { enabled: !!recurringEventId }
-    );
+  // Removed duplicate declaration of parentEvent
 
   // Get occurrences for the current month
   const { data: occurrences, isLoading: isLoadingOccurrences, refetch: refetchOccurrences } =
@@ -45,6 +60,7 @@ export function RecurringEventOccurrences({ recurringEventId, parentEventId }: R
       },
       { enabled: !!recurringEventId }
     );
+    
 
   // Get parent event details
   const { data: parentEvent, isLoading: isLoadingParentEvent } =

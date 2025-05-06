@@ -32,26 +32,7 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 
-interface Field {
-  id: string;
-  label: string;
-  type: string;
-  placeholder?: string;
-  helpText?: string;
-  required: boolean;
-  options?: string[];
-  order: number;
-}
-
-interface Section {
-  id: string;
-  title: string;
-  description?: string;
-  fields: Field[];
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
-  order: number;
-}
+import { Field, Section } from "@/types/form-types";
 
 interface FormBuilderProps {
   eventId: string;
@@ -95,7 +76,9 @@ export function FormBuilder({ eventId, formId, onSuccess, onCancel }: FormBuilde
   });
 
   // Fetch form data if editing
-  const { data: formData, isLoading: isLoadingForm } = api.registrationForm.getById.useQuery(
+  const { data: formData, isLoading: isLoadingForm } = api.registrationForm.getById.useQuery<
+    { name: string; description?: string; isActive: boolean; isDefault?: boolean; requiresApproval?: boolean; collectPayment?: boolean; paymentAmount?: number; paymentCurrency?: string; paymentDescription?: string; maxRegistrations?: number; sections?: Section[] }
+  >(
     { id: formId || "" },
     { enabled: !!formId }
   );

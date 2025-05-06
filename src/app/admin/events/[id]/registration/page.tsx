@@ -61,7 +61,9 @@ export default function EventRegistrationPage({ params }: { params: { id: string
   );
 
   // Get registration forms
-  const { data: forms, isLoading: isLoadingForms, refetch: refetchForms } = api.registrationForm.getByEvent.useQuery(
+  const { data: forms, isLoading: isLoadingForms, refetch: refetchForms } = api.registrationForm.getByEvent.useQuery<
+    { id: string; name: string; isActive: boolean; isDefault: boolean; createdAt: string }[]
+  >(
     { eventId: params.id },
     { enabled: !!params.id }
   );
