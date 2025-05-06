@@ -17,7 +17,7 @@ export const notificationRouter = createTRPCRouter({
     .input(
       z.object({
         limit: z.number().min(1).max(50).default(20),
-        cursor: z.string().optional(),
+        cursor: z.string().optional(), // ISO timestamp string
         type: z.enum(["event", "survey", "info", "reminder"]).optional(),
       }).optional(),
     )
@@ -34,29 +34,36 @@ export const notificationRouter = createTRPCRouter({
       try {
         const limit = input?.limit ?? 20;
 
-        // Create query
-        const query = Notification.find({ userId })
-          .sort({ createdAt: -1 })
-          .limit(limit + 1);
+        // Create base query with proper typing
+        const baseQuery: {
+          userId: string;
+          createdAt?: { $lt: Date };
+          type?: string;
+        } = { userId };
 
-        // Apply cursor pagination
+        // Add cursor condition if provided
         if (input?.cursor) {
-          query.where("_id").lt(input.cursor);
+          baseQuery.createdAt = { $lt: new Date(input.cursor) };
         }
 
-        // Apply type filter
+        // Add type filter if provided
         if (input?.type) {
-          query.where("type", input.type);
+          baseQuery.type = input.type;
         }
 
         // Execute query
-        const notifications = await query;
+        const notifications = await Notification.find(baseQuery)
+          .sort({ createdAt: -1 })
+          .limit(limit + 1);
 
         // Check if there are more results
         const hasMore = notifications.length > limit;
 
-        // Return results
-        return notifications.slice(0, limit);
+        // Return results with cursor info
+        return {
+          items: notifications.slice(0, limit),
+          nextCursor: hasMore ? notifications[limit - 1].createdAt.toISOString() : undefined
+        };
       } catch (error) {
         console.error("Error getting notifications:", error);
         throw new TRPCError({
@@ -83,10 +90,10 @@ export const notificationRouter = createTRPCRouter({
       }
 
       try {
-        // Update notification
+        // Update notification using the id field instead of _id
         const result = await Notification.updateOne(
           {
-            _id: input.id,
+            id: input.id,
             userId,
           },
           {
@@ -117,10 +124,19 @@ export const notificationRouter = createTRPCRouter({
       }
     }),
 
-  markAllAsRead: protectedProcedure.mutation(async () => {
+  markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+    // Ensure MongoDB is connected
+    await connectToDatabase();
+
+    // Get user ID from session
+    const userId = ctx.session?.userId;
+    if (!userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
     await Notification.updateMany(
-      { userId: "user-id" }, // Would need to get from session
-      { $set: { read: true } },
+      { userId },
+      { $set: { read: true, updatedAt: new Date() } },
     );
 
     return { success: true };
@@ -128,10 +144,19 @@ export const notificationRouter = createTRPCRouter({
 
   delete: protectedProcedure
     .input(z.object({ notificationId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      // Get user ID from session
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
       const notification = await Notification.findOneAndDelete({
         id: input.notificationId,
-        userId: "user-id", // Would need to get from session
+        userId,
       });
 
       if (!notification) {
@@ -144,9 +169,18 @@ export const notificationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getUnreadCount: protectedProcedure.query(async () => {
+  getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
+    // Ensure MongoDB is connected
+    await connectToDatabase();
+
+    // Get user ID from session
+    const userId = ctx.session?.userId;
+    if (!userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
     const count = await Notification.countDocuments({
-      userId: "user-id", // Would need to get from session
+      userId,
       read: false,
     });
 
@@ -160,7 +194,7 @@ export const notificationRouter = createTRPCRouter({
         eventId: z.string(),
         subject: z.string(),
         message: z.string(),
-        type: z.enum(["update", "cancellation", "reminder"]).default("update"),
+        type: z.enum(["update", "cancellation", "reminder"]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -168,13 +202,7 @@ export const notificationRouter = createTRPCRouter({
       await connectToDatabase();
 
       // Get user ID from session
-      const userId =
-        ctx &&
-        ctx.session &&
-        typeof ctx.session === "object" &&
-        "userId" in ctx.session
-          ? ctx.session.userId
-          : undefined;
+      const userId = ctx.session?.userId;
       if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }

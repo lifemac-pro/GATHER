@@ -27,8 +27,8 @@ const MONGODB_URI = process.env.DATABASE_URL || "";
 async function connectToDatabase() {
   try {
     await mongoose.connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      // Removed useNewUrlParser as it is no longer needed
+      // useUnifiedTopology: true,
     });
     console.log("Connected to MongoDB");
     return mongoose;

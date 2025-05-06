@@ -78,7 +78,7 @@ userSchema.pre("save", function (next) {
 });
 
 // Create a function to get the User model
-const getUserModel = (): UserModel => {
+export const getUserModel = (): UserModel => {
   // Check if we're in a middleware/edge context
   if (typeof mongoose.models === 'undefined') {
     // Return a mock model for middleware/edge context

@@ -7,7 +7,7 @@ import { type Event as EventType } from "@/server/db/models/types";
 // Define the Event interface
 export interface Event extends EventType {
   id: string;
-  status: string;
+  status: "published" | "draft" | "cancelled" | "completed";
   name: string;
   description?: string;
   location?: string;
@@ -214,13 +214,16 @@ export const EventOps = {
       console.log("EventOps.getAll: First event:", events[0]);
 
       // Process events to ensure valid dates
-      return events.map((event) => {
+      return events.map((event): Event => {
+        const validStatus: Event["status"] = ["draft", "published", "cancelled", "completed"].includes(event.status)
+          ? (event.status as Event["status"])
+          : "draft";
         try {
           return {
             ...(event as unknown as Event),
             id: event.id || event._id?.toString() || nanoid(),
             startDate: ensureValidDate(event.startDate),
-            endDate: ensureValidDate(event.endDate),
+            status: validStatus,
             name: event.name || event.title || "Unnamed Event",
             category: event.category || "general",
             status: event.status || "published",
@@ -322,7 +325,10 @@ export const EventOps = {
       );
 
       // Process events to ensure valid dates
-      return events.map((event) => {
+      return events.map((event): Event => {
+        const validStatus: Event["status"] = ["draft", "published", "cancelled", "completed"].includes(event.status)
+          ? (event.status as Event["status"])
+          : "draft";
         try {
           return {
             ...(event as unknown as Event),
@@ -409,7 +415,10 @@ export const EventOps = {
       );
 
       // Process events to ensure valid dates
-      return events.map((event) => {
+      return events.map((event): Event => {
+        const validStatus: Event["status"] = ["draft", "published", "cancelled", "completed"].includes(event.status)
+          ? (event.status as Event["status"])
+          : "draft";
         try {
           return {
             ...(event as unknown as Event),
@@ -701,15 +710,21 @@ export const EventOps = {
       console.log("EventOps.getByIds: Found", events.length, "events");
 
       // Process events to ensure valid dates
-      return events.map((event) => {
+      return events.map((event): Event => {
+        const validStatus: Event["status"] = ["draft", "published", "cancelled", "completed"].includes(event.status)
+          ? (event.status as Event["status"])
+          : "draft";
         try {
+          const validStatus: Event["status"] = ["draft", "published", "cancelled", "completed"].includes(event.status)
+            ? (event.status as Event["status"])
+            : "draft";
           return {
             ...(event as unknown as Event),
             startDate: ensureValidDate(event.startDate),
             endDate: ensureValidDate(event.endDate),
             name: event.name || "Unnamed Event",
             category: event.category || "general",
-            status: event.status || "published",
+            status: validStatus,
           };
         } catch (mapError) {
           console.error("EventOps.getByIds: Error mapping event:", mapError);

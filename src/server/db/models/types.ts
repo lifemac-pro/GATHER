@@ -172,6 +172,7 @@ export interface AttendeeInput {
 export interface AttendeeDocument extends BaseDocument, AttendeeInput {}
 
 export interface AttendeeModel extends BaseModel<AttendeeDocument> {
+  findByIdAndUpdate(registrationId: string, arg1: { status: string; updatedAt: Date; }, arg2: { new: boolean; }): unknown;
   findByEventAndUser(
     eventId: string,
     userId: string,
@@ -288,9 +289,12 @@ export interface SurveyInput {
   submittedAt?: Date;
 }
 
-export interface SurveyDocument extends BaseDocument, SurveyInput {}
+export interface SurveyDocument extends BaseDocument, SurveyInput {
+  name: string;
+}
 
 export interface SurveyModel extends BaseModel<SurveyDocument> {
+  findByIdAndUpdate(surveyId: string, arg1: { isActive: boolean; updatedAt: Date; }, arg2: { new: boolean; }): unknown;
   findByEvent(eventId: string): Promise<SurveyDocument[]>;
   findByUser(userId: string): Promise<SurveyDocument[]>;
   findByTemplate(templateId: string): Promise<SurveyDocument[]>;

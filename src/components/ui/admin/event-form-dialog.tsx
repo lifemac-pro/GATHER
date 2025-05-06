@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { CalendarIcon, FileText, Save, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RecurringEventForm } from "@/components/events/recurring-event-form";
 import {
@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 // Define the virtual meeting info schema
 const virtualMeetingInfoSchema = z
@@ -139,7 +140,11 @@ export function EventFormDialog({
   const utils = api.useUtils();
 
   // Get templates
-  const { data: templates } = api.eventTemplate.getAll.useQuery();
+  const { data: templates } = api.eventTemplate.getAll.useQuery() as {
+    data: {
+      description: string; id: string; name: string; duration?: number; category: string; location?: string; maxAttendees?: number; image?: string 
+}[] | undefined;
+  };
 
   // Get categories
   const { data: categories } = api.event.getCategories.useQuery();
@@ -153,14 +158,14 @@ export function EventFormDialog({
       router.refresh();
 
       // Show success message
-      toast.success(data.message || "Event created successfully");
+      toast({ description: "Event created successfully", variant: "default" });
 
       // Close the dialog
       onOpenChange(false);
     },
     onError: (error) => {
       console.error("Create event mutation error:", error);
-      toast.error(`Failed to create event: ${error.message}`);
+      toast({ description: `Failed to create event: ${error.message}`, variant: "destructive" });
     },
   });
 
@@ -173,14 +178,14 @@ export function EventFormDialog({
       router.refresh();
 
       // Show success message
-      toast.success(data.message || "Event updated successfully");
+      toast({ description: "Event updated successfully", variant: "default" });
 
       // Close the dialog
       onOpenChange(false);
     },
     onError: (error) => {
       console.error("Update event mutation error:", error);
-      toast.error(`Failed to update event: ${error.message}`);
+      toast({ description: `Failed to update event: ${error.message}`, variant: "destructive" });
     },
   });
 
@@ -247,9 +252,10 @@ export function EventFormDialog({
 
             if (response.ok && result.success) {
               console.log("Created event via direct API:", result.data);
-              toast.success(
-                "Event created successfully via alternative method",
-              );
+              toast({
+                description: "Event created successfully via alternative method",
+                variant: "default",
+              });
 
               // Invalidate queries manually
               utils.event.getAll.invalidate();
@@ -284,7 +290,7 @@ export function EventFormDialog({
         }
       }
 
-      toast.error(errorMessage);
+      toast({ description: errorMessage, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -333,7 +339,7 @@ export function EventFormDialog({
         form.setValue("endDate", endDate);
 
         // Show success message
-        toast.success(`Template "${template.name}" applied`);
+        toast({ description: `Template "${template.name}" applied`, variant: "default" });
 
         // Reset selected template
         setSelectedTemplateId(null);
@@ -353,7 +359,8 @@ export function EventFormDialog({
       const durationMinutes = Math.round(durationMs / (1000 * 60));
 
       // Create template
-      const result = await utils.eventTemplate.create.mutate({
+      const createTemplate = api.eventTemplate.create.useMutation();
+      const result = await createTemplate.mutateAsync({
         name: values.name,
         description: values.description,
         category: values.category,
@@ -364,10 +371,10 @@ export function EventFormDialog({
         image: values.image,
       });
 
-      toast.success("Event saved as template");
+      toast({ description: "Event saved as template", variant: "default" });
     } catch (error) {
       console.error("Error saving template:", error);
-      toast.error("Failed to save template");
+      toast({ description: "Failed to save template", variant: "destructive" });
     }
   };
 

@@ -4,17 +4,17 @@ import { connectToDatabase } from "@/server/db/mongo";
 
 // Mock models for compatibility
 const RegistrationForm = {
-  findById: async () => null,
-  updateMany: async () => null,
-  findByIdAndUpdate: async () => ({
-    populate: async () => ({
+  findById: async (formId: string) => null,
+  updateMany: async (p0: { eventId: any; _id: { $ne: string; }; }, p1: { isActive: boolean; updatedAt: Date; }) => null,
+  findByIdAndUpdate: async (formId: string, p0: { isActive: boolean; updatedAt: Date; }, p1: { new: boolean; }) => ({
+    populate: async (p0: string) => ({
       eventId: { _id: 'mock-id', name: 'Mock Event' }
     })
   })
 };
 
 const SurveyResponse = {
-  findById: async () => null
+  findById: async (responseId: string) => null
 };
 
 /**
@@ -100,7 +100,11 @@ export const activateSurvey = async (surveyId: string) => {
         updatedAt: new Date()
       },
       { new: true }
-    ).populate('eventId');
+) as unknown as {
+  populate(arg0: string): unknown;
+  id: any; eventId: { _id: string; name: string };
+};
+await survey.populate('eventId');
 
     if (!survey) {
       throw new Error("Survey not found");
@@ -199,14 +203,14 @@ export const activateRegistrationForm = async (formId: string) => {
     );
 
     // Activate this form
-    const updatedForm = await RegistrationForm.findByIdAndUpdate(
+    const updatedForm = await (await RegistrationForm.findByIdAndUpdate(
       formId,
       {
         isActive: true,
         updatedAt: new Date()
       },
       { new: true }
-    ).populate('eventId');
+    )).populate('eventId');
 
     // Notify admin users about the activated form
     const adminUsers = await getAdminUsers();
@@ -296,13 +300,13 @@ export const processSurveyResponse = async (responseId: string) => {
 
     // Get the survey response
     const response = await SurveyResponse.findById(responseId)
-      .populate({
+      .then(res => res?.populate({
         path: 'surveyId',
         populate: {
           path: 'eventId'
         }
-      })
-      .populate('userId');
+      }))
+      .then(res => res?.populate('userId'));
 
     if (!response) {
       throw new Error("Survey response not found");

@@ -44,8 +44,7 @@ export const sendEventReminders = async () => {
 
         if (user && user.email) {
           // Format event time
-          const eventTime = event.startTime ||
-            format(new Date(event.startDate), "h:mm a");
+          const eventTime = format(new Date(event.startDate), "h:mm a");
 
           // Send notification
           await sendEventReminderNotification({
@@ -112,7 +111,7 @@ export const sendSurveyInvitations = async () => {
         status: { $in: ["attended", "checked-in"] },
       });
 
-      console.log(`Processing ${attendees.length} attendees for survey: ${survey.title}`);
+      console.log(`Processing ${attendees.length} attendees for survey: ${survey?.name || "Unnamed Survey"}`);
 
       // Send invitation to each attendee
       for (const attendee of attendees) {

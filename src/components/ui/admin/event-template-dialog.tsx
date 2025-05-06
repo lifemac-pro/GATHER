@@ -95,7 +95,17 @@ export function EventTemplateDialog({
     data: templates,
     isLoading: isLoadingTemplates,
     refetch: refetchTemplates,
-  } = api.eventTemplate.getAll.useQuery();
+  } = api.eventTemplate.getAll.useQuery<{
+    id: string;
+    name: string;
+    description?: string;
+    category: string;
+    location?: string;
+    duration: number;
+    price: number;
+    maxAttendees: number;
+    image?: string;
+  }[]>();
 
   // Get categories
   const { data: categories } = api.event.getCategories.useQuery();

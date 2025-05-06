@@ -85,7 +85,7 @@ export function ResponsiveSurveyCard({
                 {isActive ? "Active" : "Inactive"}
               </Badge>
             ) : (
-              <Badge variant={isCompleted ? "success" : "outline"}>
+              <Badge variant={isCompleted ? "default" : "outline"}>
                 {isCompleted ? "Completed" : "Pending"}
               </Badge>
             )}
