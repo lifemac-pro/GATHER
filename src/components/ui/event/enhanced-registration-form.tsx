@@ -45,6 +45,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useRouter } from "next/navigation";
 
 // Define the form schema
 const formSchema = z.object({
@@ -161,6 +162,7 @@ export function EnhancedRegistrationForm({
   isPaid = false,
 }: EnhancedRegistrationFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const { isSignedIn, user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDemographics, setShowDemographics] = useState(false);
@@ -179,6 +181,7 @@ export function EnhancedRegistrationForm({
         description: "You have successfully registered for this event.",
       });
       if (onSuccess) onSuccess();
+      router.push("/attendee/events");
     },
     onError: (error) => {
       toast({

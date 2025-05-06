@@ -173,13 +173,17 @@ export const attendeeRouter = createTRPCRouter({
             const registrations = await Attendee.find({
               userId: userId,
               status: { $in: ["attended", "checked-in"] }
-            }).populate('eventId');
+            }).lean();
 
-            const eventIds = registrations.map(reg => reg.eventId._id.toString());
+            const eventIds = registrations.map(reg => reg.eventId);
+            const events = await Event.find({
+              id: { $in: eventIds }
+            }).lean();
+
             const surveys = await Survey.find({
               eventId: { $in: eventIds },
               isActive: true,
-            }).populate('eventId');
+            }).lean();
 
             const surveyResponses = await SurveyResponse.find({
               userId: userId
@@ -190,12 +194,12 @@ export const attendeeRouter = createTRPCRouter({
                 response => response.surveyId.toString() === survey._id.toString()
               ))
               .map(survey => {
-                const event = survey.eventId;
+                const event = events.find(e => e.id === survey.eventId);
                 return {
                   id: survey._id.toString(),
-                  eventId: event._id.toString(),
-                  eventName: event.name,
-                  eventDate: event.endDate,
+                  eventId: event?.id,
+                  eventName: event?.name,
+                  eventDate: event?.endDate,
                   dueDate: survey.expiresAt,
                   completed: false,
                 };
