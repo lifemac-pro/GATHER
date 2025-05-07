@@ -21,12 +21,12 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 // MongoDB connection string
-const MONGODB_URI = process.env.DATABASE_URL || "";
+const DATABASE_URL = process.env.DATABASE_URL || "";
 
 // Connect to MongoDB
 async function connectToDatabase() {
   try {
-    await mongoose.connect(MONGODB_URI, {
+    await mongoose.connect(DATABASE_URL, {
       // Removed useNewUrlParser as it is no longer needed
       // useUnifiedTopology: true,
     });

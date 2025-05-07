@@ -1,12 +1,12 @@
 import "dotenv/config";
 import { MongoClient } from "mongodb";
 
-console.log("MONGODB_URI:", process.env.MONGODB_URI); // Debug
+console.log("DATABASE_URL:", process.env.DATABASE_URL); // Debug
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.DATABASE_URL;
 
 if (!uri) {
-  throw new Error("❌ MONGODB_URI is not defined in .env file");
+  throw new Error("❌ DATABASE_URL is not defined in .env file");
 }
 
 async function testMongoConnection() {

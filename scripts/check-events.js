@@ -2,7 +2,7 @@
 import { MongoClient } from "mongodb";
 
 // MongoDB connection string - use the same one from your .env file
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/gather";
+const uri = process.env.DATABASE_URL || "mongodb://localhost:27017/gather";
 
 async function checkEvents() {
   const client = new MongoClient(uri);
