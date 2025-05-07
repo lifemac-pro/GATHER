@@ -67,4 +67,12 @@ const config = {
   },
 };
 
+
+module.exports = {
+  experimental: {
+    serverActions: true, // or other experimental features if applicable
+  },
+};
+
+
 export default config;
