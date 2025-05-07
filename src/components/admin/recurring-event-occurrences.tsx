@@ -47,8 +47,8 @@ export function RecurringEventOccurrences({ recurringEventId, parentEventId }: R
   // Get recurring event details
   const { data: recurringEvent, isLoading: isLoadingRecurringEvent } =
     api.recurringEvent.getById.useQuery<RecurringEvent | null>(
-      { id: recurringEventId },
-  // Removed duplicate declaration of parentEvent
+      { id: recurringEventId }
+    );
 
   // Get occurrences for the current month
   const { data: occurrences, isLoading: isLoadingOccurrences, refetch: refetchOccurrences } =

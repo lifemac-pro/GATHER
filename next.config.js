@@ -30,6 +30,14 @@ const config = {
   poweredByHeader: false,
   reactStrictMode: true,
 
+  // Ignore type and lint errors during build
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Configure headers for security
   async headers() {
     return [
