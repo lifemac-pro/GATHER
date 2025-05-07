@@ -1,17 +1,14 @@
 import { stripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 
-// Define the runtime for Edge compatibility
-export const runtime = 'edge';
-
-// Define dynamic config to prevent static optimization
+// Force Node.js runtime for Stripe API compatibility
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const { amount, eventId } = await request.json();
 
-    // Validate input
     if (!amount || !eventId) {
       return NextResponse.json(
         { error: "Amount and eventId are required" },
@@ -24,6 +21,9 @@ export async function POST(request: Request) {
       currency: "usd",
       metadata: {
         eventId,
+      },
+      automatic_payment_methods: {
+        enabled: true,
       },
     });
 

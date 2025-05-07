@@ -1,3 +1,4 @@
+// @ts-nocheck
 import withPWA from "next-pwa";
 import { env } from "./src/env.mjs";
 
@@ -66,9 +67,12 @@ const config = {
 
   // Configure experimental features
   experimental: {
-    serverComponentsExternalPackages: ["mongoose"],
-    serverActions: true,
-    instrumentationHook: true,
+    // External packages that should be bundled
+    serverExternalPackages: ["mongoose"],
+    // Enable server actions
+    serverActions: {
+      bodySizeLimit: "2mb"
+    }
   },
 };
 
