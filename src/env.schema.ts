@@ -12,6 +12,7 @@ const server = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   UPLOADTHING_SECRET: z.string().min(1).optional(),
   UPLOADTHING_APP_ID: z.string().min(1).optional(),
+  STRIPE_SECRET_KEY: z.string().min(1),
 });
 
 /**
@@ -25,6 +26,7 @@ const client = z.object({
   NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().default("/sign-up"),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string().default("/"),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default("/"),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
 });
 
 /**
@@ -39,6 +41,7 @@ const processEnv = {
   CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
   UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
   UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
@@ -47,6 +50,7 @@ const processEnv = {
     process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL,
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL:
     process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 };
 
 // Don't touch the part below

@@ -1,21 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { initializeSocketServer, NextApiResponseWithSocket } from "@/server/socket";
+import { NextResponse } from 'next/server';
+import { initializeSocketServer } from '@/server/socket';
 
-export async function GET(req: NextRequest, res: NextApiResponseWithSocket) {
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: Request) {
   try {
-    // Initialize Socket.IO server
-    initializeSocketServer(req as any, res);
+    const res = new NextResponse();
+    // Initialize Socket.IO with the response object
+    await initializeSocketServer(req, res);
     
-    return new NextResponse("Socket.IO server initialized", {
-      status: 200,
-    });
+    return new NextResponse('Socket initialized', { status: 200 });
   } catch (error) {
-    console.error("Error initializing Socket.IO server:", error);
-    
-    return new NextResponse("Internal Server Error", {
-      status: 500,
-    });
+    console.error('Socket initialization error:', error);
+    return new NextResponse('Failed to initialize socket', { status: 500 });
   }
 }
-
-export const dynamic = "force-dynamic";
