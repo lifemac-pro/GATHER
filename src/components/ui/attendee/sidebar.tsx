@@ -13,6 +13,7 @@ import {
   Menu,
   Bell,
   Search,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../button";
@@ -50,18 +51,16 @@ const navigation = [
   },
 ];
 
-export function AttendeeSidebar() {
+interface AttendeeSidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+export function AttendeeSidebar({ isOpen, setIsOpen }: AttendeeSidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Mobile Hamburger */}
-      <div className="p-4 md:hidden">
-        <Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
-          <Menu className="h-6 w-6" />
-        </Button>
-      </div>
 
       {/* Sidebar */}
       <div
@@ -71,11 +70,20 @@ export function AttendeeSidebar() {
           "md:h-screen md:translate-x-0",
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center px-6">
+        {/* Logo and Close Button */}
+        <div className="flex h-16 items-center justify-between px-6">
           <h1 className="text-xl font-bold text-white">
             GatherEase
           </h1>
+          {/* Close button - only visible on mobile */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white md:hidden"
+            onClick={() => setIsOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Navigation */}
@@ -86,6 +94,12 @@ export function AttendeeSidebar() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={() => {
+                  // Close sidebar on mobile when a link is clicked
+                  if (window.innerWidth < 768) {
+                    setIsOpen(false);
+                  }
+                }}
                 className={cn(
                   "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
@@ -113,6 +127,12 @@ export function AttendeeSidebar() {
             variant="ghost"
             className="w-full justify-start text-[#B0B8C5] hover:bg-white/10 hover:text-white"
             showIcon={true}
+            onClick={() => {
+              // Close sidebar on mobile when signing out
+              if (window.innerWidth < 768) {
+                setIsOpen(false);
+              }
+            }}
           />
         </div>
       </div>

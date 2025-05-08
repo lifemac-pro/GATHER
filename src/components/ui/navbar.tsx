@@ -42,49 +42,9 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop navigation */}
+          {/* Desktop navigation - removed */}
           <nav className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-foreground",
-                isActive("/") ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              <div className="flex items-center gap-1">
-                <Home className="h-4 w-4" />
-                <span>Home</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/events"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-foreground",
-                isActive("/events") || pathname?.startsWith("/events/")
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>Events</span>
-              </div>
-            </Link>
-
-            {isSignedIn && (
-              <Link
-                href="/admin/dashboard"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-foreground",
-                  pathname?.startsWith("/admin")
-                    ? "text-foreground"
-                    : "text-muted-foreground",
-                )}
-              >
-                Dashboard
-              </Link>
-            )}
+            {/* Navigation items removed */}
           </nav>
 
           {/* Auth buttons */}

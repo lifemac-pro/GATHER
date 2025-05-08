@@ -140,10 +140,10 @@ export function EventSearch() {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="w-full gap-2 sm:w-auto">
                 <Filter className="h-4 w-4" />
                 Filters
                 {activeFiltersCount > 0 && (
@@ -156,7 +156,7 @@ export function EventSearch() {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 sm:w-96">
+            <PopoverContent className="w-[calc(100vw-2rem)] max-w-[400px] sm:w-96">
               <div className="space-y-4">
                 <h4 className="font-medium">Filter Events</h4>
 
@@ -285,7 +285,7 @@ export function EventSearch() {
             </PopoverContent>
           </Popover>
 
-          <Button onClick={handleSearch}>Search</Button>
+          <Button onClick={handleSearch} className="w-full sm:w-auto">Search</Button>
         </div>
       </div>
 
