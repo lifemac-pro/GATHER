@@ -21,23 +21,32 @@ export async function GET(req: NextRequest) {
     const userRole = await getUserRole(userId);
     console.log("User role:", userRole);
 
-    // If no role is found, try to set a default role
-    if (!userRole) {
-      console.log("No role found, attempting to set default role");
-      try {
-        // Try to set a default role (user/attendee)
-        const roleSet = await setUserRole(userId, "user");
-        console.log("Default role set result:", roleSet);
-      } catch (roleError) {
-        console.error("Error setting default role:", roleError);
-        // Continue with the flow even if setting the default role fails
-      }
+    // Always ensure the user has the attendee role
+    // If they're an admin, this won't change their role due to the check in setUserRole
+    console.log("Ensuring user has the 'user' role");
+    try {
+      const roleSet = await setUserRole(userId, "user");
+      console.log("Role set/check result:", roleSet);
+    } catch (roleError) {
+      console.error("Error setting/checking role:", roleError);
+      // Continue with the flow even if setting the role fails
     }
 
-    // Get the redirect URL based on the user's role (which might now be the default)
-    const finalRole = userRole || "user"; // Use default if still null
+    // Get the user's role again after potentially setting it
+    const finalRole = await getUserRole(userId) || "user";
     console.log("Final role for redirect:", finalRole);
-    const redirectUrl = getRoleRedirectUrl(finalRole);
+
+    // ALWAYS redirect to attendee dashboard unless explicitly an admin
+    let redirectUrl = "/attendee/dashboard";
+
+    // Only admins go to admin dashboard
+    if (finalRole === "admin" || finalRole === "super_admin") {
+      redirectUrl = "/admin/dashboard";
+      console.log("Admin role detected, redirecting to admin dashboard");
+    } else {
+      console.log("Non-admin role detected, redirecting to attendee dashboard");
+    }
+
     console.log("Redirecting to:", redirectUrl);
 
     // Redirect to the appropriate page
@@ -50,8 +59,8 @@ export async function GET(req: NextRequest) {
       stack: error.stack,
     });
 
-    // Redirect to the role selection page on error
-    console.log("Redirecting to role selection page due to error");
-    return NextResponse.redirect(new URL("/role-selection", req.url));
+    // Redirect to the attendee dashboard on error (default fallback)
+    console.log("Error occurred, redirecting to attendee dashboard");
+    return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
   }
 }

@@ -51,9 +51,9 @@ export default function RootLayout({
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
           signOutUrl="/sign-out"
-          afterSignInUrl="/api/clerk/after-sign-in"
-          afterSignUpUrl="/api/clerk/after-sign-up"
-          redirectUrl="/api/clerk/after-sign-in"
+          afterSignInUrl="/redirect"
+          afterSignUpUrl="/redirect"
+          redirectUrl="/redirect"
         >
           <TRPCReactProvider>
             <ErrorBoundary>

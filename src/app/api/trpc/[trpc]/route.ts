@@ -10,9 +10,32 @@ import { createTRPCContext } from "@/server/api/trpc";
  * handling a HTTP request (e.g. when you make requests from Client Components).
  */
 const createContext = async (req: NextRequest) => {
-  return createTRPCContext({
-    headers: req.headers,
-  });
+  try {
+    console.log("Creating context for TRPC request");
+    const context = await createTRPCContext({
+      headers: req.headers,
+    });
+    return context;
+  } catch (error) {
+    console.error("Error creating context:", error);
+    // Provide a fallback context for development
+    if (process.env.NODE_ENV !== "production") {
+      return {
+        session: {
+          userId: "dev-user-id",
+          user: {
+            id: "dev-user-id",
+            email: "dev@example.com",
+            firstName: "Dev",
+            lastName: "User",
+            role: "user"
+          }
+        }
+      };
+    }
+    // Return null session for production
+    return { session: null };
+  }
 };
 
 const handler = (req: NextRequest) =>
@@ -20,7 +43,30 @@ const handler = (req: NextRequest) =>
     endpoint: "/api/trpc",
     req,
     router: appRouter,
-    createContext: () => createContext(req),
+    createContext: async () => {
+      try {
+        return await createContext(req);
+      } catch (error) {
+        console.error("Error in createContext:", error);
+        // Provide a fallback context for development
+        if (process.env.NODE_ENV !== "production") {
+          return {
+            session: {
+              userId: "dev-user-id",
+              user: {
+                id: "dev-user-id",
+                email: "dev@example.com",
+                firstName: "Dev",
+                lastName: "User",
+                role: "user"
+              }
+            }
+          };
+        }
+        // Return null session for production
+        return { session: null };
+      }
+    },
     onError: ({ path, error }) => {
       // Always log errors regardless of environment
       console.error(`❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`);

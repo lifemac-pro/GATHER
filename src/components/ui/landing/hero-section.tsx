@@ -1,4 +1,5 @@
-import { RoleSelection } from "@/components/ui/landing/role-selection";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function HeroSection() {
   return (
@@ -15,7 +16,17 @@ export function HeroSection() {
           Discover and manage events with ease. Your all-in-one platform for
           creating memorable gatherings.
         </p>
-        <RoleSelection />
+        <div className="flex flex-col items-center gap-4">
+          <Button
+            className="bg-white text-primary transition-all duration-200 hover:bg-white/90 hover:shadow-lg"
+            size="lg"
+            asChild
+          >
+            <Link href="/redirect">
+              Get Started
+            </Link>
+          </Button>
+        </div>
       </div>
     </section>
   );

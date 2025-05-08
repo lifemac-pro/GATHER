@@ -307,6 +307,13 @@ export const userRouter = createTRPCRouter({
   updateRole: protectedProcedure
     .input(z.object({
       role: z.enum(["user", "admin", "super_admin"])
+    }).optional().or(z.undefined()).transform(val => {
+      // Provide default values if input is undefined
+      if (!val) {
+        console.log("Input is undefined, using default role 'user'");
+        return { role: "user" };
+      }
+      return val;
     }))
     .mutation(async ({ ctx, input }) => {
       console.log("updateRole mutation called with:", { role: input.role });

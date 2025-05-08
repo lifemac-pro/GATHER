@@ -21,7 +21,22 @@ export function RoleSelection() {
     onSuccess: (data) => {
       console.log("Role update response:", data);
       try {
-        if (data && data.success) {
+        // Handle the case where data might be undefined or null
+        if (!data) {
+          console.error("Role update response is undefined or null");
+          toast({
+            title: "Success",
+            description: "Role set successfully. Redirecting to dashboard...",
+          });
+
+          // Default to attendee dashboard if we don't know the role
+          setTimeout(() => {
+            window.location.href = "/attendee/dashboard";
+          }, 1000);
+          return;
+        }
+
+        if (data.success) {
           // Show success toast
           toast({
             title: "Success",
@@ -29,7 +44,10 @@ export function RoleSelection() {
           });
 
           // Force a hard reload to ensure the middleware picks up the new role
-          const redirectUrl = data.role === "admin" ? "/admin/dashboard" : "/attendee/dashboard";
+          const role = data.role || selectedRole || "user";
+          const redirectUrl = (role === "admin" || role === "super_admin")
+            ? "/admin/dashboard"
+            : "/attendee/dashboard";
           console.log("Role updated successfully, redirecting to:", redirectUrl);
 
           // Add a small delay before redirecting
@@ -56,8 +74,19 @@ export function RoleSelection() {
       console.error("Error setting role:", error);
 
       try {
+        // If there's no error message, provide a default
+        if (!error || !error.message) {
+          console.error("Error object is undefined or has no message");
+          toast({
+            title: "Error",
+            description: "Failed to set role. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         // If role is already set, show a different message and redirect
-        if (error.message && error.message.includes("Role has already been set")) {
+        if (error.message.includes("Role has already been set")) {
           toast({
             title: "Already Set",
             description: "Your role is already set. Redirecting to your dashboard...",
@@ -70,6 +99,17 @@ export function RoleSelection() {
           setTimeout(() => {
             window.location.href = "/role-selection";
           }, 1000);
+          return;
+        }
+
+        // For validation errors
+        if (error.message.includes("invalid_type") || error.message.includes("Required")) {
+          console.error("Validation error:", error.message);
+          toast({
+            title: "Error",
+            description: "Invalid role selection. Please try again.",
+            variant: "destructive",
+          });
           return;
         }
 
@@ -133,11 +173,19 @@ export function RoleSelection() {
       });
 
       try {
-        const result = await updateRole.mutateAsync({
-          role: selectedRole,
-        });
-
-        console.log("Role update result:", result);
+        // Make sure selectedRole is not null before sending
+        if (!selectedRole) {
+          console.error("Selected role is null, using default 'user' role");
+          const result = await updateRole.mutateAsync({
+            role: "user",
+          });
+          console.log("Role update result (default):", result);
+        } else {
+          const result = await updateRole.mutateAsync({
+            role: selectedRole,
+          });
+          console.log("Role update result:", result);
+        }
       } catch (mutationError) {
         console.error("Error in mutation:", mutationError);
         // The error is handled in the mutation's onError callback

@@ -13,8 +13,8 @@ export default function SignInPage() {
           routing="path"
           path="/sign-in"
           signUpUrl="/sign-up"
-          redirectUrl="/api/clerk/after-sign-in"
-          afterSignInUrl="/api/clerk/after-sign-in"
+          redirectUrl="/redirect"
+          afterSignInUrl="/redirect"
         />
       </div>
     </div>

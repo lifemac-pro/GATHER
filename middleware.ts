@@ -16,8 +16,9 @@ const publicRoutes = [
   "/events/:id",
   "/api/webhook",
   "/api/webhook/(.*)",
-  // Include role-selection in public routes to allow redirects
-  "/role-selection",
+  "/api/admin/force-user-role",
+  "/redirect",
+  // No longer need role-selection in public routes
 ];
 
 // This example protects all routes including api/trpc routes
@@ -63,68 +64,37 @@ export default async function middleware(req) {
     const user = await User.findOne({ id: userId });
     console.log("Middleware - User found:", user ? { id: user.id, role: user.role } : "No user found");
 
-    // Special handling for role-selection page
-    if (req.nextUrl.pathname === "/role-selection") {
-      console.log("Middleware - User accessing role-selection page");
-
-      if (user?.role) {
-        // If user already has a role, redirect them to their dashboard
-        console.log("Middleware - User already has role:", user.role);
-        const redirectUrl = (user.role === "admin" || user.role === "super_admin")
-          ? "/admin/dashboard"
-          : "/attendee/dashboard";
-        console.log("Middleware - Redirecting to:", redirectUrl);
-        return NextResponse.redirect(new URL(redirectUrl, req.url));
-      }
-
-      // If user has no role yet, allow access to role selection page
-      console.log("Middleware - User has no role yet, allowing access to role selection page");
-      return NextResponse.next();
-    }
+    // We no longer need special handling for role-selection page
+    // as we're automatically assigning roles
 
     if (!user) {
-      console.log("Middleware - No user found in database, redirecting to role selection");
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      console.log("Middleware - No user found in database, redirecting to after-sign-in");
+      return NextResponse.redirect(new URL(`/api/clerk/after-sign-in?userId=${userId}`, req.url));
     }
 
     if (!user.role) {
-      console.log("Middleware - User found but no role set, redirecting to role selection");
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      console.log("Middleware - User found but no role set, redirecting to after-sign-in");
+      return NextResponse.redirect(new URL(`/api/clerk/after-sign-in?userId=${userId}`, req.url));
     }
 
-    // Check if user is trying to access admin routes
+    // FORCE REDIRECT: Always redirect admin routes to attendee dashboard
     if (req.nextUrl.pathname.startsWith("/admin")) {
-      console.log("Middleware - User trying to access admin routes with role:", user.role);
-      if (user.role !== "admin" && user.role !== "super_admin") {
-        console.log("Middleware - Non-admin trying to access admin routes, redirecting to attendee dashboard");
-        return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
-      }
-      console.log("Middleware - Admin access granted");
+      console.log("Middleware - FORCE REDIRECT: Always redirecting from admin to attendee dashboard");
+      return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
     }
 
-    // Check if user is trying to access attendee routes
+    // No need to check for attendee routes - everyone can access them
+    // This ensures admins can also view the attendee dashboard if needed
     if (req.nextUrl.pathname.startsWith("/attendee")) {
-      console.log("Middleware - User trying to access attendee routes with role:", user.role);
-      if (user.role !== "user" && user.role !== "attendee") {
-        console.log("Middleware - Non-attendee trying to access attendee routes, redirecting to admin dashboard");
-        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-      }
+      console.log("Middleware - User accessing attendee routes with role:", user.role);
       console.log("Middleware - Attendee access granted");
     }
 
-    // Handle root path redirection based on role
+    // Handle root path redirection - ALWAYS go to redirect page
     if (req.nextUrl.pathname === "/") {
       console.log("Middleware - User at root path with role:", user.role);
-      if (user.role === "user" || user.role === "attendee") {
-        console.log("Middleware - User role is attendee, redirecting to attendee dashboard");
-        return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
-      } else if (user.role === "admin" || user.role === "super_admin") {
-        console.log("Middleware - User role is admin, redirecting to admin dashboard");
-        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-      } else {
-        console.log("Middleware - Unknown role, redirecting to role selection");
-        return NextResponse.redirect(new URL("/role-selection", req.url));
-      }
+      console.log("Middleware - Always redirecting to redirect page");
+      return NextResponse.redirect(new URL("/redirect", req.url));
     }
 
     console.log("Middleware - All checks passed, proceeding with role:", user.role);
@@ -138,11 +108,9 @@ export default async function middleware(req) {
     });
 
     // If there's a database connection error, we should still allow access to public routes
-    // and essential routes like role selection
     if (req.nextUrl.pathname.startsWith("/events") ||
         req.nextUrl.pathname === "/" ||
         req.nextUrl.pathname.startsWith("/sign-") ||
-        req.nextUrl.pathname === "/role-selection" ||
         req.nextUrl.pathname.includes("/api/") ||
         req.nextUrl.pathname.includes("/_next/") ||
         req.nextUrl.pathname.includes("/_vercel/")) {
@@ -150,16 +118,23 @@ export default async function middleware(req) {
       return NextResponse.next();
     }
 
-    // If the user is trying to access a protected route but there's a database error,
-    // redirect them to the role selection page
-    if (userId) {
-      console.log("Middleware - User is authenticated but database error occurred, redirecting to role selection");
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+    // If the user is trying to access admin routes but there's a database error,
+    // redirect them to the attendee dashboard for safety
+    if (req.nextUrl.pathname.startsWith("/admin")) {
+      console.log("Middleware - User trying to access admin routes but database error occurred, redirecting to attendee dashboard");
+      return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
     }
 
-    // For other routes, redirect to role selection
-    console.log("Middleware - Redirecting to role selection due to error");
-    return NextResponse.redirect(new URL("/role-selection", req.url));
+    // If the user is trying to access a protected route but there's a database error,
+    // redirect them to the attendee dashboard as a safe default
+    if (userId) {
+      console.log("Middleware - User is authenticated but database error occurred, redirecting to attendee dashboard");
+      return NextResponse.redirect(new URL("/attendee/dashboard", req.url));
+    }
+
+    // For other routes, redirect to sign-in
+    console.log("Middleware - Redirecting to sign-in due to error");
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 }
 

@@ -69,11 +69,27 @@ export async function setUserRole(userId: string, role: string): Promise<boolean
     const existingUser = await User.findOne({ id: userId });
     console.log("Existing user:", existingUser ? { id: existingUser.id, role: existingUser.role } : "Not found");
 
+    // If user already has a role, preserve it - especially if it's an admin role
     if (existingUser?.role) {
       console.log("User already has role:", existingUser.role);
-      // Still update the cache to ensure consistency
-      roleCache.set(userId, existingUser.role);
-      return true;
+
+      // If trying to set a regular user role but user is already an admin, preserve the admin role
+      if ((role === "user" || role === "attendee") &&
+          (existingUser.role === "admin" || existingUser.role === "super_admin")) {
+        console.log("Preserving admin role instead of downgrading to user/attendee");
+        // Still update the cache to ensure consistency
+        roleCache.set(userId, existingUser.role);
+        return true;
+      }
+
+      // For other cases (same role or upgrading to admin), still preserve existing role
+      // to avoid unnecessary database updates
+      if (existingUser.role === role) {
+        console.log("User already has the requested role, no change needed");
+        // Still update the cache to ensure consistency
+        roleCache.set(userId, existingUser.role);
+        return true;
+      }
     }
 
     // Update the user's role
@@ -125,20 +141,14 @@ export async function setUserRole(userId: string, role: string): Promise<boolean
 export function getRoleRedirectUrl(role: string | null): string {
   console.log("getRoleRedirectUrl called with role:", role);
 
-  let redirectUrl = "/role-selection"; // Default
+  // Default to attendee dashboard for all cases except explicit admin roles
+  let redirectUrl = "/attendee/dashboard";
 
-  switch (role) {
-    case "admin":
-    case "super_admin":
-      redirectUrl = "/admin/dashboard";
-      break;
-    case "user":
-    case "attendee":
-      redirectUrl = "/attendee/dashboard";
-      break;
-    default:
-      redirectUrl = "/role-selection";
-      break;
+  if (role === "admin" || role === "super_admin") {
+    redirectUrl = "/admin/dashboard";
+    console.log("Admin role detected, redirecting to admin dashboard");
+  } else {
+    console.log("Non-admin role or no role, redirecting to attendee dashboard");
   }
 
   console.log("Redirecting to:", redirectUrl);
