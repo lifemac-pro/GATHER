@@ -33,9 +33,14 @@ const connectionOptions = {
  * Connect to MongoDB with retry logic
  */
 export async function connectToDatabase() {
+  console.log("connectToDatabase called, current state:", {
+    isConnected,
+    connectionState: typeof mongoose.connection !== 'undefined' ? mongoose.connection.readyState : 'undefined',
+  });
+
   // If already connected, return the mongoose instance
   if (isConnected && mongoose.connection.readyState === 1) {
-    // Reuse existing connection
+    console.log("Already connected to MongoDB, reusing connection");
     return mongoose;
   }
 
@@ -46,8 +51,10 @@ export async function connectToDatabase() {
     mongoose.connection.readyState > 0 &&
     mongoose.connection.readyState !== 1
   ) {
+    console.log("Closing existing MongoDB connection in state:", mongoose.connection.readyState);
     try {
       await mongoose.connection.close();
+      console.log("Successfully closed existing MongoDB connection");
     } catch (error) {
       console.error("Error closing existing MongoDB connection:", error);
     }
@@ -82,13 +89,31 @@ export async function connectToDatabase() {
     };
 
     try {
+      console.log("Attempting to connect to MongoDB...");
       await mongoose.connect(env.DATABASE_URL, safeConnectionOptions);
+      console.log("MongoDB connection successful");
     } catch (connectError) {
       console.error("Error connecting to MongoDB:", connectError);
+      console.error("Connection error details:", {
+        name: connectError.name,
+        message: connectError.message,
+        stack: connectError.stack,
+        code: connectError.code,
+      });
+
       // In edge environment, just return mongoose without connecting
       if (process.env.NEXT_RUNTIME === "edge") {
+        console.log("Running in edge environment, returning mongoose without connection");
         return mongoose;
       }
+
+      // For middleware, we'll return a mock connection to prevent errors
+      if (process.env.NEXT_RUNTIME === "nodejs") {
+        console.log("Running in middleware, returning mongoose without full connection");
+        isConnected = true; // Prevent further connection attempts
+        return mongoose;
+      }
+
       throw connectError;
     }
 

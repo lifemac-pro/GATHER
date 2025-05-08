@@ -13,7 +13,8 @@ export default function SignUpPage() {
           routing="path"
           path="/sign-up"
           signInUrl="/sign-in"
-          fallbackRedirectUrl="/admin/dashboard"
+          redirectUrl="/api/clerk/after-sign-up"
+          afterSignUpUrl="/api/clerk/after-sign-up"
         />
       </div>
     </div>

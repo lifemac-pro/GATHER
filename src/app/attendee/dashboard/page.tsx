@@ -19,6 +19,7 @@ import { CalendarDays, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 
+
 export default function AttendeeDashboardPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();

@@ -43,6 +43,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
   const [trpcClient] = useState(() =>
     api.createClient({
+      transformer: SuperJSON,
       links: [
         loggerLink({
           enabled: (op) =>
@@ -50,18 +51,17 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             (op.direction === "down" && op.result instanceof Error),
         }),
         unstable_httpBatchStreamLink({
-          // transformer is not needed here as it should be defined on the server-side initTRPC object
           url: getBaseUrl() + "/api/trpc",
           headers: async () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
-            
+
             // Get the Clerk session token
             const token = await getToken();
             if (token) {
               headers.set("authorization", `Bearer ${token}`);
             }
-            
+
             return headers;
           },
         }),
