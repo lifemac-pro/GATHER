@@ -17,10 +17,10 @@ export default function AttendeeEventsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch upcoming events for the user
-  const { data: upcomingEvents, isLoading: isUpcomingLoading, error: upcomingError } = 
+  const { data: upcomingEvents, isLoading: isUpcomingLoading, error: upcomingError } =
     api.attendee.getUpcomingEvents.useQuery(
       undefined,
-      { 
+      {
         enabled: isLoaded && !!user,
         retry: 3,
         onError: (error) => {
@@ -30,10 +30,10 @@ export default function AttendeeEventsPage() {
     );
 
   // Fetch past events for the user
-  const { data: pastEvents, isLoading: isPastLoading, error: pastError } = 
+  const { data: pastEvents, isLoading: isPastLoading, error: pastError } =
     api.attendee.getPastEvents.useQuery(
       undefined,
-      { 
+      {
         enabled: isLoaded && !!user,
         retry: 3,
         onError: (error) => {
@@ -69,8 +69,8 @@ export default function AttendeeEventsPage() {
   const filterEvents = (events: any[] | undefined) => {
     if (!events) return [];
     if (!searchQuery.trim()) return events;
-    
-    return events.filter(event => 
+
+    return events.filter(event =>
       event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase()))
     );
@@ -94,7 +94,7 @@ export default function AttendeeEventsPage() {
             />
           </div>
           <Button
-            onClick={() => router.push("/events")}
+            onClick={() => router.push("/attendee/events/browse")}
             className="whitespace-nowrap"
           >
             Browse Events
@@ -113,7 +113,7 @@ export default function AttendeeEventsPage() {
             <span>Past</span>
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="upcoming" className="space-y-6">
           {filteredUpcomingEvents && filteredUpcomingEvents.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

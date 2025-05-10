@@ -142,7 +142,7 @@ export function EventFormDialog({
   // Get templates
   const { data: templates } = api.eventTemplate.getAll.useQuery() as {
     data: {
-      description: string; id: string; name: string; duration?: number; category: string; location?: string; maxAttendees?: number; image?: string 
+      description: string; id: string; name: string; duration?: number; category: string; location?: string; maxAttendees?: number; image?: string
 }[] | undefined;
   };
 
@@ -389,7 +389,7 @@ export function EventFormDialog({
         onOpenChange(newOpen);
       }}
     >
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[#072446]">
             {event ? "Edit Event" : "Create Event"}
@@ -415,8 +415,9 @@ export function EventFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="overflow-y-auto pr-2 max-h-[calc(90vh-180px)]">
+          <Form {...form}>
+            <form id="event-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -488,11 +489,6 @@ export function EventFormDialog({
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() ||
-                            (form.getValues("endDate") &&
-                              date > form.getValues("endDate"))
-                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -912,51 +908,54 @@ export function EventFormDialog({
               )}
             />
 
-            <DialogFooter>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </Button>
+            </form>
+          </Form>
+        </div>
 
-                {!event && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={saveAsTemplate}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Save as Template
-                  </Button>
-                )}
-              </div>
+        <DialogFooter>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
 
+            {!event && (
               <Button
-                type="submit"
-                className="bg-[#E1A913] text-[#072446] hover:bg-[#E1A913]/90"
-                disabled={
-                  isSubmitting || createEvent.isPending || updateEvent.isPending
-                }
+                type="button"
+                variant="outline"
+                onClick={saveAsTemplate}
               >
-                {isSubmitting ||
-                createEvent.isPending ||
-                updateEvent.isPending ? (
-                  <>
-                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-                    {event ? "Updating..." : "Creating..."}
-                  </>
-                ) : event ? (
-                  "Update Event"
-                ) : (
-                  "Create Event"
-                )}
+                <FileText className="mr-2 h-4 w-4" />
+                Save as Template
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            form={form.formState.formId || "event-form"}
+            className="bg-[#E1A913] text-[#072446] hover:bg-[#E1A913]/90"
+            disabled={
+              isSubmitting || createEvent.isPending || updateEvent.isPending
+            }
+          >
+            {isSubmitting ||
+            createEvent.isPending ||
+            updateEvent.isPending ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                {event ? "Updating..." : "Creating..."}
+              </>
+            ) : event ? (
+              "Update Event"
+            ) : (
+              "Create Event"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -66,8 +66,8 @@ export function AttendeeSidebar({ isOpen, setIsOpen }: AttendeeSidebarProps) {
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-[#072446] text-[#B0B8C5] transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          "md:h-screen md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full", // Toggle on mobile
+          "md:translate-x-0 md:h-screen", // Always visible on desktop
         )}
       >
         {/* Logo and Close Button */}

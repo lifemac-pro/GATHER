@@ -90,7 +90,7 @@ export async function sendSurveysForTemplate(template: any, event: any) {
   // Get all attendees for this event
   const attendees = await Attendee.find({
     eventId: event.id,
-    status: "checked_in", // Only send to attendees who actually attended
+    status: { $in: ["attended", "checked-in"] }, // Only send to attendees who actually attended
   });
 
   logger.info(`Found ${attendees.length} attendees for event: ${event.name}`);
@@ -213,7 +213,7 @@ async function sendReminderForTemplate(template: any, event: any) {
   // Get all attendees for this event
   const attendees = await Attendee.find({
     eventId: event.id,
-    status: "checked_in",
+    status: { $in: ["attended", "checked-in"] },
   });
 
   // Generate survey URL with unique token for each attendee

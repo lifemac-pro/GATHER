@@ -77,11 +77,20 @@ export function Sidebar() {
           "md:h-screen  md:translate-x-0",
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center px-6">
+        {/* Logo and Close Button */}
+        <div className="flex h-16 items-center justify-between px-6">
           <h1 className="text-xl font-bold text-primary-foreground">
             GatherEase
           </h1>
+          {/* Close button - only visible on mobile */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary-foreground md:hidden"
+            onClick={() => setIsOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Navigation */}
@@ -92,6 +101,12 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={() => {
+                  // Close sidebar on mobile when a link is clicked
+                  if (window.innerWidth < 768) {
+                    setIsOpen(false);
+                  }
+                }}
                 className={cn(
                   "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
@@ -119,6 +134,12 @@ export function Sidebar() {
             variant="ghost"
             className="w-full justify-start text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
             showIcon={true}
+            onClick={() => {
+              // Close sidebar on mobile when signing out
+              if (window.innerWidth < 768) {
+                setIsOpen(false);
+              }
+            }}
           />
         </div>
       </div>

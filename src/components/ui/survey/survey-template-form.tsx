@@ -271,7 +271,8 @@ export function SurveyTemplateForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+        <form id="survey-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="questions">Questions</TabsTrigger>
@@ -690,27 +691,29 @@ export function SurveyTemplateForm({
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(`/admin/events/${eventId}/surveys`)}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <LoadingSpinner size="sm" className="mr-2" />
-                {templateId ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              <>{templateId ? "Update" : "Create"} Survey</>
-            )}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
+
+      <div className="mt-6 flex justify-end space-x-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push(`/admin/events/${eventId}/surveys`)}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" form="survey-form" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              {templateId ? "Updating..." : "Creating..."}
+            </>
+          ) : (
+            <>{templateId ? "Update" : "Create"} Survey</>
+          )}
+        </Button>
+      </div>
     </Form>
   );
 }

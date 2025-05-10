@@ -56,7 +56,7 @@ export default function AttendeeLayout({
         </Button>
       </div>
 
-      <main className="flex-1 pt-16 md:ml-64 md:pt-0">
+      <main className="flex-1 pt-16 md:ml-64 md:pt-4">
         {children}
       </main>
     </div>

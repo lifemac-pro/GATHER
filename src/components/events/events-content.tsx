@@ -8,15 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/auth-context";
-import { AttendeeSidebar } from "@/components/ui/attendee/sidebar";
-import { Menu } from "lucide-react";
 
 export function EventsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Get initial values from URL
   const initialTab = searchParams.get("tab") || "all";
@@ -36,30 +33,7 @@ export function EventsContent() {
   };
 
   return (
-    <>
-      {/* Pass state to sidebar */}
-      <AttendeeSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      {/* Backdrop - only visible on mobile when sidebar is open */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile menu button */}
-      <div className="fixed left-4 top-4 z-30 md:hidden">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(true)}
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-      </div>
-
-      <div className="container mx-auto py-8 pt-16 md:ml-64 md:pt-8">
+    <div className="container py-8">
         <div className="mb-8 flex flex-col items-start justify-between md:flex-row md:items-center">
           <h1 className="mb-4 text-3xl font-bold md:mb-0">Events</h1>
 
@@ -119,6 +93,5 @@ export function EventsContent() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
   );
 }

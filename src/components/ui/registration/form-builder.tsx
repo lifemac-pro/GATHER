@@ -236,7 +236,8 @@ export function FormBuilder({ eventId, formId, onSuccess, onCancel }: FormBuilde
   return (
     <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+          <form id="registration-form" onSubmit={form.handleSubmit(onSubmit)}>
           <Card>
             <CardHeader>
               <CardTitle>Form Details</CardTitle>
@@ -447,7 +448,7 @@ export function FormBuilder({ eventId, formId, onSuccess, onCancel }: FormBuilde
 
           <div className="my-6">
             <h2 className="mb-4 text-xl font-semibold">Form Sections</h2>
-            
+
             {sections.map((section) => (
               <FormSection
                 key={section.id}
@@ -456,34 +457,36 @@ export function FormBuilder({ eventId, formId, onSuccess, onCancel }: FormBuilde
                 onDelete={deleteSection}
               />
             ))}
-            
+
             <Button onClick={addSection} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
               Add Section
             </Button>
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {formId ? "Update Form" : "Create Form"}
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        <div className="mt-6 flex justify-between">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+
+          <Button type="submit" form="registration-form" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                {formId ? "Update Form" : "Create Form"}
+              </>
+            )}
+          </Button>
+        </div>
       </Form>
     </div>
   );

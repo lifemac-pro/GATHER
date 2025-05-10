@@ -71,7 +71,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
       endDate: boolean;
       name: ReactNode;
       isActive: any; sections: {
-      title: any; id: string; fields: { id: string; type: string; required?: boolean; defaultValue?: any; label: string; placeholder?: string; helpText?: string; options?: string[] }[] 
+      title: any; id: string; fields: { id: string; type: string; required?: boolean; defaultValue?: any; label: string; placeholder?: string; helpText?: string; options?: string[] }[]
 }[] }
   >(
     { id: formId },
@@ -114,10 +114,10 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
       form.sections.forEach((section) => {
         section.fields.forEach((field) => {
           const fieldId = `${section.id}_${field.id}`;
-          
+
           // Define schema based on field type
           let fieldSchema;
-          
+
           switch (field.type) {
             case "email":
               fieldSchema = z.string().email("Please enter a valid email address");
@@ -140,7 +140,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
               fieldSchema = z.string();
               break;
           }
-          
+
           // Add required validation if needed
           if (field.required) {
             if (field.type === "checkbox") {
@@ -153,9 +153,9 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
               fieldSchema = fieldSchema.optional();
             }
           }
-          
+
           schemaObj[fieldId] = fieldSchema;
-          
+
           // Set default value if provided
           if (field.defaultValue && field.type !== "checkbox") {
             defaultValues[fieldId] = field.defaultValue;
@@ -305,7 +305,8 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
 
       {formSchema && (
         <Form {...formMethods}>
-          <form onSubmit={formMethods.handleSubmit(onSubmit)}>
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+            <form id="registration-submission-form" onSubmit={formMethods.handleSubmit(onSubmit)}>
             {form.sections.map((section: any) => (
               <Card key={section.id} className="mb-6">
                 <CardHeader>
@@ -317,7 +318,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
                 <CardContent className="space-y-4">
                   {section.fields.map((field: any) => {
                     const fieldId = `${section.id}_${field.id}`;
-                    
+
                     return (
                       <div key={field.id}>
                         {field.type === "text" && (
@@ -634,7 +635,11 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
               </Card>
             )}
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            </form>
+          </div>
+
+          <div className="mt-6">
+            <Button type="submit" form="registration-submission-form" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
@@ -647,7 +652,7 @@ export function FormSubmission({ formId, eventId, userId, onSuccess }: FormSubmi
                 </>
               )}
             </Button>
-          </form>
+          </div>
         </Form>
       )}
     </div>

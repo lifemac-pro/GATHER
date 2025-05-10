@@ -147,7 +147,7 @@ export const attendeeRouter = createTRPCRouter({
         const [upcomingEvents, pendingSurveys, notifications] = await Promise.all([
           // Get upcoming events
           (async () => {
-            const attendees = await Attendee.find({ 
+            const attendees = await Attendee.find({
               userId: userId,
               status: { $in: ["registered", "confirmed"] }
             }).lean();
@@ -373,7 +373,7 @@ export const attendeeRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       console.log("Starting registration process with input:", input);
-      
+
       try {
         await connectToDatabase();
         console.log("Database connection established");
@@ -425,7 +425,7 @@ export const attendeeRouter = createTRPCRouter({
         // Check capacity
         console.log("Checking event capacity");
         const attendeeCount = await Attendee.countDocuments({ eventId: event._id });
-        const maxAttendees = event.maxAttendees && Array.isArray(event.maxAttendees) 
+        const maxAttendees = event.maxAttendees && Array.isArray(event.maxAttendees)
           ? parseInt(event.maxAttendees[0])
           : 0;
         console.log("Current attendee count:", attendeeCount, "Max attendees:", maxAttendees);
@@ -1123,7 +1123,7 @@ export const attendeeRouter = createTRPCRouter({
 
       try {
         // Get all attendees for this user
-        const attendees = await Attendee.find({ 
+        const attendees = await Attendee.find({
           userId: userId,
           status: { $in: ["registered", "confirmed"] }
         }).lean();
@@ -1479,6 +1479,49 @@ export const attendeeRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to mark all notifications as read",
+        });
+      }
+    }),
+
+  // Mark notification as read
+  markNotificationAsRead: protectedProcedure
+    .input(z.object({
+      notificationId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Ensure MongoDB is connected
+      await connectToDatabase();
+
+      const userId = ctx.session?.userId;
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      try {
+        // Find and update the notification
+        const result = await Notification.updateOne(
+          {
+            _id: input.notificationId,
+            userId: userId,
+          },
+          {
+            $set: { read: true, updatedAt: new Date() }
+          }
+        );
+
+        if (result.matchedCount === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Notification not found",
+          });
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to mark notification as read",
         });
       }
     }),

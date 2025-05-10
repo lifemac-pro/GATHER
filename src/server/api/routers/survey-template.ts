@@ -63,15 +63,36 @@ export const surveyTemplateRouter = createTRPCRouter({
         id: q.id ?? nanoid(),
       }));
 
-      // Create survey template
-      const surveyTemplate = await SurveyTemplate.create({
-        id: nanoid(),
-        ...input,
-        questions,
+      console.log("Creating survey template with data:", {
+        eventId: input.eventId,
+        name: input.name,
+        questionCount: questions.length,
         createdById: userId,
       });
 
-      return surveyTemplate;
+      try {
+        // Create survey template
+        const surveyTemplate = await SurveyTemplate.create({
+          id: nanoid(),
+          ...input,
+          questions,
+          createdById: userId,
+        });
+
+        console.log("Survey template created successfully:", {
+          id: surveyTemplate.id,
+          name: surveyTemplate.name,
+        });
+
+        return surveyTemplate;
+      } catch (error) {
+        console.error("Error creating survey template:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create survey template",
+          cause: error,
+        });
+      }
     }),
 
   update: protectedProcedure
@@ -143,9 +164,19 @@ export const surveyTemplateRouter = createTRPCRouter({
       // Ensure MongoDB is connected
       await connectToDatabase();
 
-      return await SurveyTemplate.find({ eventId: input.eventId }).sort({
-        createdAt: -1,
-      });
+      console.log("Fetching survey templates for event:", input.eventId);
+
+      try {
+        const templates = await SurveyTemplate.find({ eventId: input.eventId }).sort({
+          createdAt: -1,
+        });
+
+        console.log("Found templates:", templates.length);
+        return templates;
+      } catch (error) {
+        console.error("Error fetching survey templates:", error);
+        return [];
+      }
     }),
 
   getById: protectedProcedure
@@ -240,6 +271,37 @@ export const surveyTemplateRouter = createTRPCRouter({
       // Import and call the survey scheduler function
       const surveyScheduler = await import("@/lib/survey-scheduler");
       await surveyScheduler.sendSurveysForTemplate(template, event);
+
+      // Also create in-app notifications for attendees
+      const { Attendee, User } = await import("@/server/db/models");
+      const { createNotification } = await import("@/lib/notification-service");
+
+      // Get all attendees for this event
+      const attendees = await Attendee.find({
+        eventId: template.eventId,
+        status: { $in: ["attended", "checked-in"] },
+      });
+
+      console.log(`Sending notifications to ${attendees.length} attendees for survey: ${template.name}`);
+
+      // Send notification to each attendee
+      for (const attendee of attendees) {
+        try {
+          await createNotification({
+            userId: attendee.userId,
+            type: "survey",
+            title: "New Survey Available",
+            message: `Please complete the survey for "${event.name}".`,
+            eventId: template.eventId,
+            actionUrl: `/attendee/surveys/${template.id}`,
+            actionLabel: "Take Survey",
+          });
+
+          console.log(`Notification sent to attendee: ${attendee.userId}`);
+        } catch (error) {
+          console.error(`Error sending notification to attendee ${attendee.userId}:`, error);
+        }
+      }
 
       return { success: true };
     }),
