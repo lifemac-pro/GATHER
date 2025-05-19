@@ -123,3 +123,54 @@ If you encounter issues during deployment:
 5. Verify Clerk authentication is properly configured
 
 For additional help, refer to the project documentation or contact support.
+
+
+
+
+
+
+
+# MongoDB Connection
+# Original MongoDB URI
+DATABASE_URL=mongodb+srv://devdc:dev123@cluster0.v8rw266.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+# Clerk Auth
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_c29jaWFsLWhhd2stMTIuY2xlcmsuYWNjb3VudHMuZGV2JA
+CLERK_SECRET_KEY=sk_test_SQ2sfojKQomFgwe247VcWG1vAanmqNeYAgsoY5g56j
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_OUT_URL=/sign-out
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/admin/dashboard
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/admin/dashboard
+
+
+# MongoDB connection
+# DATABASE_URL=mongodb://localhost:27017/gatherease
+
+# NextAuth.js configuration
+NEXTAUTH_SECRET=EMVSyIURwdbZHaBvODuS7I9X6ErzuULcmfs8tfUddNE=
+
+NEXTAUTH_URL=http://localhost:3000
+
+# Email configuration
+EMAIL_SERVER=smtp://localhost:1025
+EMAIL_FROM=no-reply@gatherease.com
+
+# Stripe configuration (for payment processing)
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+
+# WhatsApp Business API configuration
+# For testing, you can use a mock API URL and token
+WHATSAPP_API_URL=https://mock-whatsapp-api.example.com
+WHATSAPP_API_TOKEN=mock_whatsapp_token
+
+# Application URLs
+APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Logging
+LOG_LEVEL=debug
+
+# Cron job security
+CRON_SECRET=your_cron_secret_key
